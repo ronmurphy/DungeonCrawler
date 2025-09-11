@@ -1,0 +1,42 @@
+{
+  "name": "Default Dungeon Tileset",
+  "description": "Michelle's custom dungeon sprite sheet with appropriate background colors",
+  "spriteSize": 64,
+  "gridSize": "4x4",
+  "backgroundColors": {
+    "mountain": "#8B7355",
+    "water": "#4A90E2", 
+    "grass": "#7CB342",
+    "rock": "#757575",
+    "castle": "#E0E0E0",
+    "house": "#FFAB40",
+    "shop": "#FF7043",
+    "temple": "#F5F5F5",
+    "dragon": "#FF5722",
+    "sword": "#CFD8DC",
+    "skull": "#424242",
+    "danger": "#FF9800",
+    "tower": "#9E9E9E",
+    "road": "#BCAAA4",
+    "door": "#8D6E63",
+    "fire": "#FF5722"
+  },
+  "sprites": [
+    { "id": "mountain", "name": "Mountain", "category": "terrain", "position": [0, 0] },
+    { "id": "water", "name": "Water", "category": "terrain", "position": [1, 0] },
+    { "id": "grass", "name": "Grass", "category": "terrain", "position": [2, 0] },
+    { "id": "rock", "name": "Rock", "category": "terrain", "position": [3, 0] },
+    { "id": "castle", "name": "Castle", "category": "buildings", "position": [0, 1] },
+    { "id": "house", "name": "House", "category": "buildings", "position": [1, 1] },
+    { "id": "shop", "name": "Shop", "category": "buildings", "position": [2, 1] },
+    { "id": "temple", "name": "Temple", "category": "buildings", "position": [3, 1] },
+    { "id": "dragon", "name": "Dragon", "category": "monsters", "position": [0, 2] },
+    { "id": "sword", "name": "Sword", "category": "items", "position": [1, 2] },
+    { "id": "skull", "name": "Skull", "category": "hazards", "position": [2, 2] },
+    { "id": "danger", "name": "Danger", "category": "hazards", "position": [3, 2] },
+    { "id": "tower", "name": "Tower", "category": "buildings", "position": [0, 3] },
+    { "id": "road", "name": "Road", "category": "paths", "position": [1, 3] },
+    { "id": "door", "name": "Door", "category": "features", "position": [2, 3] },
+    { "id": "fire", "name": "Fire", "category": "hazards", "position": [3, 3] }
+  ]
+}

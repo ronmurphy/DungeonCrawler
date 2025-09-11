@@ -1,0 +1,426 @@
+/* ========================================
+   ACCENT COLOR THEMES SYSTEM
+   User-selectable accent color schemes
+   Works for both light and dark modes
+   ======================================== */
+
+/* Default Theme (Purple/Indigo) - Already in light.css */
+[data-accent-theme="default"] {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --primary-light: #818cf8;
+    --accent: #10b981;
+    --accent-dark: #059669;
+    --accent-light: #34d399;
+}
+
+/* Default Theme - Dark Mode */
+body.dark-theme[data-accent-theme="default"] {
+    --primary: #818cf8;
+    --primary-dark: #6366f1;
+    --primary-light: #a5b4fc;
+    --accent: #34d399;
+    --accent-dark: #10b981;
+    --accent-light: #6ee7b7;
+}
+
+/* RED Theme */
+[data-accent-theme="red"] {
+    --primary: #ef4444;
+    --primary-dark: #dc2626;
+    --primary-light: #f87171;
+    --accent: #f59e0b;
+    --accent-dark: #d97706;
+    --accent-light: #fbbf24;
+}
+
+/* RED Theme - Dark Mode */
+body.dark-theme[data-accent-theme="red"] {
+    --primary: #f87171;
+    --primary-dark: #ef4444;
+    --primary-light: #fca5a5;
+    --accent: #fbbf24;
+    --accent-dark: #f59e0b;
+    --accent-light: #fcd34d;
+}
+
+/* ORANGE Theme */
+[data-accent-theme="orange"] {
+    --primary: #f97316;
+    --primary-dark: #ea580c;
+    --primary-light: #fb923c;
+    --accent: #eab308;
+    --accent-dark: #ca8a04;
+    --accent-light: #facc15;
+}
+
+/* ORANGE Theme - Dark Mode */
+body.dark-theme[data-accent-theme="orange"] {
+    --primary: #fb923c;
+    --primary-dark: #f97316;
+    --primary-light: #fdba74;
+    --accent: #facc15;
+    --accent-dark: #eab308;
+    --accent-light: #fde047;
+}
+
+/* YELLOW Theme */
+[data-accent-theme="yellow"] {
+    --primary: #eab308;
+    --primary-dark: #ca8a04;
+    --primary-light: #facc15;
+    --accent: #22c55e;
+    --accent-dark: #16a34a;
+    --accent-light: #4ade80;
+}
+
+/* YELLOW Theme - Dark Mode */
+body.dark-theme[data-accent-theme="yellow"] {
+    --primary: #facc15;
+    --primary-dark: #eab308;
+    --primary-light: #fde047;
+    --accent: #4ade80;
+    --accent-dark: #22c55e;
+    --accent-light: #86efac;
+}
+
+/* GREEN Theme */
+[data-accent-theme="green"] {
+    --primary: #22c55e;
+    --primary-dark: #16a34a;
+    --primary-light: #4ade80;
+    --accent: #06b6d4;
+    --accent-dark: #0891b2;
+    --accent-light: #22d3ee;
+}
+
+/* GREEN Theme - Dark Mode */
+body.dark-theme[data-accent-theme="green"] {
+    --primary: #4ade80;
+    --primary-dark: #22c55e;
+    --primary-light: #86efac;
+    --accent: #22d3ee;
+    --accent-dark: #06b6d4;
+    --accent-light: #67e8f9;
+}
+
+/* BLUE Theme */
+[data-accent-theme="blue"] {
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --primary-light: #60a5fa;
+    --accent: #8b5cf6;
+    --accent-dark: #7c3aed;
+    --accent-light: #a78bfa;
+}
+
+/* BLUE Theme - Dark Mode */
+body.dark-theme[data-accent-theme="blue"] {
+    --primary: #60a5fa;
+    --primary-dark: #3b82f6;
+    --primary-light: #93c5fd;
+    --accent: #a78bfa;
+    --accent-dark: #8b5cf6;
+    --accent-light: #c4b5fd;
+}
+
+/* INDIGO Theme */
+[data-accent-theme="indigo"] {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --primary-light: #818cf8;
+    --accent: #ec4899;
+    --accent-dark: #db2777;
+    --accent-light: #f472b6;
+}
+
+/* INDIGO Theme - Dark Mode */
+body.dark-theme[data-accent-theme="indigo"] {
+    --primary: #818cf8;
+    --primary-dark: #6366f1;
+    --primary-light: #a5b4fc;
+    --accent: #f472b6;
+    --accent-dark: #ec4899;
+    --accent-light: #f9a8d4;
+}
+
+/* VIOLET Theme */
+[data-accent-theme="violet"] {
+    --primary: #8b5cf6;
+    --primary-dark: #7c3aed;
+    --primary-light: #a78bfa;
+    --accent: #f59e0b;
+    --accent-dark: #d97706;
+    --accent-light: #fbbf24;
+}
+
+/* VIOLET Theme - Dark Mode */
+body.dark-theme[data-accent-theme="violet"] {
+    --primary: #a78bfa;
+    --primary-dark: #8b5cf6;
+    --primary-light: #c4b5fd;
+    --accent: #fbbf24;
+    --accent-dark: #f59e0b;
+    --accent-light: #fcd34d;
+}
+
+/* ========================================
+   HOLIDAY THEMES
+   ======================================== */
+
+/* CHRISTMAS Theme (Red & Green) */
+[data-accent-theme="christmas"] {
+    --primary: #dc2626;
+    --primary-dark: #b91c1c;
+    --primary-light: #ef4444;
+    --accent: #16a34a;
+    --accent-dark: #15803d;
+    --accent-light: #22c55e;
+    --secondary: #eab308;
+    --secondary-dark: #ca8a04;
+    --secondary-light: #facc15;
+}
+
+/* CHRISTMAS Theme - Dark Mode */
+body.dark-theme[data-accent-theme="christmas"] {
+    --primary: #ef4444;
+    --primary-dark: #dc2626;
+    --primary-light: #f87171;
+    --accent: #22c55e;
+    --accent-dark: #16a34a;
+    --accent-light: #4ade80;
+    --secondary: #facc15;
+    --secondary-dark: #eab308;
+    --secondary-light: #fde047;
+}
+
+/* HALLOWEEN Theme (Orange & Purple) */
+[data-accent-theme="halloween"] {
+    --primary: #ea580c;
+    --primary-dark: #c2410c;
+    --primary-light: #f97316;
+    --accent: #7c3aed;
+    --accent-dark: #6d28d9;
+    --accent-light: #8b5cf6;
+    --secondary: #facc15;
+    --secondary-dark: #eab308;
+    --secondary-light: #fde047;
+}
+
+/* HALLOWEEN Theme - Dark Mode */
+body.dark-theme[data-accent-theme="halloween"] {
+    --primary: #f97316;
+    --primary-dark: #ea580c;
+    --primary-light: #fb923c;
+    --accent: #8b5cf6;
+    --accent-dark: #7c3aed;
+    --accent-light: #a78bfa;
+    --secondary: #fde047;
+    --secondary-dark: #facc15;
+    --secondary-light: #fef3c7;
+}
+
+/* VALENTINE Theme (Pink & Red) */
+[data-accent-theme="valentine"] {
+    --primary: #ec4899;
+    --primary-dark: #db2777;
+    --primary-light: #f472b6;
+    --accent: #ef4444;
+    --accent-dark: #dc2626;
+    --accent-light: #f87171;
+    --secondary: #f59e0b;
+    --secondary-dark: #d97706;
+    --secondary-light: #fbbf24;
+}
+
+/* VALENTINE Theme - Dark Mode */
+body.dark-theme[data-accent-theme="valentine"] {
+    --primary: #f472b6;
+    --primary-dark: #ec4899;
+    --primary-light: #f9a8d4;
+    --accent: #f87171;
+    --accent-dark: #ef4444;
+    --accent-light: #fca5a5;
+    --secondary: #fbbf24;
+    --secondary-dark: #f59e0b;
+    --secondary-light: #fcd34d;
+}
+
+/* OCEAN Theme (Blues & Teals) */
+[data-accent-theme="ocean"] {
+    --primary: #0891b2;
+    --primary-dark: #0e7490;
+    --primary-light: #06b6d4;
+    --accent: #059669;
+    --accent-dark: #047857;
+    --accent-light: #10b981;
+    --secondary: #3b82f6;
+    --secondary-dark: #2563eb;
+    --secondary-light: #60a5fa;
+}
+
+/* OCEAN Theme - Dark Mode */
+body.dark-theme[data-accent-theme="ocean"] {
+    --primary: #06b6d4;
+    --primary-dark: #0891b2;
+    --primary-light: #22d3ee;
+    --accent: #10b981;
+    --accent-dark: #059669;
+    --accent-light: #34d399;
+    --secondary: #60a5fa;
+    --secondary-dark: #3b82f6;
+    --secondary-light: #93c5fd;
+}
+
+/* FOREST Theme (Greens & Browns) */
+[data-accent-theme="forest"] {
+    --primary: #16a34a;
+    --primary-dark: #15803d;
+    --primary-light: #22c55e;
+    --accent: #92400e;
+    --accent-dark: #78350f;
+    --accent-light: #a16207;
+    --secondary: #059669;
+    --secondary-dark: #047857;
+    --secondary-light: #10b981;
+}
+
+/* FOREST Theme - Dark Mode */
+body.dark-theme[data-accent-theme="forest"] {
+    --primary: #22c55e;
+    --primary-dark: #16a34a;
+    --primary-light: #4ade80;
+    --accent: #a16207;
+    --accent-dark: #92400e;
+    --accent-light: #ca8a04;
+    --secondary: #10b981;
+    --secondary-dark: #059669;
+    --secondary-light: #34d399;
+}
+
+/* SUNSET Theme (Warm Colors) */
+[data-accent-theme="sunset"] {
+    --primary: #f97316;
+    --primary-dark: #ea580c;
+    --primary-light: #fb923c;
+    --accent: #ec4899;
+    --accent-dark: #db2777;
+    --accent-light: #f472b6;
+    --secondary: #eab308;
+    --secondary-dark: #ca8a04;
+    --secondary-light: #facc15;
+}
+
+/* SUNSET Theme - Dark Mode */
+body.dark-theme[data-accent-theme="sunset"] {
+    --primary: #fb923c;
+    --primary-dark: #f97316;
+    --primary-light: #fdba74;
+    --accent: #f472b6;
+    --accent-dark: #ec4899;
+    --accent-light: #f9a8d4;
+    --secondary: #facc15;
+    --secondary-dark: #eab308;
+    --secondary-light: #fde047;
+}
+
+/* ========================================
+   THEME SELECTOR UI
+   ======================================== */
+
+.theme-selector {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+.theme-selector h4 {
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+}
+
+.theme-colors-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+}
+
+.theme-color-btn {
+    width: 32px;
+    height: 32px;
+    border: 2px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-color-btn:hover {
+    transform: scale(1.1);
+    border-color: var(--text-primary);
+}
+
+.theme-color-btn.active {
+    border-color: var(--text-primary);
+    transform: scale(1.1);
+}
+
+.theme-color-btn.active::after {
+    content: "✓";
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Individual Theme Color Buttons */
+.theme-btn-default { background: linear-gradient(135deg, #6366f1, #10b981); }
+.theme-btn-red { background: linear-gradient(135deg, #ef4444, #f59e0b); }
+.theme-btn-orange { background: linear-gradient(135deg, #f97316, #eab308); }
+.theme-btn-yellow { background: linear-gradient(135deg, #eab308, #22c55e); }
+.theme-btn-green { background: linear-gradient(135deg, #22c55e, #06b6d4); }
+.theme-btn-blue { background: linear-gradient(135deg, #3b82f6, #8b5cf6); }
+.theme-btn-indigo { background: linear-gradient(135deg, #6366f1, #ec4899); }
+.theme-btn-violet { background: linear-gradient(135deg, #8b5cf6, #f59e0b); }
+
+/* Holiday Theme Buttons */
+.theme-btn-christmas { background: linear-gradient(135deg, #dc2626, #16a34a); }
+.theme-btn-halloween { background: linear-gradient(135deg, #ea580c, #7c3aed); }
+.theme-btn-valentine { background: linear-gradient(135deg, #ec4899, #ef4444); }
+.theme-btn-ocean { background: linear-gradient(135deg, #0891b2, #059669); }
+.theme-btn-forest { background: linear-gradient(135deg, #16a34a, #92400e); }
+.theme-btn-sunset { background: linear-gradient(135deg, #f97316, #ec4899); }
+
+.holiday-themes {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--border-color);
+}
+
+.holiday-themes h5 {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-bottom: var(--spacing-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .theme-colors-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+    
+    .theme-color-btn {
+        width: 28px;
+        height: 28px;
+    }
+}

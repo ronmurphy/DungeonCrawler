@@ -1,0 +1,745 @@
+{
+  "grid": [
+    [
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      null,
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      null,
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      null,
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      null,
+      null
+    ],
+    [
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      null,
+      null,
+      null,
+      null,
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      null,
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      null,
+      null
+    ],
+    [
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      null,
+      null,
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      null,
+      null
+    ],
+    [
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      null,
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      null,
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      {
+        "type": "sprite",
+        "value": "grass",
+        "name": "Grass",
+        "category": "terrain",
+        "emoji": "🌿"
+      },
+      null,
+      null,
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      {
+        "type": "sprite",
+        "value": "castle",
+        "name": "Castle",
+        "category": "buildings",
+        "emoji": "🏰"
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "tileset": "default",
+  "name": "TestPreSpriteSheetEditorMapFile",
+  "size": 15,
+  "type": "dungeon",
+  "created": "2025-08-30T01:26:11.088Z",
+  "version": "1.2",
+  "backgroundColors": {
+    "mountain": "#8B7355",
+    "water": "#4A90E2",
+    "grass": "#7CB342",
+    "rock": "#757575",
+    "castle": "#E0E0E0",
+    "house": "#FFAB40",
+    "shop": "#FF7043",
+    "temple": "#F5F5F5",
+    "dragon": "#FF5722",
+    "sword": "#CFD8DC",
+    "skull": "#424242",
+    "danger": "#FF9800",
+    "tower": "#9E9E9E",
+    "road": "#BCAAA4",
+    "door": "#8D6E63",
+    "fire": "#FF5722"
+  }
+}

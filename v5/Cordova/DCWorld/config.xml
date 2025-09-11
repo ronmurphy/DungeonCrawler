@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.ronmurphy.dcsheet" version="1.0.0"
+        xmlns="http://www.w3.org/ns/widgets"
+        xmlns:cdv="http://cordova.apache.org/ns/1.0">
+
+    <name>Dungeon Crawler Sheet</name>
+    <description>A tabletop RPG app based on Dungeon Crawler Carl</description>
+    <author email="dev@cordova.apache.org" href="https://cordova.apache.org">
+        Ron Murphy
+    </author>
+
+    <content src="index.html" />
+
+    <!-- Allow navigation -->
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+
+    <!-- Allow external navigation for GitHub and other services -->
+    <allow-navigation href="https://*.github.com"/>
+    <allow-navigation href="https://*.githubusercontent.com"/>
+    <allow-navigation href="https://*.supabase.co"/>
+
+    <!-- Access permissions -->
+    <access origin="*"/>
+
+    <!-- Android platform assets -->
+    <platform name="android">
+        <!-- App icons (still valid) -->
+        <icon src="res/android/icon-36.png" density="ldpi" />
+        <icon src="res/android/icon-48.png" density="mdpi" />
+        <icon src="res/android/icon-72.png" density="hdpi" />
+        <icon src="res/android/icon-96.png" density="xhdpi" />
+        <icon src="res/android/icon-144.png" density="xxhdpi" />
+        <icon src="res/android/icon-192.png" density="xxxhdpi" />
+
+        <!-- New splash method -->
+        <preference name="AndroidWindowSplashScreenAnimatedIcon" value="res/android/splash.png" />
+        <preference name="AndroidWindowSplashScreenBackground" value="#141414" />
+        
+        <!-- Use API 35 for compilation to support all modern attributes -->
+        <preference name="android-targetSdkVersion" value="33" />
+        <preference name="android-compileSdkVersion" value="35" />
+    </platform>
+
+</widget>

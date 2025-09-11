@@ -1,0 +1,285 @@
+{
+  "dcc_unique": [
+    {
+      "id": "bopca",
+      "name": "Bopca",
+      "description": "Small alien creatures with diplomatic immunity and advanced technology knowledge",
+      "statBonuses": { "intelligence": 1, "charisma": 1 },
+      "skills": [
+        { "name": "Diplomatic Immunity", "stat": "charisma" },
+        { "name": "Alien Technology", "stat": "intelligence" }
+      ],
+      "maximums": { 
+        "strength": 12, "dexterity": 14, "constitution": 13, 
+        "intelligence": 18, "wisdom": 16, "charisma": 17 
+      },
+      "category": "dcc_unique"
+    },
+    {
+      "id": "skyfowl",
+      "name": "Skyfowl",
+      "description": "Aerial creatures with natural flight and storm resistance",
+      "statBonuses": { "dexterity": 2, "wisdom": 1 },
+      "skills": [
+        { "name": "Flight", "stat": "dexterity" },
+        { "name": "Aerial Combat", "stat": "dexterity" },
+        { "name": "Storm Resistance", "stat": "constitution" }
+      ],
+      "maximums": { 
+        "strength": 14, "dexterity": 18, "constitution": 15, 
+        "intelligence": 14, "wisdom": 17, "charisma": 12 
+      },
+      "category": "dcc_unique"
+    },
+    {
+      "id": "rat_kin",
+      "name": "Rat-kin",
+      "description": "Nimble scavengers with disease resistance and tunnel expertise",
+      "statBonuses": { "dexterity": 1, "constitution": 1, "wisdom": 1 },
+      "skills": [
+        { "name": "Scavenging", "stat": "wisdom" },
+        { "name": "Disease Resistance", "stat": "constitution" },
+        { "name": "Tunnel Navigation", "stat": "wisdom" }
+      ],
+      "maximums": { 
+        "strength": 13, "dexterity": 17, "constitution": 16, 
+        "intelligence": 14, "wisdom": 16, "charisma": 12 
+      },
+      "category": "dcc_unique"
+    },
+    {
+      "id": "hellspawn_familiar",
+      "name": "Hellspawn Familiar",
+      "description": "Demonic creatures with fiery heritage and wing growth capabilities",
+      "statBonuses": { "strength": 1, "constitution": 1, "charisma": 1 },
+      "skills": [
+        { "name": "Demonic Heritage", "stat": "charisma" },
+        { "name": "Wing Growth", "stat": "constitution" },
+        { "name": "Fire Resistance", "stat": "constitution" }
+      ],
+      "maximums": { 
+        "strength": 16, "dexterity": 15, "constitution": 17, 
+        "intelligence": 14, "wisdom": 13, "charisma": 16 
+      },
+      "category": "dcc_unique"
+    },
+    {
+      "id": "primal",
+      "name": "Primal",
+      "description": "Ancient beings with cosmic knowledge and universal skills",
+      "statBonuses": { "strength": 2, "constitution": 2, "intelligence": 2 },
+      "skills": [
+        { "name": "Universal Skill Training", "stat": "intelligence" },
+        { "name": "Cosmic Knowledge", "stat": "wisdom" },
+        { "name": "Progenitor Heritage", "stat": "charisma" }
+      ],
+      "maximums": { 
+        "strength": 20, "dexterity": 20, "constitution": 20, 
+        "intelligence": 20, "wisdom": 20, "charisma": 20 
+      },
+      "category": "dcc_unique"
+    },
+    {
+      "id": "were_creature",
+      "name": "Were-creature",
+      "description": "Shape-shifting beings with enhanced senses and lunar affinity",
+      "statBonuses": { "strength": 2, "constitution": 1 },
+      "skills": [
+        { "name": "Shape Shifting", "stat": "constitution" },
+        { "name": "Enhanced Senses", "stat": "wisdom" },
+        { "name": "Lunar Affinity", "stat": "wisdom" }
+      ],
+      "maximums": { 
+        "strength": 18, "dexterity": 16, "constitution": 17, 
+        "intelligence": 14, "wisdom": 15, "charisma": 13 
+      },
+      "category": "dcc_unique"
+    }
+  ],
+  "fantasy": [
+    {
+      "id": "human",
+      "name": "Human",
+      "description": "Versatile and adaptable beings with natural charisma",
+      "statBonuses": { "charisma": 1 },
+      "skills": [{ "name": "Adaptability", "stat": "charisma" }],
+      "maximums": { "strength": 15, "dexterity": 15, "constitution": 15, "intelligence": 15, "wisdom": 15, "charisma": 15 },
+      "category": "fantasy"
+    },
+    {
+      "id": "elf",
+      "name": "Elf",
+      "description": "Graceful and perceptive forest dwellers",
+      "statBonuses": { "dexterity": 2 },
+      "skills": [{ "name": "Keen Senses", "stat": "wisdom" }],
+      "maximums": { "strength": 12, "dexterity": 18, "constitution": 12, "intelligence": 16, "wisdom": 16, "charisma": 15 },
+      "category": "fantasy"
+    },
+    {
+      "id": "dwarf",
+      "name": "Dwarf",
+      "description": "Hardy mountain folk with expertise in stonework",
+      "statBonuses": { "constitution": 2 },
+      "skills": [{ "name": "Stoneworking", "stat": "intelligence" }],
+      "maximums": { "strength": 16, "dexterity": 12, "constitution": 18, "intelligence": 14, "wisdom": 15, "charisma": 12 },
+      "category": "fantasy"
+    },
+    {
+      "id": "orc",
+      "name": "Orc",
+      "description": "Powerful warriors with intimidating presence",
+      "statBonuses": { "strength": 2 },
+      "skills": [{ "name": "Intimidating Presence", "stat": "strength" }],
+      "maximums": { "strength": 18, "dexterity": 14, "constitution": 16, "intelligence": 12, "wisdom": 12, "charisma": 12 },
+      "category": "fantasy"
+    },
+    {
+      "id": "halfling",
+      "name": "Halfling",
+      "description": "Small, lucky folk with natural charm",
+      "statBonuses": { "dexterity": 1, "charisma": 1 },
+      "skills": [{ "name": "Lucky", "stat": "charisma" }],
+      "maximums": { "strength": 10, "dexterity": 17, "constitution": 14, "intelligence": 15, "wisdom": 15, "charisma": 16 },
+      "category": "fantasy"
+    },
+    {
+      "id": "dragonborn",
+      "name": "Dragonborn",
+      "description": "Dragon-descended beings with breath weapons",
+      "statBonuses": { "strength": 1, "charisma": 1 },
+      "skills": [{ "name": "Dragon Breath", "stat": "constitution" }],
+      "maximums": { "strength": 17, "dexterity": 14, "constitution": 16, "intelligence": 14, "wisdom": 14, "charisma": 17 },
+      "category": "fantasy"
+    },
+    {
+      "id": "tiefling",
+      "name": "Tiefling",
+      "description": "Fiend-touched beings with infernal heritage",
+      "statBonuses": { "intelligence": 1, "charisma": 1 },
+      "skills": [{ "name": "Infernal Heritage", "stat": "charisma" }],
+      "maximums": { "strength": 14, "dexterity": 15, "constitution": 14, "intelligence": 17, "wisdom": 14, "charisma": 18 },
+      "category": "fantasy"
+    },
+    {
+      "id": "gnome",
+      "name": "Gnome",
+      "description": "Small inventors and tinkerers",
+      "statBonuses": { "intelligence": 2 },
+      "skills": [{ "name": "Tinkering", "stat": "intelligence" }],
+      "maximums": { "strength": 10, "dexterity": 15, "constitution": 14, "intelligence": 18, "wisdom": 15, "charisma": 15 },
+      "category": "fantasy"
+    },
+    {
+      "id": "goblin",
+      "name": "Goblin",
+      "description": "Small, quick creatures with nimble escapes",
+      "statBonuses": { "dexterity": 2 },
+      "skills": [{ "name": "Nimble Escape", "stat": "dexterity" }],
+      "maximums": { "strength": 12, "dexterity": 18, "constitution": 13, "intelligence": 14, "wisdom": 13, "charisma": 14 },
+      "category": "fantasy"
+    },
+    {
+      "id": "slime",
+      "name": "Slime",
+      "description": "Amorphous beings with flexible bodies",
+      "statBonuses": { "constitution": 2 },
+      "skills": [{ "name": "Amorphous Body", "stat": "constitution" }],
+      "maximums": { "strength": 5, "dexterity": 20, "constitution": 16, "intelligence": 10, "wisdom": 10, "charisma": 10 },
+      "category": "fantasy"
+    }
+  ],
+  "modern": [
+    {
+      "id": "cyborg",
+      "name": "Cyborg",
+      "description": "Enhanced humans with cybernetic implants",
+      "statBonuses": { "strength": 1, "intelligence": 1 },
+      "skills": [{ "name": "System Interface", "stat": "intelligence" }],
+      "maximums": { "strength": 17, "dexterity": 14, "constitution": 14, "intelligence": 18, "wisdom": 13, "charisma": 13 },
+      "category": "modern"
+    },
+    {
+      "id": "mutant",
+      "name": "Mutant",
+      "description": "Genetically altered beings with radiation resistance",
+      "statBonuses": { "constitution": 1, "wisdom": 1 },
+      "skills": [{ "name": "Radiation Resistance", "stat": "constitution" }],
+      "maximums": { "strength": 16, "dexterity": 16, "constitution": 17, "intelligence": 15, "wisdom": 16, "charisma": 14 },
+      "category": "modern"
+    },
+    {
+      "id": "android",
+      "name": "Android",
+      "description": "Artificial beings with perfect memory",
+      "statBonuses": { "intelligence": 2 },
+      "skills": [{ "name": "Perfect Memory", "stat": "intelligence" }],
+      "maximums": { "strength": 14, "dexterity": 15, "constitution": 13, "intelligence": 20, "wisdom": 12, "charisma": 12 },
+      "category": "modern"
+    },
+    {
+      "id": "clone",
+      "name": "Clone",
+      "description": "Genetically replicated beings with enhanced resilience",
+      "statBonuses": { "constitution": 1, "charisma": 1 },
+      "skills": [{ "name": "Genetic Resilience", "stat": "constitution" }],
+      "maximums": { "strength": 15, "dexterity": 15, "constitution": 16, "intelligence": 15, "wisdom": 14, "charisma": 16 },
+      "category": "modern"
+    }
+  ],
+  "apocalypse": [
+    {
+      "id": "ghoul",
+      "name": "Ghoul",
+      "description": "Radiation-scarred survivors with enhanced endurance",
+      "statBonuses": { "constitution": 1, "strength": 1 },
+      "skills": [{ "name": "Rad Absorption", "stat": "constitution" }],
+      "maximums": { "strength": 16, "dexterity": 13, "constitution": 18, "intelligence": 12, "wisdom": 11, "charisma": 8 },
+      "category": "apocalypse"
+    },
+    {
+      "id": "raider",
+      "name": "Raider",
+      "description": "Post-apocalyptic warriors skilled in scrap fighting",
+      "statBonuses": { "strength": 1, "dexterity": 1 },
+      "skills": [{ "name": "Scrap Fighting", "stat": "strength" }],
+      "maximums": { "strength": 17, "dexterity": 16, "constitution": 15, "intelligence": 13, "wisdom": 13, "charisma": 14 },
+      "category": "apocalypse"
+    },
+    {
+      "id": "vault_dweller",
+      "name": "Vault Dweller",
+      "description": "Shelter-raised survivors with pre-war knowledge",
+      "statBonuses": { "intelligence": 1, "charisma": 1 },
+      "skills": [{ "name": "Pre-War Knowledge", "stat": "intelligence" }],
+      "maximums": { "strength": 14, "dexterity": 14, "constitution": 14, "intelligence": 17, "wisdom": 15, "charisma": 17 },
+      "category": "apocalypse"
+    },
+    {
+      "id": "synth",
+      "name": "Synth",
+      "description": "Synthetic beings with enhanced reflexes",
+      "statBonuses": { "dexterity": 1, "intelligence": 1 },
+      "skills": [{ "name": "Synthetic Reflexes", "stat": "dexterity" }],
+      "maximums": { "strength": 15, "dexterity": 17, "constitution": 14, "intelligence": 17, "wisdom": 14, "charisma": 15 },
+      "category": "apocalypse"
+    },
+    {
+      "id": "beast_kin",
+      "name": "Beast-kin",
+      "description": "Animal-human hybrids with natural instincts",
+      "statBonuses": { "wisdom": 1, "dexterity": 1 },
+      "skills": [{ "name": "Animal Instincts", "stat": "wisdom" }],
+      "maximums": { "strength": 15, "dexterity": 17, "constitution": 15, "intelligence": 13, "wisdom": 17, "charisma": 14 },
+      "category": "apocalypse"
+    },
+    {
+      "id": "plant_hybrid",
+      "name": "Plant Hybrid",
+      "description": "Plant-human hybrids with photosynthetic abilities",
+      "statBonuses": { "constitution": 1, "wisdom": 1 },
+      "skills": [{ "name": "Photosynthesis", "stat": "constitution" }],
+      "maximums": { "strength": 13, "dexterity": 12, "constitution": 18, "intelligence": 14, "wisdom": 17, "charisma": 13 },
+      "category": "apocalypse"
+    }
+  ]
+}

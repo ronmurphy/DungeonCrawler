@@ -1,0 +1,408 @@
+/* ========================================
+   DARK MODE THEME - CONSOLIDATED
+   All dark mode styles in one place
+   
+   RESPONSIVE BREAKPOINTS:
+   • Mobile: max-width: 768px
+   • Tablet: 769px - 1024px  
+   • Desktop: min-width: 1025px
+   • High DPI: Retina/2x displays
+   ======================================== */
+
+/* Dark Theme CSS Variables - Base (Default) */
+body.dark-theme {
+    /* Default dark theme colors - will be overridden by accent themes */
+    --primary: #818cf8;
+    --primary-dark: #6366f1;
+    --primary-light: #a5b4fc;
+    --secondary: #fbbf24;
+    --secondary-dark: #f59e0b;
+    --secondary-light: #fcd34d;
+    --accent: #34d399;
+    --accent-dark: #10b981;
+    --accent-light: #6ee7b7;
+    
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --bg-card: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    --border-color: #334155;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    
+    /* Shared dark theme properties */
+    --danger: #f87171;
+    --warning: #fbbf24;
+    --success: #4ade80;
+    --info: #60a5fa;
+}
+
+/* Mobile Dark Theme Overrides */
+@media (max-width: 768px) {
+    body.dark-theme {
+        --primary: #66b3ff;
+        --danger: #ff6666;
+        --success: #66ff66;
+        --border-color: #ffffff;
+    }
+    
+    /* Mobile-specific icon sizing and visibility */
+    body.dark-theme .header-btn .material-icons {
+        font-size: 20px; /* Slightly smaller on mobile */
+    }
+    
+    /* Mobile sidebar text visibility - ensure dark mode text is readable */
+    body.dark-theme .sidebar-tab .tab-label {
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    /* Mobile status header adjustments */
+    body.dark-theme .status-header-item {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Mobile modal adjustments */
+    body.dark-theme .modal-content,
+    body.dark-theme .character-modal-content,
+    body.dark-theme .level-up-modal-content {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Mobile achievement modal text fixes */
+    body.dark-theme .level-up-modal-content .modal-body {
+        color: #ffffff; /* Ensure white text in dark theme */
+    }
+    
+    body.dark-theme .level-up-modal-content .rarity-header {
+        color: #ffffff !important; /* Force white text for rarity headers */
+    }
+    
+    body.dark-theme .level-up-modal-content .achievement-header {
+        color: #ffffff !important; /* Force white text for achievement headers */
+    }
+    
+    body.dark-theme .level-up-modal-content .achievement-header h5 {
+        color: #ffffff !important; /* Force white text for achievement names */
+    }
+    
+    body.dark-theme .level-up-modal-content .achievement-header .achievement-date {
+        color: rgba(255, 255, 255, 0.8) !important; /* Slightly transparent white for dates */
+    }
+    
+    /* Mobile achievement display scrolling */
+    body.dark-theme .achievements-display {
+        max-height: 300px; /* Shorter on mobile */
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+    
+    /* Mobile character overview enhancements */
+    body.dark-theme .overview-combined {
+        background: var(--bg-secondary);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Mobile vital stats contrast */
+    body.dark-theme .vitals-inline .vital-item {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--radius-sm);
+        padding: var(--spacing-xs);
+    }
+    
+    /* Mobile damage tester visibility */
+    body.dark-theme .damage-tester-inline .damage-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--text-primary);
+    }
+}
+
+/* Tablet Dark Theme Overrides */
+@media (min-width: 769px) and (max-width: 1024px) {
+    body.dark-theme {
+        /* Tablet-specific dark theme adjustments */
+        --shadow-color: rgba(0, 0, 0, 0.4);
+    }
+    
+    /* Tablet icon sizing */
+    body.dark-theme .header-btn .material-icons {
+        font-size: 22px;
+    }
+    
+    /* Tablet sidebar enhancements */
+    body.dark-theme .sidebar-tab .tab-icon {
+        font-size: 1.1rem;
+    }
+    
+    /* Tablet achievement modal fixes */
+    body.dark-theme .level-up-modal-content .modal-body {
+        color: #ffffff;
+    }
+    
+    body.dark-theme .level-up-modal-content .rarity-header {
+        color: #ffffff !important;
+    }
+    
+    body.dark-theme .level-up-modal-content .achievement-header {
+        color: #ffffff !important;
+    }
+    
+    body.dark-theme .level-up-modal-content .achievement-header h5 {
+        color: #ffffff !important;
+    }
+    
+    body.dark-theme .level-up-modal-content .achievement-header .achievement-date {
+        color: rgba(255, 255, 255, 0.8) !important;
+    }
+    
+    body.dark-theme .achievements-display {
+        max-height: 350px;
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+}
+
+/* Desktop Dark Theme Enhancements */
+@media (min-width: 1025px) {
+    body.dark-theme {
+        /* Desktop-specific dark theme enhancements */
+        --shadow-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Desktop app container enhancement */
+    body.dark-theme .app-container {
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Desktop header button hover effects */
+    body.dark-theme .header-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+    }
+    
+    /* Desktop modal shadows */
+    body.dark-theme .modal-content,
+    body.dark-theme .character-modal-content,
+    body.dark-theme .level-up-modal-content {
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    }
+    
+    /* Achievement modal text fixes for dark theme */
+    body.dark-theme .level-up-modal-content .modal-body {
+        color: #ffffff; /* Ensure white text in dark theme */
+    }
+    
+    body.dark-theme .level-up-modal-content .rarity-header {
+        color: #ffffff !important; /* Force white text for rarity headers */
+    }
+    
+    body.dark-theme .level-up-modal-content .achievement-header {
+        color: #ffffff !important; /* Force white text for achievement headers */
+    }
+    
+    body.dark-theme .level-up-modal-content .achievement-header h5 {
+        color: #ffffff !important; /* Force white text for achievement names */
+    }
+    
+    body.dark-theme .level-up-modal-content .achievement-header .achievement-date {
+        color: rgba(255, 255, 255, 0.8) !important; /* Slightly transparent white for dates */
+    }
+    
+    /* Achievement display scrolling */
+    body.dark-theme .achievements-display {
+        max-height: 400px;
+        overflow-y: auto;
+        padding-right: 8px; /* Account for scrollbar */
+    }
+}
+
+/* High DPI/Retina Display Dark Mode Adjustments */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    body.dark-theme {
+        /* Enhanced contrast for high DPI displays */
+        --text-primary: #ffffff;
+        --border-color: #475569;
+    }
+    
+    /* Sharper icons on retina displays */
+    body.dark-theme .material-icons,
+    body.dark-theme .ra {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* ========================================
+   HEADER BUTTON ICONS - ORIGINAL COLORS
+   ======================================== */
+body.dark-theme .header-btn .material-icons {
+    color: white; /* Keep header icons white for contrast */
+}
+body.dark-theme .header-btn.trophy-btn .material-icons {
+    color: #FFD700; /* Original gold for trophy */
+}
+body.dark-theme .header-btn.trophy-btn:hover .material-icons {
+    color: #FFA500; /* Original darker gold on hover */
+}
+body.dark-theme .header-btn.save-btn .material-icons {
+    color: #10b981; /* Original green for save */
+}
+body.dark-theme .header-btn.theme-btn .material-icons {
+    color: #f59e0b; /* Original amber for theme */
+}
+body.dark-theme .header-btn.menu-btn .material-icons {
+    color: #6366f1; /* Original indigo for menu */
+}
+body.dark-theme .header-btn.cache-btn .material-icons {
+    color: #3b82f6; /* Original blue for cache */
+}
+
+/* ========================================
+   CARD HEADER ICONS
+   ======================================== */
+body.dark-theme .race-card .card-header i {
+    color: var(--accent-dark) !important;
+    filter: brightness(0.95) contrast(1.1);
+}
+body.dark-theme .background-card .card-header i {
+    color: var(--warning);
+}
+body.dark-theme .class-card .card-header i {
+    color: var(--info);
+}
+
+/* ========================================
+   VITAL STATS ICONS
+   ======================================== */
+body.dark-theme .hp-stat i {
+    color: var(--danger); /* Red for HP */
+}
+body.dark-theme .mp-stat i {
+    color: var(--info); /* Blue for MP */
+}
+
+/* ========================================
+   RPG AWESOME SPECIFIC ICONS
+   ======================================== */
+body.dark-theme .ra-hearts {
+    color: var(--danger) !important;
+}
+body.dark-theme .ra-crystal-wand {
+    color: var(--info) !important;
+}
+
+/* RPG Awesome fallback colors */
+body.dark-theme .ra.ra-hearts:after {
+    color: var(--danger);
+}
+body.dark-theme .ra.ra-crystal-wand:after {
+    color: var(--info);
+}
+
+/* ========================================
+   TAB AND SIDEBAR ICONS
+   ======================================== */
+body.dark-theme .tab-icon .ra {
+    color: var(--text-secondary);
+}
+body.dark-theme .sidebar-tab.active .tab-icon .ra {
+    color: white;
+}
+
+/* ========================================
+   GENERAL UI ICONS
+   ======================================== */
+/* Close sidebar button */
+body.dark-theme .close-sidebar .material-icons {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Status header icons */
+body.dark-theme .status-header-icon .material-icons,
+body.dark-theme .status-header-icon .ra {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Portrait placeholder icon */
+body.dark-theme .portrait-placeholder i {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Modal close buttons */
+body.dark-theme .modal-close .material-icons {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Equipment slot icons */
+body.dark-theme .slot-icon .ra,
+body.dark-theme .slot-icon .material-icons {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Item icons in inventory */
+body.dark-theme .item-icon .ra,
+body.dark-theme .item-icon .material-icons {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Notification icons */
+body.dark-theme .notification h4 i {
+    color: inherit; /* Let notification type colors show through */
+}
+
+/* Bonus indicator icons */
+body.dark-theme .bonus-indicator .material-icons {
+    color: #f59e0b; /* Amber for bonus indicators */
+}
+
+/* Action button icons */
+body.dark-theme .action-btn .material-icons,
+body.dark-theme .action-btn .ra {
+    color: inherit; /* Let button color show through */
+}
+
+/* Character card action icons */
+body.dark-theme .card-action-btn .material-icons {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Delete button specific styling */
+body.dark-theme .delete-btn .material-icons {
+    color: #ef4444; /* Red for delete */
+}
+
+/* Export button specific styling */
+body.dark-theme .export-btn .material-icons {
+    color: #10b981; /* Green for export */
+}
+
+/* ========================================
+   TEXT ELEMENTS IN DARK MODE
+   ======================================== */
+body.dark-theme .rest-btn,
+body.dark-theme .rest-btn span,
+body.dark-theme .rest-btn small,
+body.dark-theme .vital-item,
+body.dark-theme .vital-label,
+body.dark-theme .equipment-slot,
+body.dark-theme .slot-label,
+body.dark-theme .card-header h3 {
+    color: #e0e0e0 !important;
+}
+
+/* ========================================
+   BUTTON STYLING IN DARK MODE
+   ======================================== */
+body.dark-theme .rest-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+body.dark-theme .rest-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}

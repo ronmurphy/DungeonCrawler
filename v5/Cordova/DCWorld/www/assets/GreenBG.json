@@ -1,0 +1,42 @@
+{
+  "name": "GreenBG",
+  "description": "Custom tileset created with SpriteSheetEditor",
+  "spriteSize": 64,
+  "gridSize": "4x4",
+  "backgroundColors": {
+    "mountain": "#689F38",
+    "water": "#1976D2",
+    "grass": "#689F38",
+    "rock": "#689F38",
+    "castle": "#689F38",
+    "house": "#689F38",
+    "shop": "#689F38",
+    "temple": "#689F38",
+    "dragon": "#689F38",
+    "sword": "#689F38",
+    "skull": "#689F38",
+    "danger": "#689F38",
+    "tower": "#689F38",
+    "road": "#689F38",
+    "door": "#689F38",
+    "fire": "#689F38"
+  },
+  "sprites": [
+    { "id": "mountain", "name": "Mountain", "category": "terrain", "position": [0, 0] },
+    { "id": "water", "name": "Water", "category": "terrain", "position": [1, 0] },
+    { "id": "grass", "name": "Grass", "category": "terrain", "position": [2, 0] },
+    { "id": "rock", "name": "Rock", "category": "terrain", "position": [3, 0] },
+    { "id": "castle", "name": "Castle", "category": "buildings", "position": [0, 1] },
+    { "id": "house", "name": "House", "category": "buildings", "position": [1, 1] },
+    { "id": "shop", "name": "Shop", "category": "buildings", "position": [2, 1] },
+    { "id": "temple", "name": "Temple", "category": "buildings", "position": [3, 1] },
+    { "id": "dragon", "name": "Dragon", "category": "monsters", "position": [0, 2] },
+    { "id": "sword", "name": "Sword", "category": "items", "position": [1, 2] },
+    { "id": "skull", "name": "Skull", "category": "hazards", "position": [2, 2] },
+    { "id": "danger", "name": "Danger", "category": "hazards", "position": [3, 2] },
+    { "id": "tower", "name": "Tower", "category": "buildings", "position": [0, 3] },
+    { "id": "road", "name": "Road", "category": "paths", "position": [1, 3] },
+    { "id": "door", "name": "Door", "category": "features", "position": [2, 3] },
+    { "id": "fire", "name": "Fire", "category": "hazards", "position": [3, 3] }
+  ]
+}

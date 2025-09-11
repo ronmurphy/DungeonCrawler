@@ -1,0 +1,322 @@
+{
+  "weapons": [
+    {
+      "name": "Demon-Forged Axe",
+      "type": "Weapon",
+      "damage": "1d12",
+      "properties": [
+        "two-handed",
+        "cursed"
+      ],
+      "value": 120
+    },
+    {
+      "name": "Rusted Meat Cleaver",
+      "type": "Weapon",
+      "damage": "1d6",
+      "properties": [
+        "close",
+        "messy"
+      ],
+      "value": 5
+    },
+    {
+      "name": "Blunderbuss of the Mule God",
+      "type": "Weapon",
+      "damage": "1d10",
+      "properties": [
+        "scatter",
+        "reload"
+      ],
+      "value": 80
+    },
+    {
+      "name": "Star-Metal Sword",
+      "type": "Weapon",
+      "damage": "1d8+1",
+      "properties": [
+        "versatile"
+      ],
+      "value": 150
+    },
+    {
+      "name": "Bone Club of the Ancients",
+      "type": "Weapon",
+      "damage": "1d6",
+      "properties": [
+        "crushing"
+      ],
+      "value": 25
+    },
+    {
+      "name": "Pitchfork of the Peasantry",
+      "type": "weapon",
+      "damage": "1d6",
+      "properties": [
+        "two-handed"
+      ],
+      "description": "Rusty but reliable. Farmers wield it with surprising fury."
+    },
+    {
+      "name": "Bronze Age Kopesh",
+      "type": "weapon",
+      "damage": "1d8",
+      "properties": [
+        "curved blade"
+      ],
+      "description": "An old-world weapon, still sharp, still deadly."
+    },
+    {
+      "name": "Blunderbuss of Misfires",
+      "type": "weapon",
+      "damage": "2d8 (if it doesn\u2019t explode)",
+      "properties": [
+        "unreliable"
+      ],
+      "description": "Roll a d20: on a 1\u20133, it backfires and hits you instead."
+    },
+    {
+      "name": "War Gong",
+      "type": "weapon",
+      "damage": "1d4 sonic",
+      "properties": [
+        "two-handed"
+      ],
+      "description": "Struck with a mallet, its sound deafens foes for 1 round."
+    }
+  ],
+  "armor": [
+    {
+      "name": "Helm of the Slug",
+      "type": "Armor",
+      "ac_bonus": 1,
+      "properties": [
+        "slimy",
+        "drips constantly"
+      ],
+      "value": 40
+    },
+    {
+      "name": "Spiked Hide",
+      "type": "Armor",
+      "ac_bonus": 2,
+      "properties": [
+        "intimidating"
+      ],
+      "value": 60
+    },
+    {
+      "name": "Chain of Eternal Hunger",
+      "type": "Armor",
+      "ac_bonus": 3,
+      "properties": [
+        "cursed",
+        "hungers for blood"
+      ],
+      "value": 200
+    },
+    {
+      "name": "Golden Breastplate",
+      "type": "Armor",
+      "ac_bonus": 4,
+      "properties": [
+        "shiny",
+        "heavy"
+      ],
+      "value": 250
+    },
+    {
+      "name": "Bone Shaman Vest",
+      "type": "armor",
+      "ac_bonus": 2,
+      "properties": [
+        "ritualistic"
+      ],
+      "description": "Woven from sacred bones, rattles ominously during battle."
+    },
+    {
+      "name": "Ironwood Shield",
+      "type": "armor",
+      "ac_bonus": 1,
+      "properties": [
+        "flammable"
+      ],
+      "description": "Carved from enchanted trees; resists most blows but burns easily."
+    },
+    {
+      "name": "Clay Plate Harness",
+      "type": "armor",
+      "ac_bonus": 3,
+      "properties": [
+        "brittle"
+      ],
+      "description": "Heavy armor made from baked clay tiles. Strong, but shatters on a critical hit."
+    }
+  ],
+  "consumables": [
+    {
+      "name": "Potion of Weird Dreams",
+      "type": "Consumable",
+      "effect": "visions of far realms",
+      "uses": 1,
+      "value": 50
+    },
+    {
+      "name": "Mushroom of Many Colors",
+      "type": "Consumable",
+      "effect": "roll d6: 1-poison, 2-invisibility, 3-strength, 4-shrink, 5-grow, 6-laughter",
+      "uses": 1,
+      "value": 20
+    },
+    {
+      "name": "Ale of the Cyclops",
+      "type": "Consumable",
+      "effect": "+2 strength, -2 intelligence for 1 hour",
+      "uses": 1,
+      "value": 15
+    },
+    {
+      "name": "Rotgrub in a Jar",
+      "type": "Consumable",
+      "effect": "throw as weapon: 1d6 ongoing damage unless burned",
+      "uses": 1,
+      "value": 5
+    },
+    {
+      "name": "Pickled Troll Finger",
+      "type": "consumable",
+      "effect": "Heals 1d4 HP, but may regrow hair in strange places.",
+      "description": "A delicacy in backwater taverns."
+    },
+    {
+      "name": "Black Lotus Smoke",
+      "type": "consumable",
+      "effect": "Grants visions, +2 to spellcasting for 1 hour, then 1d6 poison damage.",
+      "description": "Banned in most cities, prized by cults."
+    },
+    {
+      "name": "Stout of Stonebrew",
+      "type": "consumable",
+      "effect": "+2 AC for 1 hour, but movement halved.",
+      "description": "Dwarven ale said to turn one\u2019s skin to granite."
+    },
+    {
+      "name": "Sizzling Salamander Skewer",
+      "type": "consumable",
+      "effect": "Breathe fire for 1d4 rounds.",
+      "description": "Popular street food in desert markets."
+    }
+  ],
+  "accessories": [
+    {
+      "name": "Ring of Frog Speech",
+      "type": "Accessory",
+      "effect": "speak with amphibians",
+      "value": 100
+    },
+    {
+      "name": "Necklace of Teeth",
+      "type": "Accessory",
+      "effect": "gain +1 intimidation",
+      "value": 50
+    },
+    {
+      "name": "Cloak of Questionable Shadows",
+      "type": "Accessory",
+      "effect": "advantage on hiding in candlelight",
+      "value": 120
+    },
+    {
+      "name": "Bracelet of Rust",
+      "type": "Accessory",
+      "effect": "corrodes metal nearby",
+      "value": 60
+    },
+    {
+      "name": "Amulet of Forgotten Gods",
+      "type": "accessory",
+      "effect": "+1 Will save, whispers ancient blasphemies at night.",
+      "description": "A cracked stone pendant etched with runes of the void."
+    },
+    {
+      "name": "Sandwalker Anklet",
+      "type": "accessory",
+      "effect": "Ignore difficult terrain in deserts.",
+      "description": "Favored by nomads of the Great Dunes."
+    },
+    {
+      "name": "Cloak of Vexing Patterns",
+      "type": "accessory",
+      "effect": "Enemies attacking must pass a Will save or be distracted.",
+      "description": "The shifting embroidery causes dizziness if stared at too long."
+    },
+    {
+      "name": "Ring of Questionable Sponsorship",
+      "type": "accessory",
+      "effect": "Once per day, summon a random item from a corporate sponsor.",
+      "description": "Inscribed with mysterious brand sigils like \u2018Coca-Khaos\u2019."
+    }
+  ],
+  "miscellaneous": [
+    {
+      "name": "Idol of the Crawling Chaos",
+      "type": "Misc",
+      "effect": "whispers secrets at night, DC 12 Will save or go mad",
+      "value": 500
+    },
+    {
+      "name": "Goblin Dice",
+      "type": "Misc",
+      "effect": "roll to gamble, 50% chance they bite",
+      "value": 10
+    },
+    {
+      "name": "Lantern of Red Smoke",
+      "type": "Misc",
+      "effect": "illuminates but fills room with choking fumes",
+      "value": 25
+    },
+    {
+      "name": "Book of Infinite Margins",
+      "type": "Misc",
+      "effect": "blank, but new scribbles appear daily",
+      "value": 40
+    },
+    {
+      "name": "Portable Hole (Leaky)",
+      "type": "Misc",
+      "effect": "stores up to 50 lbs before it seeps out",
+      "value": 300
+    },
+    {
+      "name": "Goblin Market Token",
+      "type": "misc",
+      "effect": "Trade for strange goods in hidden markets.",
+      "description": "A small brass coin with shifting faces engraved."
+    },
+    {
+      "name": "Traveling Merchant Bell",
+      "type": "misc",
+      "effect": "Summons a wandering peddler within 1d4 hours.",
+      "description": "Its ring carries across planes and realities."
+    },
+    {
+      "name": "Fool\u2019s Gold Nugget",
+      "type": "misc",
+      "effect": "Looks like gold, fools 90% of merchants.",
+      "description": "Actually worthless, but convincing."
+    },
+    {
+      "name": "Bone Dice of the Ancestors",
+      "type": "misc",
+      "effect": "Roll 2d6 once per day; on 7, gain +1 Luck, otherwise nothing happens.",
+      "description": "Said to carry the voices of your lineage."
+    },
+    {
+      "name": "Cultural Mask of the Jade Isles",
+      "type": "misc",
+      "effect": "Worn during rituals, grants +2 Persuasion with islanders.",
+      "description": "Brightly painted, sacred to a distant culture."
+    }
+  ]
+}

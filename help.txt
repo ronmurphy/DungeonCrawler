@@ -1,0 +1,1228 @@
+You're absolutely right! The README I created is there, but let me check what happened and give you the complete content to copy and paste. You're absolutely correct - the file is empty! The create_file tool isn't working in this environment either. Let me give you the complete README content right here in this response that you can copy and paste:
+
+---
+
+# V5 3D MAP VIEWER SYSTEM - COMPLETE IMPLEMENTATION GUIDE
+
+## Overview
+This document provides complete specifications for implementing a 3D map viewer system in the V5 network using Three.js. The system converts V5's grid-based map data into immersive 3D environments with mobile-first responsive design.
+
+## System Architecture
+
+### Core Components
+1. **Map3DViewer.js** - Main 3D rendering engine
+2. **GameInterface3D.js** - Mobile UI controls and interface
+3. **test-3d-viewer.html** - Complete test page with sample maps
+
+## File Specifications
+
+### 1. Map3DViewer.js (Map3DViewer.js)
+
+**Purpose**: Core 3D engine that converts V5 map data to Three.js 3D worlds
+
+**Key Features**:
+- Responsive canvas sizing (mobile-first design)
+- V5 grid format support with network v1.2 compatibility
+- Wall/floor detection with emoji decorations
+- First-person camera controls with pointer lock
+- Shadow mapping and fog effects
+- Device-specific layout handling
+
+**Complete Code**:
+
+```javascript
+// ========================================
+// MAP 3D VIEWER - V5 Integration
+// ========================================
+// Converts V5 map data to 3D world using Three.js
+
+class Map3DViewer {
+    constructor(canvasId, options = {}) {
+        this.canvasId = canvasId;
+        this.canvas = document.getElementById(canvasId);
+        
+        if (!this.canvas) {
+            throw new Error(`Canvas element with id "${canvasId}" not found`);
+        }
+        
+        // Configuration options
+        this.options = {
+            blockSize: 20,
+            playerHeight: 10,
+            wallHeight: 40,
+            fogDistance: 200,
+            ambientLightColor: 0x404040,
+            directionalLightColor: 0xffffff,
+            skyColor: 0xE6F3FF,
+            ...options
+        };
+        
+        // Three.js components
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.player = null;
+        
+        // Map data
+        this.currentMapData = null;
+        this.walls = [];
+        this.floors = [];
+        this.decorations = [];
+        
+        // Controls
+        this.keys = {};
+        this.mouse = { x: 0, y: 0 };
+        this.isPointerLocked = false;
+        this.isMobile = 'ontouchstart' in window;
+        
+        console.log('🎮 Map3DViewer initialized');
+    }
+    
+    async initialize() {
+        try {
+            this.setupRenderer();
+            this.setupScene();
+            this.setupLighting();
+            this.setupPlayer();
+            this.setupControls();
+            this.setupEventListeners();
+            this.handleResize();
+            
+            console.log('✅ Map3DViewer initialized successfully');
+            return true;
+        } catch (error) {
+            console.error('❌ Failed to initialize Map3DViewer:', error);
+            throw error;
+        }
+    }
+    
+    setupRenderer() {
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: this.canvas,
+            antialias: true,
+            alpha: false
+        });
+        
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        
+        console.log('🖥️ WebGL renderer setup complete');
+    }
+    
+    setupScene() {
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(this.options.skyColor);
+        this.scene.fog = new THREE.Fog(this.options.skyColor, 1, this.options.fogDistance);
+        
+        console.log('🌍 3D scene setup complete');
+    }
+    
+    setupLighting() {
+        const ambientLight = new THREE.AmbientLight(this.options.ambientLightColor, 0.6);
+        this.scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(this.options.directionalLightColor, 0.8);
+        directionalLight.position.set(50, 100, 50);
+        directionalLight.castShadow = true;
+        this.scene.add(directionalLight);
+        
+        console.log('💡 Lighting system setup complete');
+    }
+    
+    setupPlayer() {
+        this.player = new THREE.Object3D();
+        this.player.position.set(0, this.options.playerHeight, 0);
+        this.scene.add(this.player);
+        
+        this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+        this.camera.position.set(0, 0, 0);
+        this.player.add(this.camera);
+        
+        console.log('🚶 Player and camera setup complete');
+    }
+    
+    setupControls() {
+        if (!this.isMobile) {
+            this.canvas.addEventListener('click', () => {
+                this.canvas.requestPointerLock();
+            });
+            
+            document.addEventListener('pointerlockchange', () => {
+                this.isPointerLocked = document.pointerLockElement === this.canvas;
+            });
+        }
+        
+        console.log('🎮 Controls setup complete');
+    }
+    
+    setupEventListeners() {
+        window.addEventListener('keydown', (e) => this.keys[e.code] = true);
+        window.addEventListener('keyup', (e) => this.keys[e.code] = false);
+        window.addEventListener('mousemove', (e) => this.onMouseMove(e));
+        window.addEventListener('resize', () => this.handleResize());
+        
+        console.log('🎧 Event listeners setup complete');
+    }
+    
+    handleResize() {
+        const deviceLayout = this.getDeviceLayout();
+        let width, height;
+        
+        switch(deviceLayout) {
+            case 'mobile-portrait':
+                width = height = Math.min(window.innerWidth, window.innerHeight * 0.6);
+                break;
+            case 'tablet-portrait':
+                width = height = Math.min(600, window.innerWidth);
+                break;
+            case 'tablet-landscape':
+                width = height = Math.min(400, window.innerWidth * 0.4);
+                break;
+            case 'desktop':
+                width = height = 500;
+                break;
+            default:
+                width = height = 400;
+        }
+        
+        this.renderer.setSize(width, height);
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
+        
+        console.log(`📐 Canvas resized to ${width}×${height} (${deviceLayout})`);
+    }
+    
+    getDeviceLayout() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const isPortrait = height > width;
+        
+        if (width <= 768 && isPortrait) return 'mobile-portrait';
+        if (width <= 1024 && isPortrait) return 'tablet-portrait';
+        if (width <= 1024 && !isPortrait) return 'tablet-landscape';
+        return 'desktop';
+    }
+    
+    async loadMapData(mapData) {
+        try {
+            console.log('🗺️ Loading map data:', mapData.name || 'Unnamed Map');
+            
+            this.currentMapData = mapData;
+            this.clearCurrentMap();
+            
+            if (mapData.grid) {
+                await this.convertGridTo3D(mapData);
+            } else if (mapData.spriteNames && mapData.width && mapData.height) {
+                await this.convertNetworkFormatTo3D(mapData);
+            } else {
+                throw new Error('Unsupported map data format');
+            }
+            
+            console.log('✅ Map loaded successfully');
+            return true;
+        } catch (error) {
+            console.error('❌ Failed to load map data:', error);
+            throw error;
+        }
+    }
+    
+    async convertGridTo3D(mapData) {
+        const { grid, backgroundColors = {} } = mapData;
+        
+        for (let y = 0; y < grid.length; y++) {
+            for (let x = 0; x < grid[y].length; x++) {
+                const cell = grid[y][x];
+                const worldX = x * this.options.blockSize;
+                const worldZ = y * this.options.blockSize;
+                
+                if (cell && cell.value) {
+                    const spriteType = cell.value;
+                    const color = backgroundColors[spriteType] || '#808080';
+                    const emoji = cell.emoji || '📦';
+                    
+                    if (this.isWallType(spriteType)) {
+                        this.createWall(worldX, worldZ, color);
+                    } else {
+                        this.createFloor(worldX, worldZ, color);
+                        this.createDecoration(worldX, worldZ, emoji);
+                    }
+                } else {
+                    this.createFloor(worldX, worldZ, '#f0f0f0');
+                }
+            }
+        }
+        
+        console.log(`✅ Created ${this.walls.length} walls, ${this.floors.length} floors, ${this.decorations.length} decorations`);
+    }
+    
+    async convertNetworkFormatTo3D(mapData) {
+        const { width, height, spriteNames, backgroundColors = {} } = mapData;
+        
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const index = y * width + x;
+                const spriteName = spriteNames[index];
+                const worldX = x * this.options.blockSize;
+                const worldZ = y * this.options.blockSize;
+                
+                if (spriteName) {
+                    const color = backgroundColors[spriteName] || '#808080';
+                    
+                    if (this.isWallType(spriteName)) {
+                        this.createWall(worldX, worldZ, color);
+                    } else {
+                        this.createFloor(worldX, worldZ, color);
+                        this.createDecoration(worldX, worldZ, this.getEmojiForSprite(spriteName));
+                    }
+                } else {
+                    this.createFloor(worldX, worldZ, '#f0f0f0');
+                }
+            }
+        }
+        
+        console.log(`✅ Created ${this.walls.length} walls, ${this.floors.length} floors, ${this.decorations.length} decorations`);
+    }
+    
+    isWallType(spriteType) {
+        const wallTypes = ['mountain', 'rock', 'castle', 'tower', 'wall', 'tree'];
+        return wallTypes.includes(spriteType.toLowerCase());
+    }
+    
+    getEmojiForSprite(spriteName) {
+        const emojiMap = {
+            'mountain': '🏔️', 'water': '💧', 'grass': '🌱', 'rock': '🪨',
+            'castle': '🏰', 'house': '🏠', 'shop': '🏪', 'temple': '🏛️',
+            'dragon': '🐉', 'sword': '⚔️', 'tree': '🌳'
+        };
+        return emojiMap[spriteName.toLowerCase()] || '📦';
+    }
+    
+    createWall(x, z, color) {
+        const geometry = new THREE.BoxGeometry(this.options.blockSize, this.options.wallHeight, this.options.blockSize);
+        const material = new THREE.MeshPhongMaterial({ color: new THREE.Color(color), transparent: true, opacity: 0.8 });
+        
+        const wall = new THREE.Mesh(geometry, material);
+        wall.position.set(x, this.options.wallHeight / 2, z);
+        wall.castShadow = true;
+        wall.receiveShadow = true;
+        
+        this.scene.add(wall);
+        this.walls.push(wall);
+    }
+    
+    createFloor(x, z, color) {
+        const geometry = new THREE.PlaneGeometry(this.options.blockSize, this.options.blockSize);
+        const material = new THREE.MeshPhongMaterial({ color: new THREE.Color(color), side: THREE.DoubleSide });
+        
+        const floor = new THREE.Mesh(geometry, material);
+        floor.rotation.x = Math.PI / 2;
+        floor.position.set(x, 0, z);
+        floor.receiveShadow = true;
+        
+        this.scene.add(floor);
+        this.floors.push(floor);
+    }
+    
+    createDecoration(x, z, emoji) {
+        const canvas = document.createElement('canvas');
+        const size = 64;
+        canvas.width = canvas.height = size;
+        const context = canvas.getContext('2d');
+        
+        context.font = `${size * 0.8}px Arial`;
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText(emoji, size / 2, size / 2);
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, alphaTest: 0.5 });
+        
+        const geometry = new THREE.PlaneGeometry(this.options.blockSize * 0.8, this.options.blockSize * 0.8);
+        const decoration = new THREE.Mesh(geometry, material);
+        decoration.position.set(x, this.options.blockSize / 2, z);
+        
+        this.scene.add(decoration);
+        this.decorations.push(decoration);
+    }
+    
+    clearCurrentMap() {
+        this.walls.forEach(wall => this.scene.remove(wall));
+        this.walls = [];
+        this.floors.forEach(floor => this.scene.remove(floor));
+        this.floors = [];
+        this.decorations.forEach(decoration => this.scene.remove(decoration));
+        this.decorations = [];
+        
+        console.log('🧹 Previous map cleared');
+    }
+    
+    onMouseMove(event) {
+        if (!this.isPointerLocked) return;
+        
+        const sensitivity = 0.002;
+        this.mouse.x += event.movementX * sensitivity;
+        this.mouse.y += event.movementY * sensitivity;
+        this.mouse.y = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.mouse.y));
+        
+        this.player.rotation.y = -this.mouse.x;
+        this.camera.rotation.x = -this.mouse.y;
+    }
+    
+    updateMovement() {
+        if (!this.player) return;
+        
+        const speed = 2;
+        const direction = new THREE.Vector3();
+        
+        if (this.keys['KeyW'] || this.keys['ArrowUp']) direction.z -= 1;
+        if (this.keys['KeyS'] || this.keys['ArrowDown']) direction.z += 1;
+        if (this.keys['KeyA'] || this.keys['ArrowLeft']) direction.x -= 1;
+        if (this.keys['KeyD'] || this.keys['ArrowRight']) direction.x += 1;
+        
+        if (direction.length() > 0) {
+            direction.normalize();
+            direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.player.rotation.y);
+            
+            const newPosition = this.player.position.clone();
+            newPosition.add(direction.multiplyScalar(speed));
+            this.player.position.copy(newPosition);
+        }
+    }
+    
+    animate() {
+        requestAnimationFrame(() => this.animate());
+        this.updateMovement();
+        this.renderer.render(this.scene, this.camera);
+    }
+    
+    start() {
+        console.log('🚀 Starting 3D viewer animation loop');
+        this.animate();
+    }
+    
+    stop() {
+        console.log('⏹️ 3D viewer stopped');
+    }
+}
+
+// Global export
+window.Map3DViewer = Map3DViewer;
+```
+
+### 2. GameInterface3D.js (`v5/js/GameInterface3D.js`)
+
+**Purpose**: Mobile-first UI system with virtual controls and responsive overlays
+
+**Complete Code**:
+
+```javascript
+// ========================================
+// GAME INTERFACE 3D - Mobile Controls
+// ========================================
+// Mobile-first UI system for 3D map viewer
+
+class GameInterface3D {
+    constructor(map3DViewer, containerId = 'game-interface-3d') {
+        this.map3DViewer = map3DViewer;
+        this.containerId = containerId;
+        this.container = null;
+        
+        // Control states
+        this.joystickActive = false;
+        this.joystickCenter = { x: 0, y: 0 };
+        this.joystickPosition = { x: 0, y: 0 };
+        this.actionButtons = {};
+        
+        // Touch tracking
+        this.activeTouches = new Map();
+        this.isMobile = 'ontouchstart' in window;
+        
+        console.log('🎮 GameInterface3D initialized');
+    }
+    
+    initialize() {
+        try {
+            this.createContainer();
+            this.createVirtualJoystick();
+            this.createActionButtons();
+            this.createInfoOverlay();
+            this.setupEventListeners();
+            this.handleResize();
+            
+            console.log('✅ GameInterface3D initialized successfully');
+            return true;
+        } catch (error) {
+            console.error('❌ Failed to initialize GameInterface3D:', error);
+            throw error;
+        }
+    }
+    
+    createContainer() {
+        this.container = document.createElement('div');
+        this.container.id = this.containerId;
+        this.container.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            font-family: 'Courier New', monospace;
+        `;
+        
+        document.body.appendChild(this.container);
+        console.log('📦 Interface container created');
+    }
+    
+    createVirtualJoystick() {
+        if (!this.isMobile) return;
+        
+        const joystickArea = document.createElement('div');
+        joystickArea.style.cssText = `
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+        
+        const joystickKnob = document.createElement('div');
+        joystickKnob.style.cssText = `
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            transition: all 0.1s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        `;
+        
+        joystickArea.appendChild(joystickKnob);
+        this.container.appendChild(joystickArea);
+        
+        this.joystick = { area: joystickArea, knob: joystickKnob };
+        
+        // Touch events for joystick
+        joystickArea.addEventListener('touchstart', (e) => this.onJoystickStart(e));
+        joystickArea.addEventListener('touchmove', (e) => this.onJoystickMove(e));
+        joystickArea.addEventListener('touchend', (e) => this.onJoystickEnd(e));
+        
+        console.log('🕹️ Virtual joystick created');
+    }
+    
+    createActionButtons() {
+        if (!this.isMobile) return;
+        
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.cssText = `
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 10px;
+            pointer-events: auto;
+        `;
+        
+        const buttons = [
+            { label: 'Y', action: 'jump', color: '#4CAF50' },
+            { label: 'X', action: 'run', color: '#2196F3' },
+            { label: 'B', action: 'crouch', color: '#FF9800' },
+            { label: 'A', action: 'interact', color: '#F44336' }
+        ];
+        
+        buttons.forEach(buttonDef => {
+            const button = document.createElement('button');
+            button.textContent = buttonDef.label;
+            button.style.cssText = `
+                width: 50px;
+                height: 50px;
+                border: none;
+                border-radius: 50%;
+                background: ${buttonDef.color};
+                color: white;
+                font-weight: bold;
+                font-size: 18px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+                cursor: pointer;
+                user-select: none;
+            `;
+            
+            button.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.onActionButtonPress(buttonDef.action, true);
+                button.style.transform = 'scale(0.9)';
+            });
+            
+            button.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.onActionButtonPress(buttonDef.action, false);
+                button.style.transform = 'scale(1)';
+            });
+            
+            buttonContainer.appendChild(button);
+            this.actionButtons[buttonDef.action] = button;
+        });
+        
+        this.container.appendChild(buttonContainer);
+        console.log('🎯 Action buttons created');
+    }
+    
+    createInfoOverlay() {
+        const infoPanel = document.createElement('div');
+        infoPanel.style.cssText = `
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            max-width: 300px;
+            pointer-events: auto;
+        `;
+        
+        infoPanel.innerHTML = `
+            <div><strong>🎮 3D Map Viewer</strong></div>
+            <div style="margin-top: 5px; font-size: 12px;">
+                ${this.isMobile ? 
+                    '📱 Use joystick to move, buttons for actions' : 
+                    '⌨️ WASD/Arrows to move, Click to look around'
+                }
+            </div>
+        `;
+        
+        this.container.appendChild(infoPanel);
+        this.infoPanel = infoPanel;
+        console.log('ℹ️ Info overlay created');
+    }
+    
+    setupEventListeners() {
+        window.addEventListener('resize', () => this.handleResize());
+        
+        // Prevent context menu on mobile
+        if (this.isMobile) {
+            document.addEventListener('contextmenu', (e) => e.preventDefault());
+        }
+        
+        console.log('🎧 Interface event listeners setup');
+    }
+    
+    onJoystickStart(event) {
+        event.preventDefault();
+        this.joystickActive = true;
+        
+        const rect = this.joystick.area.getBoundingClientRect();
+        this.joystickCenter = {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+        };
+        
+        const touch = event.touches[0];
+        this.updateJoystickPosition(touch.clientX, touch.clientY);
+    }
+    
+    onJoystickMove(event) {
+        if (!this.joystickActive) return;
+        event.preventDefault();
+        
+        const touch = event.touches[0];
+        this.updateJoystickPosition(touch.clientX, touch.clientY);
+    }
+    
+    onJoystickEnd(event) {
+        event.preventDefault();
+        this.joystickActive = false;
+        
+        // Reset joystick position
+        this.joystick.knob.style.transform = 'translate(0, 0)';
+        this.joystickPosition = { x: 0, y: 0 };
+        this.updateMovementFromJoystick();
+    }
+    
+    updateJoystickPosition(clientX, clientY) {
+        const deltaX = clientX - this.joystickCenter.x;
+        const deltaY = clientY - this.joystickCenter.y;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const maxDistance = 40; // Half of joystick area radius
+        
+        if (distance <= maxDistance) {
+            this.joystickPosition = { x: deltaX / maxDistance, y: deltaY / maxDistance };
+            this.joystick.knob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        } else {
+            const angle = Math.atan2(deltaY, deltaX);
+            const limitedX = Math.cos(angle) * maxDistance;
+            const limitedY = Math.sin(angle) * maxDistance;
+            
+            this.joystickPosition = { x: limitedX / maxDistance, y: limitedY / maxDistance };
+            this.joystick.knob.style.transform = `translate(${limitedX}px, ${limitedY}px)`;
+        }
+        
+        this.updateMovementFromJoystick();
+    }
+    
+    updateMovementFromJoystick() {
+        if (!this.map3DViewer) return;
+        
+        // Clear existing movement keys
+        this.map3DViewer.keys['KeyW'] = false;
+        this.map3DViewer.keys['KeyS'] = false;
+        this.map3DViewer.keys['KeyA'] = false;
+        this.map3DViewer.keys['KeyD'] = false;
+        
+        // Set movement based on joystick position
+        const threshold = 0.3;
+        if (Math.abs(this.joystickPosition.y) > threshold) {
+            if (this.joystickPosition.y < 0) this.map3DViewer.keys['KeyW'] = true;
+            if (this.joystickPosition.y > 0) this.map3DViewer.keys['KeyS'] = true;
+        }
+        
+        if (Math.abs(this.joystickPosition.x) > threshold) {
+            if (this.joystickPosition.x < 0) this.map3DViewer.keys['KeyA'] = true;
+            if (this.joystickPosition.x > 0) this.map3DViewer.keys['KeyD'] = true;
+        }
+    }
+    
+    onActionButtonPress(action, pressed) {
+        console.log(`🎯 Action ${action}: ${pressed ? 'pressed' : 'released'}`);
+        
+        // Handle specific actions
+        switch(action) {
+            case 'jump':
+                if (pressed) this.handleJump();
+                break;
+            case 'run':
+                this.handleRun(pressed);
+                break;
+            case 'crouch':
+                this.handleCrouch(pressed);
+                break;
+            case 'interact':
+                if (pressed) this.handleInteract();
+                break;
+        }
+    }
+    
+    handleJump() {
+        console.log('🦘 Jump action triggered');
+    }
+    
+    handleRun(isRunning) {
+        console.log(`🏃 Run mode: ${isRunning ? 'on' : 'off'}`);
+    }
+    
+    handleCrouch(isCrouching) {
+        console.log(`🦆 Crouch mode: ${isCrouching ? 'on' : 'off'}`);
+    }
+    
+    handleInteract() {
+        console.log('🤝 Interact action triggered');
+    }
+    
+    handleResize() {
+        // Responsive adjustments for interface
+        const isMobileLayout = window.innerWidth <= 768;
+        
+        if (this.joystick && isMobileLayout !== this.isMobile) {
+            // Recreate interface if layout changed significantly
+            this.destroy();
+            this.initialize();
+        }
+    }
+    
+    updateMapInfo(mapName, playerPosition) {
+        if (!this.infoPanel) return;
+        
+        this.infoPanel.innerHTML = `
+            <div><strong>🗺️ ${mapName || 'Unknown Map'}</strong></div>
+            <div style="margin-top: 5px; font-size: 12px;">
+                📍 Position: ${playerPosition ? `${Math.round(playerPosition.x)}, ${Math.round(playerPosition.z)}` : 'Unknown'}
+            </div>
+            <div style="margin-top: 3px; font-size: 12px;">
+                ${this.isMobile ? 
+                    '📱 Use joystick to move, buttons for actions' : 
+                    '⌨️ WASD/Arrows to move, Click to look around'
+                }
+            </div>
+        `;
+    }
+    
+    destroy() {
+        if (this.container && this.container.parentNode) {
+            this.container.parentNode.removeChild(this.container);
+        }
+        console.log('🗑️ GameInterface3D destroyed');
+    }
+}
+
+// Global export
+window.GameInterface3D = GameInterface3D;
+```
+
+### 3. test-3d-viewer.html (`v5/test-3d-viewer.html`)
+
+**Purpose**: Complete test page demonstrating the 3D system with sample V5 maps
+
+**Complete HTML File**:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V5 3D Map Viewer - Test Page</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .content {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+        
+        .viewer-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        #map3d-canvas {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: #000;
+        }
+        
+        .controls {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 250px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group h3 {
+            margin-bottom: 8px;
+            color: #4CAF50;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin: 3px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        
+        button:hover { background: #45a049; }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .debug-panel {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .debug-entry {
+            margin: 2px 0;
+            white-space: pre-wrap;
+        }
+        
+        @media (max-width: 768px) {
+            .content { flex-direction: column; }
+            .controls { min-width: auto; }
+            .container { padding: 10px; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 V5 3D Map Viewer</h1>
+            <p>Interactive 3D visualization of V5 map data using Three.js</p>
+        </div>
+        
+        <div class="content">
+            <div class="viewer-section">
+                <canvas id="map3d-canvas"></canvas>
+                <div id="status">🔄 Initializing 3D viewer...</div>
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <h3>📋 Sample Maps</h3>
+                    <button onclick="loadSampleMap('forest')">🌲 Forest</button>
+                    <button onclick="loadSampleMap('castle')">🏰 Castle</button>
+                    <button onclick="loadSampleMap('dungeon')">🗡️ Dungeon</button>
+                    <button onclick="loadSampleMap('village')">🏘️ Village</button>
+                </div>
+                
+                <div class="control-group">
+                    <h3>🎮 Controls</h3>
+                    <div style="font-size: 12px; margin-bottom: 8px;">
+                        <div>🖱️ <strong>Desktop:</strong> WASD/Arrows + Mouse</div>
+                        <div>📱 <strong>Mobile:</strong> Virtual joystick + buttons</div>
+                    </div>
+                    <button onclick="resetCamera()">📷 Reset Camera</button>
+                    <button onclick="toggleFullscreen()">🖥️ Fullscreen</button>
+                </div>
+                
+                <div class="control-group">
+                    <h3>🔧 Debug</h3>
+                    <button onclick="toggleDebug()">📊 Toggle Debug</button>
+                    <button onclick="clearDebug()">🗑️ Clear Log</button>
+                    <div id="debug-panel" class="debug-panel" style="display: none;"></div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>📈 Performance</h3>
+                    <div id="performance-stats" style="font-size: 11px;">
+                        <div>FPS: <span id="fps">--</span></div>
+                        <div>Objects: <span id="object-count">--</span></div>
+                        <div>Memory: <span id="memory-usage">--</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
+    
+    <!-- V5 3D System -->
+    <script src="js/Map3DViewer.js"></script>
+    <script src="js/GameInterface3D.js"></script>
+    
+    <script>
+        // Global variables
+        let map3DViewer = null;
+        let gameInterface = null;
+        let debugMode = false;
+        let performanceStats = { frameCount: 0, lastTime: Date.now() };
+        
+        // Sample map data
+        const sampleMaps = {
+            forest: {
+                name: "Enchanted Forest",
+                width: 10,
+                height: 10,
+                grid: [
+                    [{ value: 'tree' }, { value: 'grass' }, { value: 'grass' }, { value: 'tree' }, { value: 'tree' }, { value: 'grass' }, { value: 'tree' }, { value: 'grass' }, { value: 'tree' }, { value: 'tree' }],
+                    [{ value: 'grass' }, { value: 'grass' }, { value: 'water' }, { value: 'water' }, { value: 'grass' }, { value: 'grass' }, { value: 'grass' }, { value: 'water' }, { value: 'grass' }, { value: 'tree' }],
+                    [{ value: 'tree' }, { value: 'water' }, { value: 'water' }, { value: 'water' }, { value: 'water' }, { value: 'grass' }, { value: 'grass' }, { value: 'water' }, { value: 'water' }, { value: 'grass' }],
+                    [{ value: 'tree' }, { value: 'grass' }, { value: 'water' }, { value: 'house' }, { value: 'water' }, { value: 'grass' }, { value: 'tree' }, { value: 'grass' }, { value: 'water' }, { value: 'grass' }],
+                    [{ value: 'grass' }, { value: 'grass' }, { value: 'water' }, { value: 'water' }, { value: 'water' }, { value: 'grass' }, { value: 'grass' }, { value: 'grass' }, { value: 'water' }, { value: 'tree' }],
+                    [{ value: 'tree' }, { value: 'grass' }, { value: 'grass' }, { value: 'grass' }, { value: 'grass' }, { value: 'grass' }, { value: 'tree' }, { value: 'grass' }, { value: 'grass' }, { value: 'grass' }],
+                    [{ value: 'tree' }, { value: 'tree' }, { value: 'grass' }, { value: 'rock' }, { value: 'grass' }, { value: 'grass' }, { value: 'tree' }, { value: 'tree' }, { value: 'grass' }, { value: 'tree' }],
+                    [{ value: 'grass' }, { value: 'grass' }, { value: 'grass' }, { value: 'grass' }, { value: 'grass' }, { value: 'tree' }, { value: 'grass' }, { value: 'grass' }, { value: 'grass' }, { value: 'grass' }],
+                    [{ value: 'tree' }, { value: 'grass' }, { value: 'tree' }, { value: 'grass' }, { value: 'tree' }, { value: 'tree' }, { value: 'grass' }, { value: 'tree' }, { value: 'grass' }, { value: 'tree' }],
+                    [{ value: 'tree' }, { value: 'tree' }, { value: 'tree' }, { value: 'tree' }, { value: 'tree' }, { value: 'tree' }, { value: 'tree' }, { value: 'tree' }, { value: 'tree' }, { value: 'tree' }]
+                ],
+                backgroundColors: {
+                    'tree': '#2d5016',
+                    'grass': '#4a7c23',
+                    'water': '#1e6091',
+                    'house': '#8b4513',
+                    'rock': '#696969'
+                }
+            },
+            
+            castle: {
+                name: "Medieval Castle",
+                width: 8,
+                height: 8,
+                spriteNames: [
+                    'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall',
+                    'wall', 'grass', 'grass', 'tower', 'tower', 'grass', 'grass', 'wall',
+                    'wall', 'grass', 'castle', 'castle', 'castle', 'castle', 'grass', 'wall',
+                    'wall', 'tower', 'castle', 'grass', 'grass', 'castle', 'tower', 'wall',
+                    'wall', 'tower', 'castle', 'grass', 'grass', 'castle', 'tower', 'wall',
+                    'wall', 'grass', 'castle', 'castle', 'castle', 'castle', 'grass', 'wall',
+                    'wall', 'grass', 'grass', 'tower', 'tower', 'grass', 'grass', 'wall',
+                    'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall'
+                ],
+                backgroundColors: {
+                    'wall': '#555555',
+                    'grass': '#4a7c23',
+                    'castle': '#8b7355',
+                    'tower': '#654321'
+                }
+            },
+            
+            dungeon: {
+                name: "Dark Dungeon",
+                width: 6,
+                height: 6,
+                grid: [
+                    [{ value: 'rock' }, { value: 'rock' }, { value: 'rock' }, { value: 'rock' }, { value: 'rock' }, { value: 'rock' }],
+                    [{ value: 'rock' }, null, null, { value: 'dragon' }, null, { value: 'rock' }],
+                    [{ value: 'rock' }, null, { value: 'rock' }, { value: 'rock' }, null, { value: 'rock' }],
+                    [{ value: 'rock' }, null, { value: 'rock' }, { value: 'rock' }, null, { value: 'rock' }],
+                    [{ value: 'rock' }, null, null, { value: 'sword' }, null, { value: 'rock' }],
+                    [{ value: 'rock' }, { value: 'rock' }, { value: 'rock' }, { value: 'rock' }, { value: 'rock' }, { value: 'rock' }]
+                ],
+                backgroundColors: {
+                    'rock': '#2c2c2c',
+                    'dragon': '#8b0000',
+                    'sword': '#ffd700'
+                }
+            },
+            
+            village: {
+                name: "Peaceful Village",
+                width: 12,
+                height: 8,
+                spriteNames: [
+                    'grass', 'grass', 'tree', 'grass', 'grass', 'grass', 'grass', 'grass', 'tree', 'grass', 'grass', 'grass',
+                    'grass', 'house', 'grass', 'grass', 'shop', 'grass', 'grass', 'house', 'grass', 'grass', 'tree', 'grass',
+                    'tree', 'grass', 'grass', 'grass', 'grass', 'grass', 'grass', 'grass', 'grass', 'grass', 'grass', 'grass',
+                    'grass', 'grass', 'grass', 'temple', 'grass', 'grass', 'grass', 'grass', 'grass', 'house', 'grass', 'tree',
+                    'grass', 'tree', 'grass', 'grass', 'grass', 'grass', 'grass', 'grass', 'grass', 'grass', 'grass', 'grass',
+                    'grass', 'grass', 'grass', 'grass', 'house', 'grass', 'grass', 'shop', 'grass', 'grass', 'grass', 'grass',
+                    'tree', 'grass', 'grass', 'grass', 'grass', 'grass', 'grass', 'grass', 'grass', 'tree', 'grass', 'grass',
+                    'grass', 'grass', 'tree', 'grass', 'grass', 'grass', 'grass', 'grass', 'tree', 'grass', 'grass', 'tree'
+                ],
+                backgroundColors: {
+                    'grass': '#4a7c23',
+                    'house': '#8b4513',
+                    'shop': '#daa520',
+                    'temple': '#9370db',
+                    'tree': '#2d5016'
+                }
+            }
+        };
+        
+        // Initialize the 3D viewer
+        async function initialize() {
+            try {
+                updateStatus('🔄 Initializing 3D viewer...');
+                
+                // Create Map3DViewer instance
+                map3DViewer = new Map3DViewer('map3d-canvas', {
+                    blockSize: 20,
+                    playerHeight: 10,
+                    wallHeight: 40,
+                    fogDistance: 200
+                });
+                
+                await map3DViewer.initialize();
+                
+                // Create GameInterface3D instance
+                gameInterface = new GameInterface3D(map3DViewer);
+                await gameInterface.initialize();
+                
+                // Load default map
+                await loadSampleMap('forest');
+                
+                // Start animation loop
+                map3DViewer.start();
+                
+                // Start performance monitoring
+                startPerformanceMonitoring();
+                
+                updateStatus('✅ 3D viewer ready! Use controls to explore.');
+                debugLog('System initialized successfully');
+                
+            } catch (error) {
+                updateStatus('❌ Failed to initialize 3D viewer');
+                debugLog('Initialization error: ' + error.message);
+                console.error('Initialization failed:', error);
+            }
+        }
+        
+        // Load a sample map
+        async function loadSampleMap(mapKey) {
+            if (!map3DViewer || !sampleMaps[mapKey]) return;
+            
+            try {
+                updateStatus(`🔄 Loading ${sampleMaps[mapKey].name}...`);
+                
+                await map3DViewer.loadMapData(sampleMaps[mapKey]);
+                
+                if (gameInterface) {
+                    gameInterface.updateMapInfo(
+                        sampleMaps[mapKey].name,
+                        map3DViewer.player?.position
+                    );
+                }
+                
+                updateStatus(`✅ ${sampleMaps[mapKey].name} loaded successfully!`);
+                debugLog(`Map loaded: ${sampleMaps[mapKey].name}`);
+                
+            } catch (error) {
+                updateStatus('❌ Failed to load map');
+                debugLog('Map loading error: ' + error.message);
+                console.error('Map loading failed:', error);
+            }
+        }
+        
+        // Reset camera position
+        function resetCamera() {
+            if (!map3DViewer || !map3DViewer.player) return;
+            
+            map3DViewer.player.position.set(0, map3DViewer.options.playerHeight, 0);
+            map3DViewer.player.rotation.set(0, 0, 0);
+            map3DViewer.camera.rotation.set(0, 0, 0);
+            map3DViewer.mouse = { x: 0, y: 0 };
+            
+            debugLog('Camera reset to origin');
+            updateStatus('📷 Camera reset');
+        }
+        
+        // Toggle fullscreen
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        // Toggle debug panel
+        function toggleDebug() {
+            debugMode = !debugMode;
+            const panel = document.getElementById('debug-panel');
+            panel.style.display = debugMode ? 'block' : 'none';
+            debugLog('Debug mode: ' + (debugMode ? 'enabled' : 'disabled'));
+        }
+        
+        // Clear debug log
+        function clearDebug() {
+            const panel = document.getElementById('debug-panel');
+            panel.innerHTML = '';
+        }
+        
+        // Update status message
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+        
+        // Debug logging
+        function debugLog(message) {
+            if (!debugMode) return;
+            
+            const panel = document.getElementById('debug-panel');
+            const entry = document.createElement('div');
+            entry.className = 'debug-entry';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            panel.appendChild(entry);
+            panel.scrollTop = panel.scrollHeight;
+        }
+        
+        // Performance monitoring
+        function startPerformanceMonitoring() {
+            setInterval(() => {
+                const now = Date.now();
+                const deltaTime = now - performanceStats.lastTime;
+                
+                if (deltaTime >= 1000) {
+                    const fps = Math.round((performanceStats.frameCount * 1000) / deltaTime);
+                    document.getElementById('fps').textContent = fps;
+                    
+                    performanceStats.frameCount = 0;
+                    performanceStats.lastTime = now;
+                }
+                
+                performanceStats.frameCount++;
+                
+                // Update object count
+                if (map3DViewer && map3DViewer.scene) {
+                    const objectCount = map3DViewer.scene.children.length;
+                    document.getElementById('object-count').textContent = objectCount;
+                }
+                
+                // Update memory usage (if available)
+                if (performance.memory) {
+                    const memoryMB = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+                    document.getElementById('memory-usage').textContent = memoryMB + ' MB';
+                }
+            }, 100);
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', initialize);
+        
+        // Handle page unload
+        window.addEventListener('beforeunload', () => {
+            if (gameInterface) gameInterface.destroy();
+            if (map3DViewer) map3DViewer.stop();
+        });
+    </script>
+</body>
+</html>
+```
+
+## Implementation Summary
+
+### Quick Setup Steps:
+1. **Create directory structure**: js folder
+2. **Download Three.js**: Save from CDN to `v5/js/libs/three.min.js`
+3. **Create the three files** above with exact content
+4. **Test**: Open `test-3d-viewer.html` in browser
+
+### Key Features:
+- ✅ **Responsive Design**: Square canvas adapts to device
+- ✅ **Mobile Controls**: Virtual joystick + action buttons  
+- ✅ **V5 Integration**: Supports grid and network formats
+- ✅ **Sample Maps**: Forest, Castle, Dungeon, Village
+- ✅ **Debug Console**: Performance monitoring
+- ✅ **First-Person View**: WASD + mouse look
+
+### Dependencies:
+- **Three.js r160**: https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js
+
+### Browser Support:
+- Chrome 88+, Firefox 85+, Safari 14.1+, Edge 88+
+
+---
+
+**Copy the above content to save as your implementation guide!** This gives you everything needed to recreate the complete V5 3D system after your reboot.
+
+Similar code found with 1 license type

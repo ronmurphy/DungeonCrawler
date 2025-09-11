@@ -1,0 +1,1811 @@
+{
+  "name": "Untitled Map",
+  "size": 15,
+  "type": "dungeon",
+  "created": "2025-08-27T23:22:18.982Z",
+  "mapData": [
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "mountain",
+      "name": "Mountain",
+      "category": "terrain",
+      "emoji": "🏔️"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "water",
+      "name": "Water",
+      "category": "terrain",
+      "emoji": "🌊"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "grass",
+      "name": "Grass",
+      "category": "terrain",
+      "emoji": "🌿"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "rock",
+      "name": "Rock",
+      "category": "terrain",
+      "emoji": "🪨"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "castle",
+      "name": "Castle",
+      "category": "buildings",
+      "emoji": "🏰"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "house",
+      "name": "House",
+      "category": "buildings",
+      "emoji": "🏠"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "shop",
+      "name": "Shop",
+      "category": "buildings",
+      "emoji": "🏪"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "temple",
+      "name": "Temple",
+      "category": "buildings",
+      "emoji": "🏛️"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "dragon",
+      "name": "Dragon",
+      "category": "monsters",
+      "emoji": "🐉"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "sword",
+      "name": "Sword",
+      "category": "items",
+      "emoji": "⚔️"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "skull",
+      "name": "Skull",
+      "category": "hazards",
+      "emoji": "💀"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "danger",
+      "name": "Danger",
+      "category": "hazards",
+      "emoji": "⚠️"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "tower",
+      "name": "Tower",
+      "category": "buildings",
+      "emoji": "🗼"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "road",
+      "name": "Road",
+      "category": "paths",
+      "emoji": "🛣️"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    },
+    {
+      "type": "sprite",
+      "value": "door",
+      "name": "Door",
+      "category": "features",
+      "emoji": "🚪"
+    }
+  ],
+  "playerLayer": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "version": "1.0"
+}

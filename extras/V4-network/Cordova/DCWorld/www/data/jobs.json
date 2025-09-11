@@ -1,0 +1,175 @@
+{
+  "professional": [
+    {
+      "id": "engineer",
+      "name": "Engineer",
+      "description": "Technical specialists with mechanical and electrical expertise",
+      "statBonuses": { "intelligence": 1 },
+      "skills": [
+        { "name": "Mechanical", "stat": "intelligence" },
+        { "name": "Electrical", "stat": "intelligence" }
+      ],
+      "category": "professional"
+    },
+    {
+      "id": "doctor",
+      "name": "Doctor",
+      "description": "Medical professionals with surgical and diagnostic skills",
+      "statBonuses": { "intelligence": 1, "wisdom": 1 },
+      "skills": [
+        { "name": "Surgery", "stat": "dexterity" },
+        { "name": "Diagnosis", "stat": "intelligence" }
+      ],
+      "category": "professional"
+    },
+    {
+      "id": "lawyer",
+      "name": "Lawyer",
+      "description": "Legal experts with negotiation and knowledge skills",
+      "statBonuses": { "intelligence": 1, "charisma": 1 },
+      "skills": [
+        { "name": "Legal Knowledge", "stat": "intelligence" },
+        { "name": "Negotiation", "stat": "charisma" }
+      ],
+      "category": "professional"
+    },
+    {
+      "id": "teacher",
+      "name": "Teacher",
+      "description": "Educators with teaching and research abilities",
+      "statBonuses": { "wisdom": 1, "charisma": 1 },
+      "skills": [
+        { "name": "Teaching", "stat": "charisma" },
+        { "name": "Research", "stat": "intelligence" }
+      ],
+      "category": "professional"
+    },
+    {
+      "id": "programmer",
+      "name": "Programmer",
+      "description": "Software specialists with programming and systems analysis",
+      "statBonuses": { "intelligence": 2 },
+      "skills": [
+        { "name": "Programming", "stat": "intelligence" },
+        { "name": "Systems Analysis", "stat": "intelligence" }
+      ],
+      "category": "professional"
+    },
+    {
+      "id": "scientist",
+      "name": "Scientist",
+      "description": "Research specialists with scientific method expertise",
+      "statBonuses": { "intelligence": 2 },
+      "skills": [
+        { "name": "Research", "stat": "intelligence" },
+        { "name": "Scientific Method", "stat": "wisdom" }
+      ],
+      "category": "professional"
+    }
+  ],
+  "service": [
+    {
+      "id": "mechanic",
+      "name": "Mechanic",
+      "description": "Repair specialists with automotive expertise",
+      "statBonuses": { "dexterity": 1, "intelligence": 1 },
+      "skills": [
+        { "name": "Repair", "stat": "dexterity" },
+        { "name": "Automotive", "stat": "intelligence" }
+      ],
+      "category": "service"
+    },
+    {
+      "id": "police",
+      "name": "Police Officer",
+      "description": "Law enforcement with criminal justice knowledge",
+      "statBonuses": { "constitution": 1, "wisdom": 1 },
+      "skills": [
+        { "name": "Law Enforcement", "stat": "wisdom" },
+        { "name": "Criminal Justice", "stat": "intelligence" }
+      ],
+      "category": "service"
+    },
+    {
+      "id": "firefighter",
+      "name": "Firefighter",
+      "description": "Emergency responders with rescue abilities",
+      "statBonuses": { "strength": 1, "constitution": 1 },
+      "skills": [
+        { "name": "Emergency Response", "stat": "wisdom" },
+        { "name": "Physical Rescue", "stat": "strength" }
+      ],
+      "category": "service"
+    },
+    {
+      "id": "chef",
+      "name": "Chef",
+      "description": "Culinary experts with cooking and food knowledge",
+      "statBonuses": { "dexterity": 1, "wisdom": 1 },
+      "skills": [
+        { "name": "Cooking", "stat": "dexterity" },
+        { "name": "Food Knowledge", "stat": "intelligence" }
+      ],
+      "category": "service"
+    }
+  ],
+  "creative": [
+    {
+      "id": "artist",
+      "name": "Artist",
+      "description": "Visual artists with art history knowledge",
+      "statBonuses": { "dexterity": 1, "charisma": 1 },
+      "skills": [
+        { "name": "Visual Arts", "stat": "dexterity" },
+        { "name": "Art History", "stat": "intelligence" }
+      ],
+      "category": "creative"
+    },
+    {
+      "id": "musician",
+      "name": "Musician",
+      "description": "Musical performers with theory knowledge",
+      "statBonuses": { "dexterity": 1, "charisma": 1 },
+      "skills": [
+        { "name": "Musical Performance", "stat": "charisma" },
+        { "name": "Music Theory", "stat": "intelligence" }
+      ],
+      "category": "creative"
+    },
+    {
+      "id": "writer",
+      "name": "Writer",
+      "description": "Literary specialists with writing and research skills",
+      "statBonuses": { "intelligence": 1, "charisma": 1 },
+      "skills": [
+        { "name": "Writing", "stat": "intelligence" },
+        { "name": "Research", "stat": "intelligence" }
+      ],
+      "category": "creative"
+    }
+  ],
+  "physical": [
+    {
+      "id": "soldier",
+      "name": "Soldier",
+      "description": "Military specialists with tactics and combat training",
+      "statBonuses": { "strength": 1, "constitution": 1 },
+      "skills": [
+        { "name": "Military Tactics", "stat": "intelligence" },
+        { "name": "Combat Training", "stat": "strength" }
+      ],
+      "category": "physical"
+    },
+    {
+      "id": "athlete",
+      "name": "Athlete",
+      "description": "Sports specialists with physical training expertise",
+      "statBonuses": { "strength": 1, "dexterity": 1 },
+      "skills": [
+        { "name": "Sports", "stat": "dexterity" },
+        { "name": "Physical Training", "stat": "constitution" }
+      ],
+      "category": "physical"
+    }
+  ]
+}
