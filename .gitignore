@@ -180,3 +180,11 @@ Icon
 # Uncomment if docs get too large
 # Documentation/
 # markdown_readme/
+
+# ========================
+# Large Folders and APKs (2025-09-11 cleanup)
+v5/Cordova/
+v5/APKs/
+StoryTeller/APKs/
+extras/V4-network/Cordova/
+*.apk
