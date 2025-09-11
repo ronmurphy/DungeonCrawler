@@ -1,0 +1,41 @@
+# StoryTeller Mobile Build - Git Ignore
+
+# Cordova Platform and Build Directories
+Cordova/StoryTellerApp/platforms/
+Cordova/StoryTellerApp/plugins/
+Cordova/StoryTellerApp/node_modules/
+Cordova/StoryTellerApp/www/
+
+# Build outputs and temporary files
+Cordova/StoryTellerApp/.cordova/
+Cordova/StoryTellerApp/hooks/
+
+# APK files (optional - remove these lines if you want to track APKs)
+APKs/*.apk
+
+# Android Studio / IDE files
+.idea/
+*.iml
+.gradle/
+local.properties
+
+# Node.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary and backup files
+*~
+*.tmp
+*.bak
+*.swp
+*.log

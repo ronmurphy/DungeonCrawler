@@ -1,0 +1,1306 @@
+<html lang="en"><head><div style="display: none;"></div>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katia's Training Room</title>
+    <meta name="description" content="Master Katia Grim's doppelganger abilities - absorb mass, grow stronger, survive the training!"
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            color: white;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        body {
+            animation: backgroundShift 15s infinite alternate;
+        }
+
+        @keyframes backgroundShift {
+            0% { background: linear-gradient(45deg, #1a1a2e, #16213e); }
+            100% { background: linear-gradient(45deg, #16213e, #1a1a2e); }
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #gameCanvas {
+            border: 2px solid #0f3460;
+            background: #0f1419;
+            box-shadow: 0 0 20px rgba(15, 52, 96, 0.5);
+            max-width: 100vw;
+            max-height: 100vh;
+        }
+
+        /* Power-up notifications - fixed positioning to not disrupt layout */
+        .power-notification {
+            position: fixed !important;
+            top: 20px !important;
+            right: 20px !important;
+            z-index: 1000 !important;
+            pointer-events: none !important;
+            color: white !important;
+            background: rgba(0, 0, 0, 0.8) !important;
+            padding: 8px 15px !important;
+            border-radius: 8px !important;
+            font-size: 0.9rem !important;
+            font-weight: bold !important;
+            border: 1px solid #4fc3f7 !important;
+            animation: slideIn 0.5s ease, fadeOut 2.5s ease !important;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            0%, 80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            #gameCanvas {
+                width: 100vw !important;
+                height: 100vh !important;
+                border: none;
+            }
+            
+            .power-notification {
+                top: 10px !important;
+                right: 10px !important;
+                font-size: 0.8rem !important;
+                padding: 6px 12px !important;
+            }
+        }
+
+        #startMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #0f3460;
+            z-index: 100;
+            animation: menuPulse 2s infinite;
+        }
+
+        @keyframes menuPulse {
+            0% { box-shadow: 0 0 10px rgba(15, 52, 96, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(79, 195, 247, 0.7); }
+            100% { box-shadow: 0 0 10px rgba(15, 52, 96, 0.5); }
+        }
+
+        #startMenu h1 {
+            color: #4fc3f7;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            text-shadow: 0 0 10px #4fc3f7;
+        }
+
+        #startMenu p {
+            margin: 10px 0;
+            font-size: 1.2rem;
+            color: #b0bec5;
+        }
+
+        #readyBtn {
+            background: linear-gradient(45deg, #4fc3f7, #29b6f6);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        #readyBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(79, 195, 247, 0.5);
+        }
+
+        #gameUI {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #0f3460;
+        }
+
+        #gameUI div {
+            margin: 5px 0;
+            font-size: 1.2rem;
+        }
+
+        .score {
+            color: #4fc3f7;
+        }
+
+        .mass {
+            color: #81c784;
+        }
+
+        /* Virtual thumb stick styles */
+        #thumbstickContainer {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 100px;
+            height: 100px;
+            z-index: 100;
+            touch-action: none;
+            display: none;
+        }
+
+        #thumbstickBase {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            left: 10px;
+            top: 10px;
+        }
+
+        #thumbstickKnob {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: rgba(79, 195, 247, 0.7);
+            border-radius: 50%;
+            border: 2px solid #4fc3f7;
+            transform: translate(-50%, -50%);
+            left: 50%;
+            top: 50%;
+            transition: transform 0.1s;
+        }
+
+        /* Shoot button styles */
+        #shootButton {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #ff6b6b, #ff5252);
+            border-radius: 50%;
+            border: 2px solid #ff9e9e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            touch-action: none;
+            display: none;
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+        }
+
+        #shootButton::before {
+            content: "";
+            position: absolute;
+            width: 30px;
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            transform: rotate(45deg);
+            top: 25px;
+            left: 25px;
+        }
+
+        #shootButton::after {
+            content: "";
+            position: absolute;
+            width: 30px;
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            transform: rotate(-45deg);
+            top: 25px;
+            left: 25px;
+        }
+
+        #shootButton.active {
+            background: linear-gradient(45deg, #ff5252, #ff1744);
+            box-shadow: 0 0 20px rgba(255, 82, 82, 0.8);
+        }
+
+        @media (max-width: 768px) {
+            #startMenu h1 {
+                font-size: 2rem;
+            }
+
+            #startMenu p {
+                font-size: 1rem;
+            }
+
+            #gameUI {
+                font-size: 1rem;
+            }
+
+            #thumbstickContainer, #shootButton {
+                display: block;
+            }
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px); }
+            20% { opacity: 1; transform: translateY(0); }
+            80% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(10px); }
+        }
+
+        /* Additional mobile touch optimizations */
+        body, html {
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+        }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="startMenu" style="display: none;">
+            <h1>KATIA'S TRAINING ROOM</h1>
+            <p>🎮 Touch and drag to move</p>
+            <p>🎯 Master your doppelganger abilities</p>
+            <p>🔵 Absorb creatures to grow stronger</p>
+            <p>🏹 Use your crossbow to stun threats</p>
+            <p>⚡ Collect power-ups to enhance your skills</p>
+            <button id="readyBtn">BEGIN TRAINING</button>
+        </div>
+
+        <div id="gameUI" style="display: block;">
+            <div class="score">Score: <span id="score">1203</span></div>
+            <div class="mass">Mass: <span id="mass">128</span></div>
+        </div>
+
+        <!-- Virtual thumb stick -->
+        <div id="thumbstickContainer">
+            <div id="thumbstickBase"></div>
+            <div id="thumbstickKnob"></div>
+        </div>
+
+        <!-- Shoot button -->
+        <div id="shootButton"></div>
+    </div>
+
+    <script>
+        class MassCollectorGame {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.startMenu = document.getElementById('startMenu');
+                this.gameUI = document.getElementById('gameUI');
+
+                // Control elements
+                this.thumbstickContainer = document.getElementById('thumbstickContainer');
+                this.thumbstickKnob = document.getElementById('thumbstickKnob');
+                this.shootButton = document.getElementById('shootButton');
+
+                this.setupCanvas();
+                this.initGame();
+                this.setupControls();
+
+                document.getElementById('readyBtn').addEventListener('click', () => this.startGame());
+            }
+
+            setupCanvas() {
+                const container = document.getElementById('gameContainer');
+                
+                // Phone-first responsive design
+                if (window.innerWidth < 768) {
+                    // Mobile/phone - full screen
+                    this.canvas.width = window.innerWidth;
+                    this.canvas.height = window.innerHeight;
+                } else if (window.innerWidth < 1024) {
+                    // Tablet
+                    this.canvas.width = Math.min(window.innerWidth - 40, 700);
+                    this.canvas.height = Math.min(window.innerHeight - 40, 500);
+                } else {
+                    // Desktop/PC - larger play area
+                    this.canvas.width = Math.min(window.innerWidth - 100, 900);
+                    this.canvas.height = Math.min(window.innerHeight - 100, 700);
+                }
+                
+                // Update thumbstick position for new canvas size
+                this.updateThumbstickPosition();
+            }
+            
+            updateThumbstickPosition() {
+                if (this.thumbstickContainer) {
+                    this.thumbstickBasePosition = {
+                        x: this.thumbstickContainer.offsetLeft + this.thumbstickContainer.offsetWidth / 2,
+                        y: this.thumbstickContainer.offsetTop + this.thumbstickContainer.offsetHeight / 2
+                    };
+                }
+            }
+
+            initGame() {
+                this.gameStarted = false;
+                this.gameRunning = false;
+
+                // Player properties
+                this.player = {
+                    x: this.canvas.width / 2,
+                    y: this.canvas.height / 2,
+                    radius: 15,
+                    mass: 10,
+                    color: '#4fc3f7',
+                    targetX: this.canvas.width / 2,
+                    targetY: this.canvas.height / 2,
+                    velocity: { x: 0, y: 0 },
+                    maxSpeed: 5,
+                    crossbowAngle: 0,
+                    directionX: 1,  // Default to moving right
+                    directionY: 0,   // Initially not moving vertically
+                    // Power-up properties
+                    powerUps: {
+                        electricShield: { active: false, duration: 0 },
+                        fireTrail: { active: false, duration: 0 },
+                        speedBoost: { active: false, duration: 0, originalMaxSpeed: 5 },
+                        invincibility: { active: false, duration: 0 }
+                    },
+                    powerUpTrail: [] // For fire trail positions
+                };
+
+                // Game state
+                this.score = 0;
+                this.collectibles = [];
+                this.particles = [];
+                this.projectiles = [];
+
+                // Thumbstick properties
+                this.thumbstickActive = false;
+                this.thumbstickPosition = { x: 0, y: 0 };
+                this.thumbstickBasePosition = {
+                    x: this.thumbstickContainer.offsetLeft + this.thumbstickContainer.offsetWidth / 2,
+                    y: this.thumbstickContainer.offsetTop + this.thumbstickContainer.offsetHeight / 2
+                };
+                this.thumbstickRadius = 40;
+
+                this.generateCollectibles();
+            }
+
+            generateCollectibles() {
+                this.collectibles = [];
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#fecca7', '#ff9ff3', '#54a0ff'];
+                const powerUpColors = ['#ffff00', '#ff0000', '#00ffff', '#00ff00']; // yellow, red, cyan, green
+
+                // Regular collectibles
+                for (let i = 0; i < 20; i++) {
+                    let x, y, attempts = 0;
+
+                    // Ensure collectibles don't spawn too close to player
+                    do {
+                        x = Math.random() * (this.canvas.width - 40) + 20;
+                        y = Math.random() * (this.canvas.height - 40) + 20;
+                        attempts++;
+                    } while (
+                        attempts < 50 &&
+                        Math.sqrt((x - this.player.x) ** 2 + (y - this.player.y) ** 2) < 100
+                    );
+
+                    // Randomly make some collectibles flee
+                    const isFleeing = Math.random() < 0.3;
+
+                    this.collectibles.push({
+                        x: x,
+                        y: y,
+                        radius: Math.random() * 8 + 5,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        mass: Math.random() * 5 + 2,
+                        pulse: Math.random() * Math.PI * 2,
+                        collected: false,
+                        fleeing: isFleeing,
+                        fleeTimer: 0,
+                        immobilized: false,
+                        immobilizeTimer: 0,
+                        isPowerUp: false
+                    });
+                }
+
+                // Power-ups (diamonds)
+                for (let i = 0; i < 5; i++) {
+                    let x, y, attempts = 0;
+
+                    do {
+                        x = Math.random() * (this.canvas.width - 40) + 20;
+                        y = Math.random() * (this.canvas.height - 40) + 20;
+                        attempts++;
+                    } while (
+                        attempts < 50 &&
+                        Math.sqrt((x - this.player.x) ** 2 + (y - this.player.y) ** 2) < 150
+                    );
+
+                    // Randomly select power-up type
+                    const powerUpType = Math.floor(Math.random() * powerUpColors.length);
+                    const color = powerUpColors[powerUpType];
+
+                    this.collectibles.push({
+                        x: x,
+                        y: y,
+                        radius: 12, // Slightly larger than regular collectibles
+                        color: color,
+                        mass: 5, // Fixed mass for power-ups
+                        pulse: Math.random() * Math.PI * 2,
+                        collected: false,
+                        fleeing: false,
+                        fleeTimer: 0,
+                        immobilized: false,
+                        immobilizeTimer: 0,
+                        isPowerUp: true,
+                        powerUpType: powerUpType,
+                        glow: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+
+            setupControls() {
+                // Touch controls for thumbstick
+                this.thumbstickContainer.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (!this.gameRunning) return;
+
+                    this.thumbstickActive = true;
+                    this.updateThumbstick(e.touches[0]);
+                });
+
+                this.thumbstickContainer.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if (!this.gameRunning || !this.thumbstickActive) return;
+
+                    this.updateThumbstick(e.touches[0]);
+                });
+
+                this.thumbstickContainer.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.thumbstickActive = false;
+                    this.resetThumbstick();
+                });
+
+                this.thumbstickContainer.addEventListener('touchcancel', (e) => {
+                    e.preventDefault();
+                    this.thumbstickActive = false;
+                    this.resetThumbstick();
+                });
+
+                // Shoot button controls
+                this.shootButton.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (!this.gameRunning) return;
+
+                    this.shootButton.classList.add('active');
+                    this.shootCrossbow();
+                });
+
+                this.shootButton.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.shootButton.classList.remove('active');
+                });
+
+                this.shootButton.addEventListener('touchcancel', (e) => {
+                    e.preventDefault();
+                    this.shootButton.classList.remove('active');
+                });
+
+                // Mouse click to shoot for desktop
+                this.canvas.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    if (!this.gameRunning || e.button !== 0) return; // Only left click
+
+                    this.shootCrossbow();
+                });
+
+                // Mouse controls for desktop
+                this.canvas.addEventListener('mousemove', (e) => {
+                    e.preventDefault();
+                    if (!this.gameRunning) return;
+
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.player.targetX = e.clientX - rect.left;
+                    this.player.targetY = e.clientY - rect.top;
+                });
+
+                // Touch controls for canvas (fallback)
+                this.canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (!this.gameRunning) return;
+
+                    const touch = e.touches[0];
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.player.targetX = touch.clientX - rect.left;
+                    this.player.targetY = touch.clientY - rect.top;
+                });
+
+                this.canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if (!this.gameRunning) return;
+
+                    const touch = e.touches[0];
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.player.targetX = touch.clientX - rect.left;
+                    this.player.targetY = touch.clientY - rect.top;
+                });
+
+                // Prevent context menu on touch
+                this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+            }
+
+            updateThumbstick(touch) {
+                const rect = this.thumbstickContainer.getBoundingClientRect();
+                const touchX = touch.clientX - rect.left;
+                const touchY = touch.clientY - rect.top;
+
+                // Calculate distance from center
+                const centerX = this.thumbstickContainer.offsetWidth / 2;
+                const centerY = this.thumbstickContainer.offsetHeight / 2;
+                const dx = touchX - centerX;
+                const dy = touchY - centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Limit to thumbstick radius
+                if (distance > this.thumbstickRadius) {
+                    const angle = Math.atan2(dy, dx);
+                    this.thumbstickPosition.x = Math.cos(angle) * this.thumbstickRadius;
+                    this.thumbstickPosition.y = Math.sin(angle) * this.thumbstickRadius;
+                } else {
+                    this.thumbstickPosition.x = dx;
+                    this.thumbstickPosition.y = dy;
+                }
+
+                // Update knob position
+                this.thumbstickKnob.style.transform = `translate(-50%, -50%) translate(${this.thumbstickPosition.x}px, ${this.thumbstickPosition.y}px)`;
+
+                // Update player target position based on thumbstick
+                const maxDistance = this.thumbstickRadius;
+                const moveX = this.thumbstickPosition.x / maxDistance;
+                const moveY = this.thumbstickPosition.y / maxDistance;
+
+                this.player.targetX = this.player.x + moveX * 100;
+                this.player.targetY = this.player.y + moveY * 100;
+            }
+
+            resetThumbstick() {
+                this.thumbstickPosition = { x: 0, y: 0 };
+                this.thumbstickKnob.style.transform = 'translate(-50%, -50%)';
+                this.player.targetX = this.player.x;
+                this.player.targetY = this.player.y;
+            }
+
+            updateCrossbowDirection() {
+                this.player.crossbowAngle = Math.atan2(this.player.directionY, this.player.directionX);
+            }
+
+            shootCrossbow() {
+                if (!this.gameRunning) return;
+
+                // Create a projectile
+                const speed = 10;
+                const offsetX = Math.cos(this.player.crossbowAngle) * (this.player.radius + 5);
+                const offsetY = Math.sin(this.player.crossbowAngle) * (this.player.radius + 5);
+
+                this.projectiles.push({
+                    x: this.player.x + offsetX,
+                    y: this.player.y + offsetY,
+                    vx: Math.cos(this.player.crossbowAngle) * speed,
+                    vy: Math.sin(this.player.crossbowAngle) * speed,
+                    radius: 4,
+                    color: '#ffcc00',
+                    life: 60 // Will disappear after 60 frames
+                });
+            }
+
+            updatePlayer() {
+                const dx = this.player.targetX - this.player.x;
+                const dy = this.player.targetY - this.player.y;
+
+                // Calculate direction and distance
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const directionX = dx / distance || 0;
+                const directionY = dy / distance || 0;
+
+                // Store movement direction (if moving significantly)
+                if (distance > 5) {
+                    this.player.directionX = directionX;
+                    this.player.directionY = directionY;
+                }
+
+                // Smooth movement with speed based on mass
+                const speed = Math.max(0.5, 3 - (this.player.mass / 50));
+                this.player.x += directionX * speed;
+                this.player.y += directionY * speed;
+
+                // Keep player in bounds
+                this.player.x = Math.max(this.player.radius,
+                    Math.min(this.canvas.width - this.player.radius, this.player.x));
+                this.player.y = Math.max(this.player.radius,
+                    Math.min(this.canvas.height - this.player.radius, this.player.y));
+            }
+
+            updateCollectibles() {
+                this.collectibles.forEach(collectible => {
+                    if (collectible.collected || collectible.immobilized) return;
+
+                    // Update flee timer if active
+                    if (collectible.fleeTimer > 0) {
+                        collectible.fleeTimer--;
+                    }
+
+                    // Fleeing behavior
+                    if (collectible.fleeing && collectible.fleeTimer <= 0) {
+                        const dx = collectible.x - this.player.x;
+                        const dy = collectible.y - this.player.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        // Only flee if player is close enough
+                        if (distance < 150) {
+                            const fleeSpeed = 0.8;
+                            const fleeDirectionX = dx / distance;
+                            const fleeDirectionY = dy / distance;
+
+                            collectible.x += fleeDirectionX * fleeSpeed;
+                            collectible.y += fleeDirectionY * fleeSpeed;
+
+                            // Keep collectible in bounds
+                            collectible.x = Math.max(collectible.radius,
+                                Math.min(this.canvas.width - collectible.radius, collectible.x));
+                            collectible.y = Math.max(collectible.radius,
+                                Math.min(this.canvas.height - collectible.radius, collectible.y));
+                        }
+                    }
+                });
+            }
+
+            updateProjectiles() {
+                for (let i = this.projectiles.length - 1; i >= 0; i--) {
+                    const projectile = this.projectiles[i];
+
+                    // Move projectile
+                    projectile.x += projectile.vx;
+                    projectile.y += projectile.vy;
+                    projectile.life--;
+
+                    // Check if projectile is out of bounds
+                    if (
+                        projectile.x < -50 ||
+                        projectile.x > this.canvas.width + 50 ||
+                        projectile.y < -50 ||
+                        projectile.y > this.canvas.height + 50 ||
+                        projectile.life <= 0
+                    ) {
+                        this.projectiles.splice(i, 1);
+                        continue;
+                    }
+
+                    // Check collision with collectibles
+                    this.collectibles.forEach(collectible => {
+                        if (collectible.collected || collectible.immobilized) return;
+
+                        const dx = projectile.x - collectible.x;
+                        const dy = projectile.y - collectible.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < projectile.radius + collectible.radius) {
+                            // Hit! Immobilize the collectible
+                            collectible.immobilized = true;
+                            collectible.immobilizeTimer = 120; // 2 seconds at 60fps
+
+                            // Create hit particles
+                            this.createParticles(collectible.x, collectible.y, '#ffcc00');
+
+                            // Remove projectile
+                            this.projectiles.splice(i, 1);
+                            return;
+                        }
+                    });
+                }
+            }
+
+            updateImmobilizedCollectibles() {
+                this.collectibles.forEach(collectible => {
+                    if (collectible.immobilized) {
+                        collectible.immobilizeTimer--;
+
+                        if (collectible.immobilizeTimer <= 0) {
+                            collectible.immobilized = false;
+                        }
+                    }
+                });
+            }
+
+            updatePowerUps() {
+                // Electric Shield
+                if (this.player.powerUps.electricShield.active) {
+                    this.player.powerUps.electricShield.duration--;
+
+                    if (this.player.powerUps.electricShield.duration <= 0) {
+                        this.player.powerUps.electricShield.active = false;
+                    } else {
+                        // Draw electric shield
+                        const shieldRadius = this.player.radius + 15;
+                        this.ctx.beginPath();
+                        this.ctx.arc(this.player.x, this.player.y, shieldRadius, 0, Math.PI * 2);
+
+                        const gradient = this.ctx.createRadialGradient(
+                            this.player.x, this.player.y, shieldRadius - 5,
+                            this.player.x, this.player.y, shieldRadius
+                        );
+                        gradient.addColorStop(0, 'rgba(255, 255, 0, 0.3)');
+                        gradient.addColorStop(1, 'rgba(255, 255, 0, 0)');
+
+                        this.ctx.fillStyle = gradient;
+                        this.ctx.fill();
+
+                        // Check for collisions with shield
+                        this.collectibles.forEach(collectible => {
+                            if (collectible.collected || collectible.immobilized || !collectible.fleeing || collectible.isPowerUp) return;
+
+                            const dx = this.player.x - collectible.x;
+                            const dy = this.player.y - collectible.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+
+                            if (distance < shieldRadius + collectible.radius) {
+                                // Stun the collectible
+                                collectible.immobilized = true;
+                                collectible.immobilizeTimer = 30; // 0.5 seconds at 60fps
+                                collectible.fleeTimer = 60; // Prevent fleeing for 1 second
+
+                                // Create stun particles
+                                this.createParticles(collectible.x, collectible.y, '#ffff00');
+                            }
+                        });
+                    }
+                }
+
+                // Fire Trail
+                if (this.player.powerUps.fireTrail.active) {
+                    this.player.powerUps.fireTrail.duration--;
+
+                    if (this.player.powerUps.fireTrail.duration <= 0) {
+                        this.player.powerUps.fireTrail.active = false;
+                    } else {
+                        // Add current position to trail
+                        if (this.player.powerUpTrail.length > 30) { // Limit trail length
+                            this.player.powerUpTrail.shift();
+                        }
+                        this.player.powerUpTrail.push({
+                            x: this.player.x,
+                            y: this.player.y,
+                            radius: this.player.radius,
+                            life: 60 // 1 second at 60fps
+                        });
+
+                        // Update and check trail collisions
+                        for (let i = this.player.powerUpTrail.length - 1; i >= 0; i--) {
+                            const segment = this.player.powerUpTrail[i];
+                            segment.life--;
+
+                            if (segment.life <= 0) {
+                                this.player.powerUpTrail.splice(i, 1);
+                                continue;
+                            }
+
+                            // Draw fire trail segment
+                            const fireGradient = this.ctx.createRadialGradient(
+                                segment.x, segment.y, 0,
+                                segment.x, segment.y, segment.radius * 0.8
+                            );
+                            fireGradient.addColorStop(0, 'rgba(255, 100, 0, 1)');
+                            fireGradient.addColorStop(0.7, 'rgba(255, 200, 0, 0.7)');
+                            fireGradient.addColorStop(1, 'rgba(255, 255, 0, 0)');
+
+                            this.ctx.beginPath();
+                            this.ctx.arc(segment.x, segment.y, segment.radius * 0.8, 0, Math.PI * 2);
+                            this.ctx.fillStyle = fireGradient;
+                            this.ctx.fill();
+
+                            // Check for collisions with trail
+                            this.collectibles.forEach(collectible => {
+                                if (collectible.collected || collectible.immobilized || collectible.isPowerUp) return;
+
+                                const dx = segment.x - collectible.x;
+                                const dy = segment.y - collectible.y;
+                                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                                if (distance < segment.radius * 0.8 + collectible.radius) {
+                                    // Burn the collectible
+                                    collectible.immobilized = true;
+                                    collectible.immobilizeTimer = 60; // 1 second at 60fps
+
+                                    // Add score and mass
+                                    this.score += Math.floor(collectible.mass * 15);
+                                    this.player.mass += collectible.mass;
+                                    this.player.radius = Math.sqrt(this.player.mass) * 2;
+
+                                    // Create burn particles
+                                    this.createParticles(collectible.x, collectible.y, '#ff6600');
+
+                                    // Remove collectible
+                                    collectible.collected = true;
+                                    setTimeout(() => {
+                                        const index = this.collectibles.indexOf(collectible);
+                                        if (index !== -1) {
+                                            this.collectibles.splice(index, 1);
+                                        }
+                                    }, 0);
+                                }
+                            });
+                        }
+                    }
+                }
+
+                // Speed Boost
+                if (this.player.powerUps.speedBoost.active) {
+                    this.player.powerUps.speedBoost.duration--;
+
+                    if (this.player.powerUps.speedBoost.duration <= 0) {
+                        this.player.powerUps.speedBoost.active = false;
+                        this.player.maxSpeed = this.player.powerUps.speedBoost.originalMaxSpeed;
+                    }
+                }
+
+                // Invincibility
+                if (this.player.powerUps.invincibility.active) {
+                    this.player.powerUps.invincibility.duration--;
+
+                    if (this.player.powerUps.invincibility.duration <= 0) {
+                        this.player.powerUps.invincibility.active = false;
+                    } else {
+                        // Draw invincibility effect
+                        this.ctx.beginPath();
+                        this.ctx.arc(this.player.x, this.player.y, this.player.radius + 10, 0, Math.PI * 2);
+
+                        const gradient = this.ctx.createRadialGradient(
+                            this.player.x, this.player.y, this.player.radius,
+                            this.player.x, this.player.y, this.player.radius + 10
+                        );
+                        gradient.addColorStop(0, 'rgba(0, 255, 0, 0.2)');
+                        gradient.addColorStop(1, 'rgba(0, 255, 0, 0)');
+
+                        this.ctx.fillStyle = gradient;
+                        this.ctx.fill();
+                    }
+                }
+            }
+
+            activatePowerUp(powerUpType) {
+                const duration = 10 * 60; // 10 seconds at 60fps
+
+                switch(powerUpType) {
+                    case 0: // Yellow - Electric Shield
+                        this.player.powerUps.electricShield = {
+                            active: true,
+                            duration: duration
+                        };
+                        break;
+                    case 1: // Red - Fire Trail
+                        this.player.powerUps.fireTrail = {
+                            active: true,
+                            duration: duration
+                        };
+                        this.player.powerUpTrail = [];
+                        break;
+                    case 2: // Cyan - Speed Boost
+                        this.player.powerUps.speedBoost = {
+                            active: true,
+                            duration: duration,
+                            originalMaxSpeed: this.player.maxSpeed
+                        };
+                        this.player.maxSpeed *= 1.5;
+                        break;
+                    case 3: // Green - Temporary Invincibility
+                        this.player.powerUps.invincibility = {
+                            active: true,
+                            duration: duration
+                        };
+                        break;
+                }
+            }
+
+            showPowerUpNotification(powerUpType) {
+                let message = '';
+                switch(powerUpType) {
+                    case 0:
+                        message = '⚡ Electric Shield';
+                        break;
+                    case 1:
+                        message = '🔥 Fire Trail';
+                        break;
+                    case 2:
+                        message = '🌀 Speed Boost';
+                        break;
+                    case 3:
+                        message = '🛡️ Invincibility';
+                        break;
+                }
+
+                // Remove any existing notifications
+                const existingNotification = document.querySelector('.power-notification');
+                if (existingNotification) {
+                    existingNotification.remove();
+                }
+
+                const notification = document.createElement('div');
+                notification.textContent = message;
+                notification.className = 'power-notification';
+
+                // Add to body (not game container to avoid layout disruption)
+                document.body.appendChild(notification);
+
+                // Remove notification after animation
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 3000);
+            }
+
+            checkCollisions() {
+                this.collectibles.forEach((collectible, index) => {
+                    if (collectible.collected) return;
+
+                    const dx = this.player.x - collectible.x;
+                    const dy = this.player.y - collectible.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < this.player.radius + collectible.radius) {
+                        if (collectible.isPowerUp) {
+                            // Handle power-up collection
+                            this.activatePowerUp(collectible.powerUpType);
+                            this.showPowerUpNotification(collectible.powerUpType);
+                        } else {
+                            // Collect the item
+                            collectible.collected = true;
+                            this.score += Math.floor(collectible.mass * 10);
+                            this.player.mass += collectible.mass;
+                            this.player.radius = Math.sqrt(this.player.mass) * 2;
+                        }
+
+                        // Create particles
+                        this.createParticles(collectible.x, collectible.y, collectible.color);
+
+                        // Remove collectible
+                        this.collectibles.splice(index, 1);
+
+                        // Generate new collectible
+                        if (this.collectibles.length < 20) {
+                            setTimeout(() => this.addNewCollectible(), 500);
+                        }
+                    }
+                });
+            }
+
+            addNewCollectible() {
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#fecca7', '#ff9ff3', '#54a0ff'];
+                let x, y, attempts = 0;
+
+                do {
+                    x = Math.random() * (this.canvas.width - 40) + 20;
+                    y = Math.random() * (this.canvas.height - 40) + 20;
+                    attempts++;
+                } while (
+                    attempts < 50 &&
+                    Math.sqrt((x - this.player.x) ** 2 + (y - this.player.y) ** 2) < 150
+                );
+
+                // Randomly make some collectibles flee
+                const isFleeing = Math.random() < 0.3;
+
+                this.collectibles.push({
+                    x: x,
+                    y: y,
+                    radius: Math.random() * 8 + 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    mass: Math.random() * 5 + 2,
+                    pulse: Math.random() * Math.PI * 2,
+                    collected: false,
+                    fleeing: isFleeing,
+                    fleeTimer: 0,
+                    immobilized: false,
+                    immobilizeTimer: 0,
+                    isPowerUp: false
+                });
+            }
+
+            createParticles(x, y, color) {
+                for (let i = 0; i < 8; i++) {
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 6,
+                        vy: (Math.random() - 0.5) * 6,
+                        color: color,
+                        life: 30,
+                        maxLife: 30
+                    });
+                }
+            }
+
+            updateParticles() {
+                this.particles.forEach((particle, index) => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    particle.vx *= 0.98;
+                    particle.vy *= 0.98;
+                    particle.life--;
+
+                    if (particle.life <= 0) {
+                        this.particles.splice(index, 1);
+                    }
+                });
+            }
+
+            render() {
+                // Clear canvas
+                this.ctx.fillStyle = '#0f1419';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw grid
+                this.ctx.strokeStyle = 'rgba(15, 52, 96, 0.3)';
+                this.ctx.lineWidth = 1;
+                for (let x = 0; x < this.canvas.width; x += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.canvas.height);
+                    this.ctx.stroke();
+                }
+                for (let y = 0; y < this.canvas.height; y += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.canvas.width, y);
+                    this.ctx.stroke();
+                }
+
+                // Draw projectiles
+                this.projectiles.forEach(projectile => {
+                    this.ctx.beginPath();
+                    this.ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+                    this.ctx.fillStyle = projectile.color;
+                    this.ctx.fill();
+
+                    // Draw bolt tail
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(projectile.x, projectile.y);
+                    this.ctx.lineTo(
+                        projectile.x - Math.cos(this.player.crossbowAngle) * 10,
+                        projectile.y - Math.sin(this.player.crossbowAngle) * 10
+                    );
+                    this.ctx.strokeStyle = 'rgba(255, 204, 0, 0.7)';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.stroke();
+                });
+
+                // Draw collectibles
+                this.collectibles.forEach(collectible => {
+                    if (collectible.collected) return;
+
+                    if (collectible.isPowerUp) {
+                        // Draw diamond (rotated square)
+                        collectible.glow += 0.05;
+                        const glowSize = 5 + Math.sin(collectible.glow) * 3;
+
+                        // Draw glow effect
+                        this.ctx.beginPath();
+                        this.ctx.arc(collectible.x, collectible.y, collectible.radius + glowSize, 0, Math.PI * 2);
+                        const gradient = this.ctx.createRadialGradient(
+                            collectible.x, collectible.y, collectible.radius,
+                            collectible.x, collectible.y, collectible.radius + glowSize
+                        );
+
+                        gradient.addColorStop(0, `${collectible.color}44`); // Semi-transparent
+                        gradient.addColorStop(1, `${collectible.color}00`); // Fully transparent
+
+                        this.ctx.fillStyle = gradient;
+                        this.ctx.fill();
+
+                        // Draw diamond
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(collectible.x, collectible.y - collectible.radius);
+                        this.ctx.lineTo(collectible.x + collectible.radius, collectible.y);
+                        this.ctx.lineTo(collectible.x, collectible.y + collectible.radius);
+                        this.ctx.lineTo(collectible.x - collectible.radius, collectible.y);
+                        this.ctx.closePath();
+
+                        this.ctx.fillStyle = collectible.color;
+                        this.ctx.fill();
+
+                        this.ctx.strokeStyle = 'white';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.stroke();
+                    } else {
+                        collectible.pulse += 0.1;
+                        const pulseRadius = collectible.radius + Math.sin(collectible.pulse) * 2;
+
+                        this.ctx.beginPath();
+                        this.ctx.arc(collectible.x, collectible.y, pulseRadius, 0, Math.PI * 2);
+                        this.ctx.fillStyle = collectible.color;
+                        this.ctx.fill();
+
+                        // Draw immobilized effect
+                        if (collectible.immobilized) {
+                            this.ctx.beginPath();
+                            this.ctx.arc(collectible.x, collectible.y, pulseRadius + 3, 0, Math.PI * 2);
+                            this.ctx.strokeStyle = 'rgba(255, 204, 0, 0.7)';
+                            this.ctx.lineWidth = 2;
+                            this.ctx.stroke();
+                        }
+
+                        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.stroke();
+                    }
+                });
+
+                // Draw particles
+                this.particles.forEach(particle => {
+                    const alpha = particle.life / particle.maxLife;
+                    this.ctx.fillStyle = particle.color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, 3 * alpha, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+
+                // Draw player
+                this.ctx.beginPath();
+                this.ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2);
+                this.ctx.fillStyle = this.player.color;
+                this.ctx.fill();
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                this.ctx.lineWidth = 3;
+                this.ctx.stroke();
+
+                // Draw player glow
+                this.ctx.beginPath();
+                this.ctx.arc(this.player.x, this.player.y, this.player.radius + 5, 0, Math.PI * 2);
+                this.ctx.strokeStyle = `rgba(79, 195, 247, 0.3)`;
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+
+                // Draw crossbow
+                const crossbowLength = this.player.radius + 10;
+                this.ctx.beginPath();
+                this.ctx.moveTo(
+                    this.player.x,
+                    this.player.y
+                );
+                this.ctx.lineTo(
+                    this.player.x + Math.cos(this.player.crossbowAngle) * crossbowLength,
+                    this.player.y + Math.sin(this.player.crossbowAngle) * crossbowLength
+                );
+                this.ctx.strokeStyle = '#8B4513'; // Brown for crossbow
+                this.ctx.lineWidth = 3;
+                this.ctx.stroke();
+
+                // Draw crossbow tip
+                this.ctx.beginPath();
+                this.ctx.arc(
+                    this.player.x + Math.cos(this.player.crossbowAngle) * crossbowLength,
+                    this.player.y + Math.sin(this.player.crossbowAngle) * crossbowLength,
+                    4,
+                    0,
+                    Math.PI * 2
+                );
+                this.ctx.fillStyle = '#ffcc00';
+                this.ctx.fill();
+            }
+
+            updateUI() {
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('mass').textContent = Math.floor(this.player.mass);
+            }
+
+            gameLoop() {
+                if (!this.gameRunning) return;
+
+                this.updatePlayer();
+                this.updateCrossbowDirection();
+                this.updateCollectibles();
+                this.updateProjectiles();
+                this.updateImmobilizedCollectibles();
+                this.updatePowerUps();
+                this.checkCollisions();
+                this.updateParticles();
+                this.render();
+                this.updateUI();
+
+                requestAnimationFrame(() => this.gameLoop());
+            }
+
+            startGame() {
+                this.startMenu.style.display = 'none';
+                this.gameUI.style.display = 'block';
+
+                // Show controls on mobile
+                if (window.innerWidth < 768) {
+                    this.thumbstickContainer.style.display = 'block';
+                    this.shootButton.style.display = 'block';
+                }
+
+                this.gameStarted = true;
+                this.gameRunning = true;
+                this.gameLoop();
+            }
+        }
+
+                                let lastTouchEnd = 0;
+
+                        document.addEventListener('touchstart', function(e) {
+                            if (e.touches.length > 1) {
+                                e.preventDefault();
+                            }
+                        }, { passive: false });
+
+                        document.addEventListener('touchend', function(e) {
+                            const now = (new Date()).getTime();
+                            if (now - lastTouchEnd <= 300) {
+                                e.preventDefault();
+                            }
+                            lastTouchEnd = now;
+                        }, false);
+
+                        document.addEventListener('touchmove', function(e) {
+                            if (e.touches.length > 1) {
+                                e.preventDefault();
+                            }
+                        }, { passive: false });
+
+        // Initialize game when page loads
+        window.addEventListener('load', () => {
+            new MassCollectorGame();
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            location.reload();
+        });
+
+
+
+                    </script></body></html>

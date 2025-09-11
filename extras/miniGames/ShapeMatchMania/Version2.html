@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bejeweled-like Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1a1a;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+
+        .game-container {
+            margin-top: 20px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(8, 50px);
+            grid-template-rows: repeat(8, 50px);
+            gap: 2px;
+            background: #333;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .gem {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+
+        .gem:hover {
+            transform: scale(1.1);
+        }
+
+        .gem.selected {
+            border: 3px solid white;
+        }
+
+        .score-container {
+            margin: 20px 0;
+            font-size: 24px;
+        }
+
+        .controls {
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+<div class="score-container">Score: <span id="score">0</span></div>
+<div class="game-container">
+    <div class="game-board" id="gameBoard"></div>
+</div>
+<div class="controls">
+    <button onclick="newGame()">New Game</button>
+</div>
+
+<script>
+    const BOARD_SIZE = 8;
+    const GEMS = ['💎', '💫', '⭐', '🌟', '✨', '🌠'];
+    let score = 0;
+    let selectedGem = null;
+    let gameBoard = [];
+
+    function createBoard() {
+        gameBoard = Array(BOARD_SIZE).fill().map(() =>
+            Array(BOARD_SIZE).fill().map(() => GEMS[Math.floor(Math.random() * GEMS.length)])
+        );
+    }
+
+    function renderBoard() {
+        const board = document.getElementById('gameBoard');
+        board.innerHTML = '';
+
+        gameBoard.forEach((row, i) => {
+            row.forEach((gem, j) => {
+                const gemElement = document.createElement('div');
+                gemElement.className = 'gem';
+                gemElement.textContent = gem;
+                gemElement.style.background = getGemColor(gem);
+                gemElement.onclick = () => handleGemClick(i, j);
+                board.appendChild(gemElement);
+            });
+        });
+    }
+
+    function getGemColor(gem) {
+        const colors = {
+            '💎': '#4169E1',
+            '💫': '#FFD700',
+            '⭐': '#FF69B4',
+            '🌟': '#32CD32',
+            '✨': '#9370DB',
+            '🌠': '#FF4500'
+        };
+        return colors[gem] || '#666';
+    }
+
+    function handleGemClick(row, col) {
+        const clickedPosition = {row, col};
+
+        if (!selectedGem) {
+            selectedGem = clickedPosition;
+            highlightGem(row, col);
+            return;
+        }
+
+        if (row === selectedGem.row && col === selectedGem.col) {
+            selectedGem = null;
+            removeHighlights();
+            return;
+        }
+
+        if (isAdjacent(selectedGem, clickedPosition)) {
+            swapGems(selectedGem, clickedPosition);
+            if (!checkForMatches()) {
+                swapGems(selectedGem, clickedPosition);
+            } else {
+                while (checkForMatches()) {
+                    removeMatches();
+                    dropGems();
+                    fillEmptySpaces();
+                }
+            }
+            selectedGem = null;
+            removeHighlights();
+            renderBoard();
+        } else {
+            selectedGem = clickedPosition;
+            removeHighlights();
+            highlightGem(row, col);
+        }
+    }
+
+    function isAdjacent(pos1, pos2) {
+        const rowDiff = Math.abs(pos1.row - pos2.row);
+        const colDiff = Math.abs(pos1.col - pos2.col);
+        return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
+    }
+
+    function swapGems(pos1, pos2) {
+        const temp = gameBoard[pos1.row][pos1.col];
+        gameBoard[pos1.row][pos1.col] = gameBoard[pos2.row][pos2.col];
+        gameBoard[pos2.row][pos2.col] = temp;
+    }
+
+    function highlightGem(row, col) {
+        const gems = document.querySelectorAll('.gem');
+        gems[row * BOARD_SIZE + col].classList.add('selected');
+    }
+
+    function removeHighlights() {
+        const gems = document.querySelectorAll('.gem');
+        gems.forEach(gem => gem.classList.remove('selected'));
+    }
+
+    function checkForMatches() {
+        let hasMatches = false;
+
+        // Check horizontal matches
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE - 2; j++) {
+                if (gameBoard[i][j] &&
+                    gameBoard[i][j] === gameBoard[i][j + 1] &&
+                    gameBoard[i][j] === gameBoard[i][j + 2]) {
+                    hasMatches = true;
+                }
+            }
+        }
+
+        // Check vertical matches
+        for (let i = 0; i < BOARD_SIZE - 2; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                if (gameBoard[i][j] &&
+                    gameBoard[i][j] === gameBoard[i + 1][j] &&
+                    gameBoard[i][j] === gameBoard[i + 2][j]) {
+                    hasMatches = true;
+                }
+            }
+        }
+
+        return hasMatches;
+    }
+
+    function removeMatches() {
+        // Check and remove horizontal matches
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE - 2; j++) {
+                if (gameBoard[i][j] &&
+                    gameBoard[i][j] === gameBoard[i][j + 1] &&
+                    gameBoard[i][j] === gameBoard[i][j + 2]) {
+                    gameBoard[i][j] = null;
+                    gameBoard[i][j + 1] = null;
+                    gameBoard[i][j + 2] = null;
+                    score += 30;
+                }
+            }
+        }
+
+        // Check and remove vertical matches
+        for (let i = 0; i < BOARD_SIZE - 2; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                if (gameBoard[i][j] &&
+                    gameBoard[i][j] === gameBoard[i + 1][j] &&
+                    gameBoard[i][j] === gameBoard[i + 2][j]) {
+                    gameBoard[i][j] = null;
+                    gameBoard[i + 1][j] = null;
+                    gameBoard[i + 2][j] = null;
+                    score += 30;
+                }
+            }
+        }
+
+        document.getElementById('score').textContent = score;
+    }
+
+    function dropGems() {
+        for (let j = 0; j < BOARD_SIZE; j++) {
+            let emptySpaces = 0;
+            for (let i = BOARD_SIZE - 1; i >= 0; i--) {
+                if (!gameBoard[i][j]) {
+                    emptySpaces++;
+                } else if (emptySpaces > 0) {
+                    gameBoard[i + emptySpaces][j] = gameBoard[i][j];
+                    gameBoard[i][j] = null;
+                }
+            }
+        }
+    }
+
+    function fillEmptySpaces() {
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                if (!gameBoard[i][j]) {
+                    gameBoard[i][j] = GEMS[Math.floor(Math.random() * GEMS.length)];
+                }
+            }
+        }
+    }
+
+    function newGame() {
+        score = 0;
+        document.getElementById('score').textContent = score;
+        selectedGem = null;
+        createBoard();
+        while (checkForMatches()) {
+            removeMatches();
+            dropGems();
+            fillEmptySpaces();
+        }
+        renderBoard();
+    }
+
+    // Initialize the game
+    newGame();
+</script>
+</body>
+</html>

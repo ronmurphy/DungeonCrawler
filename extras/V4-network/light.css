@@ -1,0 +1,321 @@
+/* ========================================
+   LIGHT MODE THEME - CONSOLIDATED
+   All light mode styles in one place
+   
+   RESPONSIVE BREAKPOINTS:
+   • Mobile: max-width: 768px
+   • Tablet: 769px - 1024px  
+   • Desktop: min-width: 1025px
+   • High DPI: Retina/2x displays
+   ======================================== */
+
+/* Light Theme CSS Variables */
+:root {
+    /* Color Palette */
+    --primary: #6366f1;
+    --primary-rgb: 99, 102, 241;
+    --primary-dark: #4f46e5;
+    --primary-light: #818cf8;
+    --secondary: #f59e0b;
+    --secondary-dark: #d97706;
+    --secondary-light: #fbbf24;
+    --accent: #10b981;
+    --accent-dark: #059669;
+    --accent-light: #34d399;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --success: #10b981;
+    --info: #3b82f6;
+    
+    /* Base Colors - Enhanced Contrast */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --bg-tertiary: #e2e8f0;
+    --bg-card: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-tertiary: #64748b;
+    --border-color: #cbd5e1;
+    --shadow-color: rgba(0, 0, 0, 0.15);
+}
+
+/* ========================================
+   HEADER BUTTON ICONS - LIGHT MODE
+   ======================================== */
+.header-btn .material-icons {
+    color: white; /* Default white for contrast */
+}
+
+.header-btn.trophy-btn .material-icons {
+    color: #FFD700; /* Gold color for trophy */
+}
+
+.header-btn.trophy-btn:hover .material-icons {
+    color: #FFA500; /* Slightly darker gold on hover */
+}
+
+.header-btn.save-btn .material-icons {
+    color: #10b981; /* Green for save */
+}
+
+.header-btn.theme-btn .material-icons {
+    color: #f59e0b; /* Orange for theme toggle */
+}
+
+.header-btn.menu-btn .material-icons {
+    color: #6366f1; /* Purple for menu */
+}
+
+.header-btn.cache-btn .material-icons {
+    color: #3b82f6; /* Blue for refresh */
+}
+
+/* ========================================
+   CARD HEADER ICONS - LIGHT MODE
+   ======================================== */
+.race-card .card-header i {
+    color: var(--accent);
+}
+
+.background-card .card-header i {
+    color: var(--warning);
+}
+
+.class-card .card-header i {
+    color: var(--info);
+}
+
+/* ========================================
+   VITAL STATS ICONS - LIGHT MODE
+   ======================================== */
+.hp-stat i {
+    color: var(--danger);
+}
+
+.mp-stat i {
+    color: var(--info);
+}
+
+/* ========================================
+   RPG AWESOME SPECIFIC ICONS - LIGHT MODE
+   ======================================== */
+.ra-hearts {
+    color: var(--danger) !important;
+}
+
+.ra-crystal-wand {
+    color: var(--info) !important;
+}
+
+/* RPG Awesome fallback colors when icons fail to load */
+.ra.ra-hearts:after {
+    color: var(--danger);
+}
+
+.ra.ra-crystal-wand:after {
+    color: var(--info);
+}
+
+/* ========================================
+   TAB AND SIDEBAR ICONS - LIGHT MODE
+   ======================================== */
+.tab-icon .ra {
+    color: var(--text-secondary);
+}
+
+.sidebar-tab.active .tab-icon .ra {
+    color: white;
+}
+
+/* ========================================
+   GENERAL RPG AWESOME ICONS - LIGHT MODE
+   ======================================== */
+.ra {
+    color: var(--text-primary);
+}
+
+/* ========================================
+   RESPONSIVE LIGHT MODE ENHANCEMENTS
+   ======================================== */
+
+/* Mobile Light Theme Adjustments */
+@media (max-width: 768px) {
+    :root {
+        /* Mobile-optimized light colors for better readability */
+        --shadow-color: rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Mobile header button adjustments */
+    .header-btn .material-icons {
+        font-size: 20px; /* Slightly smaller on mobile */
+    }
+    
+    /* Mobile sidebar text visibility */
+    .sidebar-tab .tab-label {
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    /* Mobile vital stats enhancement */
+    .vitals-inline .vital-item {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-sm);
+        padding: var(--spacing-xs);
+        border: 1px solid var(--border-color);
+    }
+}
+
+/* Tablet Light Theme Overrides */
+@media (min-width: 769px) and (max-width: 1024px) {
+    :root {
+        /* Tablet-specific light theme adjustments */
+        --shadow-color: rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Tablet icon sizing */
+    .header-btn .material-icons {
+        font-size: 22px;
+    }
+    
+    /* Tablet sidebar enhancements */
+    .sidebar-tab .tab-icon {
+        font-size: 1.1rem;
+    }
+    
+    /* Tablet achievement modal fixes */
+    .level-up-modal-content .modal-body {
+        color: #ffffff;
+    }
+    
+    .level-up-modal-content .rarity-header {
+        color: #ffffff !important;
+    }
+    
+    .level-up-modal-content .achievement-header {
+        color: #ffffff !important;
+    }
+    
+    .level-up-modal-content .achievement-header h5 {
+        color: #ffffff !important;
+    }
+    
+    .level-up-modal-content .achievement-header .achievement-date {
+        color: rgba(255, 255, 255, 0.8) !important;
+    }
+    
+    .achievements-display {
+        max-height: 350px;
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+}
+
+/* Desktop Light Theme Enhancements */
+@media (min-width: 1025px) {
+    :root {
+        /* Desktop-specific light theme enhancements */
+        --shadow-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Desktop app container enhancement */
+    .app-container {
+        box-shadow: 0 20px 40px var(--shadow-color);
+        border: 1px solid var(--border-color);
+    }
+    
+    /* Desktop header button hover effects */
+    .header-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+    }
+    
+    /* Desktop modal shadows */
+    /* Mobile modal adjustments */
+    .modal-content,
+    .character-modal-content,
+    .level-up-modal-content {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Mobile achievement modal text fixes */
+    .level-up-modal-content .modal-body {
+        color: #ffffff; /* Force white text in achievement modal body */
+    }
+    
+    .level-up-modal-content .rarity-header {
+        color: #ffffff !important; /* Force white text for rarity headers */
+    }
+    
+    .level-up-modal-content .achievement-header {
+        color: #ffffff !important; /* Force white text for achievement headers */
+    }
+    
+    .level-up-modal-content .achievement-header h5 {
+        color: #ffffff !important; /* Force white text for achievement names */
+    }
+    
+    .level-up-modal-content .achievement-header .achievement-date {
+        color: rgba(255, 255, 255, 0.8) !important; /* Slightly transparent white for dates */
+    }
+    
+    /* Mobile achievement display scrolling */
+    .achievements-display {
+        max-height: 300px; /* Shorter on mobile */
+        overflow-y: auto;
+        padding-right: 8px;
+    }    /* Achievement modal text fixes for light theme */
+    .level-up-modal-content .modal-body {
+        color: #ffffff; /* Force white text in achievement modal body */
+    }
+    
+    .level-up-modal-content .rarity-header {
+        color: #ffffff !important; /* Force white text for rarity headers */
+    }
+    
+    .level-up-modal-content .achievement-header {
+        color: #ffffff !important; /* Force white text for achievement headers */
+    }
+    
+    .level-up-modal-content .achievement-header h5 {
+        color: #ffffff !important; /* Force white text for achievement names */
+    }
+    
+    .level-up-modal-content .achievement-header .achievement-date {
+        color: rgba(255, 255, 255, 0.8) !important; /* Slightly transparent white for dates */
+    }
+    
+    /* Achievement display scrolling */
+    .achievements-display {
+        max-height: 400px;
+        overflow-y: auto;
+        padding-right: 8px; /* Account for scrollbar */
+    }
+}
+
+/* High DPI/Retina Display Light Mode Adjustments */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    :root {
+        /* Enhanced contrast for high DPI displays */
+        --text-primary: #000000;
+        --border-color: #d1d5db;
+    }
+    
+    /* Sharper icons on retina displays */
+    .material-icons,
+    .ra {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* High Contrast Mode - Light Theme */
+@media (prefers-contrast: high) {
+    :root {
+        --primary: #0066cc;
+        --danger: #cc0000;
+        --success: #008800;
+        --border-color: #000000;
+        --text-primary: #000000;
+        --bg-primary: #ffffff;
+    }
+}

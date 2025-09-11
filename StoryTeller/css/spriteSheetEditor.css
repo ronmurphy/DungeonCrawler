@@ -1,0 +1,506 @@
+/* Sprite Sheet Editor - Tablet Optimized CSS */
+
+/* Modal Container - Highest z-index to ensure visibility */
+.sprite-editor-modal {
+    display: none !important;
+    z-index: 99999 !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(0,0,0,0.5) !important;
+}
+
+.sprite-editor-modal.show {
+    display: block !important;
+}
+
+.sprite-editor-modal-content {
+    max-width: 95vw !important;
+    width: 900px !important;
+    height: 90vh !important;
+    max-height: 720px !important;
+    z-index: 100000 !important;
+    position: relative !important;
+    margin: 2vh auto !important;
+    background-color: white !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+    overflow: hidden !important;
+}
+
+.sprite-editor-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+}
+
+.sprite-editor-header h2 {
+    margin: 0;
+    font-size: 16px;
+    color: #495057;
+}
+
+.sprite-editor-body {
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: calc(100% - 60px);
+}
+
+/* Color Swatches & Import Section */
+.color-swatches-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 12px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.color-palettes h4 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    color: #495057;
+}
+
+.palette-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.palette-btn {
+    padding: 6px 12px;
+    border: 2px solid #dee2e6;
+    border-radius: 4px;
+    background: white;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.palette-btn:hover {
+    border-color: #007cba;
+    background: #e3f2fd;
+}
+
+.palette-btn.active {
+    border-color: #007cba;
+    background: #007cba;
+    color: white;
+}
+
+.import-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.grid-size-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+}
+
+/* Main Workspace - 3 Column Layout */
+.main-workspace {
+    display: flex;
+    gap: 15px;
+    min-height: 350px;
+    flex: 1;
+}
+
+/* Alignment Controls (Left Column) */
+.alignment-controls {
+    width: 160px;
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    height: fit-content;
+}
+
+.alignment-controls h4 {
+    margin: 0 0 10px 0;
+    color: #495057;
+    font-size: 14px;
+}
+
+.controls-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.controls-column .control-group {
+    text-align: center;
+}
+
+.controls-column .control-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+    font-size: 11px;
+    color: #495057;
+}
+
+.controls-column .control-group input[type="range"] {
+    width: 100%;
+    margin: 0;
+    display: block;
+}
+
+.controls-column .reset-button {
+    width: 100%;
+    padding: 6px;
+    font-size: 11px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+/* Sprite Grid (Center Column) */
+.sprite-grid-container {
+    flex: 1;
+    max-width: 300px;
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    overflow: hidden;
+}
+
+/* Cell Editor (Right Column) */
+.cell-editor-container {
+    width: 260px;
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    height: fit-content;
+}
+
+/* Enhanced Color Controls */
+.color-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.color-input-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.auto-color-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-auto-color,
+.btn-auto-color-all {
+    padding: 4px 8px;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    font-size: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.btn-auto-color {
+    background: #28a745;
+}
+
+.btn-auto-color:hover {
+    background: #218838;
+}
+
+.btn-auto-color-all {
+    background: #007cba;
+}
+
+.btn-auto-color-all:hover {
+    background: #0056b3;
+}
+
+/* Spectrum Picker Container */
+#spectrum-picker {
+    width: 100%;
+    height: 30px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background: linear-gradient(to right, 
+        #ff0000 0%, #ffff00 16.66%, #00ff00 33.33%, 
+        #00ffff 50%, #0000ff 66.66%, #ff00ff 83.33%, #ff0000 100%);
+    position: relative;
+    cursor: crosshair;
+    --indicator-pos: 50%;
+}
+
+#spectrum-picker::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: var(--indicator-pos, 50%);
+    width: 12px;
+    height: 12px;
+    background: white;
+    border: 2px solid #333;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Cell Editor Form */
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+    font-size: 11px;
+    color: #495057;
+}
+
+.form-group select,
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.color-input-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.color-input-group input[type="color"] {
+    width: 40px;
+    height: 28px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 0;
+}
+
+.color-input-group input[type="text"] {
+    flex: 1;
+    padding: 6px 8px;
+}
+
+/* Button Groups */
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.button-group .btn {
+    padding: 8px 10px;
+    border-radius: 4px;
+    border: none;
+    font-weight: 600;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.btn-lock {
+    background: #28a745;
+    color: white;
+}
+
+.btn-import {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-save {
+    background: #007cba;
+    color: white;
+    font-size: 12px;
+}
+
+.lock-info {
+    font-size: 10px;
+    color: #6c757d;
+    margin-top: 8px;
+    text-align: center;
+    line-height: 1.3;
+}
+
+/* Export Section */
+.export-section {
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.export-section h3 {
+    margin: 0 0 8px 0;
+    color: #495057;
+    font-size: 14px;
+}
+
+.export-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.export-controls input[type="text"] {
+    flex: 1;
+    min-width: 180px;
+    padding: 6px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.export-controls .btn {
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: none;
+    font-weight: 600;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.btn-export {
+    background: #28a745;
+    color: white;
+}
+
+.btn-export-disabled {
+    background: #6c757d;
+    color: white;
+    opacity: 0.6;
+}
+
+/* Responsive Adjustments for Small Tablets */
+@media (max-width: 1080px) {
+    .sprite-editor-modal-content {
+        max-width: 98vw;
+        height: 95vh;
+        margin: 1vh auto;
+    }
+    
+    .main-workspace {
+        flex-direction: column;
+        min-height: auto;
+    }
+    
+    .cell-editor-container {
+        width: 100%;
+    }
+    
+    .controls-row-2 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .export-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .export-controls input[type="text"] {
+        min-width: auto;
+        margin-bottom: 8px;
+    }
+}
+
+@media (max-width: 768px) {
+    .controls-row-1 {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .grid-size-controls {
+        justify-content: center;
+    }
+    
+    .controls-row-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Sprite Grid Styling */
+.sprite-grid {
+    display: grid;
+    gap: 2px;
+    justify-content: center;
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.sprite-cell {
+    width: 60px;
+    height: 60px;
+    border: 2px solid #ddd;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #666;
+    background: #f9f9f9;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.sprite-cell:hover {
+    border-color: #007cba;
+    transform: scale(1.05);
+}
+
+.sprite-cell.selected {
+    border-color: #007cba;
+    background: #e3f2fd;
+    box-shadow: 0 0 8px rgba(0, 124, 186, 0.3);
+}
+
+.sprite-cell.locked {
+    border-color: #28a745;
+    box-shadow: 0 0 5px rgba(40, 167, 69, 0.4);
+}
+
+.sprite-cell.locked::after {
+    content: "🔒";
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 8px;
+    background: #28a745;
+    color: white;
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

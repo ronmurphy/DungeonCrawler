@@ -1,0 +1,410 @@
+/* ===============================================
+   UNIFIED COMBAT MANAGER - THEME AWARE
+   =============================================== */
+
+.combat-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin: 10px 0;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    color: var(--text-primary);
+}
+
+.combat-header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.combat-header h4 {
+    color: var(--primary);
+    margin: 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-section {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+}
+
+.status-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.status-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 2px 8px;
+    background: var(--bg-card);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    min-width: 30px;
+    text-align: center;
+}
+
+.combat-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.start-combat-btn, .next-turn-btn, .clear-initiative-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.start-combat-btn:hover, .next-turn-btn:hover, .clear-initiative-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+.next-turn-btn {
+    background: var(--success);
+}
+
+.next-turn-btn:hover {
+    background: #0ea5e9;
+}
+
+.clear-initiative-btn {
+    background: var(--danger);
+}
+
+.clear-initiative-btn:hover {
+    background: #dc2626;
+}
+
+/* Initiative Tracker with Enemy Selection */
+.initiative-tracker {
+    background: var(--bg-card);
+    border-radius: 0 0 8px 8px;
+    min-height: 200px;
+    position: relative;
+}
+
+.tracker-header {
+    background: var(--bg-secondary);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.enemy-quick-select {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.enemy-quick-select label {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.enemy-select {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    min-width: 140px;
+}
+
+.enemy-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+.enemy-stats {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    background: var(--bg-tertiary);
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+.empty-state {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--text-tertiary);
+    padding: 20px;
+    width: 90%;
+}
+
+.empty-state h6 {
+    color: var(--text-secondary);
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+}
+
+.empty-state p {
+    margin: 4px 0;
+    font-size: 0.9rem;
+}
+
+/* Initiative List */
+.initiative-list {
+    padding: 16px;
+}
+
+.initiative-entry {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+}
+
+.initiative-entry:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+.initiative-entry.current-turn {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: white;
+    font-weight: 600;
+}
+
+.initiative-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.initiative-number {
+    background: var(--primary);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 50%;
+    font-weight: 600;
+    min-width: 36px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.initiative-entry.current-turn .initiative-number {
+    background: white;
+    color: var(--primary);
+}
+
+.character-name {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.initiative-entry.current-turn .character-name {
+    color: white;
+}
+
+.action-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+}
+
+.status-indicator {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+}
+
+.status-waiting {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.status-queued {
+    background: var(--warning);
+    color: white;
+}
+
+.status-ready {
+    background: var(--success);
+    color: white;
+}
+
+.process-action-btn {
+    background: var(--success);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.process-action-btn:hover {
+    background: #0ea5e9;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .combat-header {
+        padding: 12px;
+        gap: 10px;
+    }
+    
+    .status-section {
+        gap: 12px;
+        padding: 10px;
+    }
+    
+    .status-item {
+        font-size: 0.8rem;
+    }
+    
+    .combat-controls {
+        gap: 6px;
+    }
+    
+    .start-combat-btn, .next-turn-btn, .clear-initiative-btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .tracker-header {
+        padding: 10px 12px;
+    }
+    
+    .enemy-quick-select {
+        gap: 8px;
+    }
+    
+    .enemy-select {
+        min-width: 120px;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+    
+    .initiative-entry {
+        padding: 10px;
+    }
+    
+    .initiative-number {
+        padding: 4px 8px;
+        min-width: 30px;
+        font-size: 0.8rem;
+    }
+    
+    .character-name {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .combat-header {
+        padding: 10px;
+    }
+    
+    .status-section {
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+    }
+    
+    .combat-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .enemy-quick-select {
+        flex-direction: column;
+        gap: 6px;
+        text-align: center;
+    }
+    
+    .enemy-select {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .enemy-stats {
+        font-size: 0.75rem;
+        text-align: center;
+    }
+}
+
+@media (max-width: 360px) {
+    .initiative-info {
+        gap: 8px;
+    }
+    
+    .action-status {
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-end;
+    }
+    
+    .empty-state {
+        padding: 15px;
+    }
+    
+    .empty-state h6 {
+        font-size: 0.9rem;
+    }
+    
+    .empty-state p {
+        font-size: 0.8rem;
+    }
+}

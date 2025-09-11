@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Additional DCC FAB Concepts</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0f0f23, #1a1a3e);
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .demo-container {
+            margin-bottom: 120px;
+            position: relative;
+            height: 400px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .description {
+            margin-bottom: 30px;
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            max-width: 700px;
+            line-height: 1.5;
+        }
+
+        /* Design 4: Compass Rose Navigation */
+        .compass-fab {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+        }
+
+        .compass-main {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #2c3e50, #34495e);
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(44, 62, 80, 0.4);
+            transition: all 0.4s ease;
+            border: 3px solid #f39c12;
+        }
+
+        .compass-main::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: conic-gradient(from 0deg, #e74c3c, #f39c12, #f1c40f, #2ecc71, #3498db, #9b59b6, #e74c3c);
+            border-radius: 50%;
+            animation: compassSpin 6s linear infinite;
+        }
+
+        .compass-main::after {
+            content: '🧭';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            z-index: 2;
+        }
+
+        @keyframes compassSpin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .compass-main:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(243, 156, 18, 0.4);
+        }
+
+        .compass-directions {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .compass-direction {
+            position: absolute;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            opacity: 0;
+            transform: scale(0);
+            pointer-events: none;
+            font-size: 12px;
+            color: white;
+            text-align: center;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .compass-fab.active .compass-direction {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: all;
+        }
+
+        .compass-direction:nth-child(2) { /* North */
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            transition-delay: 0.1s;
+        }
+
+        .compass-direction:nth-child(3) { /* Northeast */
+            top: 15%;
+            left: 85%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            transition-delay: 0.2s;
+        }
+
+        .compass-direction:nth-child(4) { /* East */
+            top: 50%;
+            right: 0;
+            transform: translate(50%, -50%) scale(0);
+            background: linear-gradient(135deg, #f1c40f, #f39c12);
+            transition-delay: 0.3s;
+        }
+
+        .compass-direction:nth-child(5) { /* Southeast */
+            bottom: 15%;
+            right: 15%;
+            transform: translate(50%, 50%) scale(0);
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            transition-delay: 0.4s;
+        }
+
+        .compass-direction:nth-child(6) { /* South */
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            transition-delay: 0.5s;
+        }
+
+        .compass-direction:nth-child(7) { /* Southwest */
+            bottom: 15%;
+            left: 15%;
+            transform: translate(-50%, 50%) scale(0);
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            transition-delay: 0.6s;
+        }
+
+        .compass-fab.active .compass-direction:nth-child(2) { transform: translateX(-50%) scale(1); }
+        .compass-fab.active .compass-direction:nth-child(3) { transform: translate(-50%, -50%) scale(1); }
+        .compass-fab.active .compass-direction:nth-child(4) { transform: translate(50%, -50%) scale(1); }
+        .compass-fab.active .compass-direction:nth-child(5) { transform: translate(50%, 50%) scale(1); }
+        .compass-fab.active .compass-direction:nth-child(6) { transform: translateX(-50%) scale(1); }
+        .compass-fab.active .compass-direction:nth-child(7) { transform: translate(-50%, 50%) scale(1); }
+
+        /* Design 5: Constellation Map */
+        .constellation-fab {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+        }
+
+        .constellation-main {
+            width: 70px;
+            height: 70px;
+            background: radial-gradient(circle, #1a1a3e, #0f0f23);
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+            transition: all 0.4s ease;
+            border: 2px solid #4a69bd;
+            overflow: hidden;
+        }
+
+        .constellation-main::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: 
+                radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+                radial-gradient(1px 1px at 40px 70px, #fff, transparent),
+                radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+                radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+                radial-gradient(1px 1px at 160px 30px, #fff, transparent);
+            background-repeat: repeat;
+            background-size: 200px 100px;
+            animation: starsMove 20s linear infinite;
+        }
+
+        .constellation-main::after {
+            content: '✨';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            z-index: 2;
+            animation: starTwinkle 2s ease-in-out infinite;
+        }
+
+        @keyframes starsMove {
+            to { transform: translateX(-200px); }
+        }
+
+        @keyframes starTwinkle {
+            0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.2); }
+        }
+
+        .constellation-main:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px rgba(74, 105, 189, 0.4);
+        }
+
+        .constellation-map {
+            position: absolute;
+            width: 300px;
+            height: 250px;
+            bottom: 80px;
+            right: -115px;
+            background: radial-gradient(ellipse at center, rgba(26, 26, 62, 0.95), rgba(15, 15, 35, 0.98));
+            border-radius: 20px;
+            border: 1px solid #4a69bd;
+            opacity: 0;
+            transform: scale(0.8) translateY(20px);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .constellation-fab.active .constellation-map {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: all;
+        }
+
+        .star-cluster {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1), transparent);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .star-cluster::before {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            border-radius: 50%;
+            background: radial-gradient(circle, transparent 70%, rgba(255,255,255,0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .star-cluster:hover::before {
+            opacity: 1;
+        }
+
+        .star-cluster:hover {
+            transform: scale(1.2);
+            background: radial-gradient(circle, rgba(255,255,255,0.2), transparent);
+        }
+
+        .cluster-1 { top: 30px; left: 50px; }
+        .cluster-2 { top: 60px; left: 120px; }
+        .cluster-3 { top: 100px; left: 200px; }
+        .cluster-4 { top: 160px; left: 180px; }
+        .cluster-5 { top: 180px; left: 100px; }
+        .cluster-6 { top: 140px; left: 30px; }
+
+        /* Design 6: Mechanical Gear System */
+        .gear-fab {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 75px;
+            height: 75px;
+        }
+
+        .gear-main {
+            width: 75px;
+            height: 75px;
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 25px rgba(52, 73, 94, 0.4);
+            animation: gearRotate 8s linear infinite;
+        }
+
+        .gear-main::before {
+            content: '⚙️';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            z-index: 2;
+        }
+
+        @keyframes gearRotate {
+            to { transform: rotate(360deg); }
+        }
+
+        .gear-main:hover {
+            animation-duration: 2s;
+            box-shadow: 0 12px 35px rgba(211, 84, 0, 0.4);
+        }
+
+        .gear-system {
+            position: absolute;
+            width: 250px;
+            height: 200px;
+            bottom: 0;
+            right: 0;
+            pointer-events: none;
+        }
+
+        .mini-gear {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            opacity: 0;
+            transform: scale(0);
+            pointer-events: none;
+            color: white;
+            font-size: 14px;
+        }
+
+        .gear-fab.active .mini-gear {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: all;
+            animation: gearRotate 6s linear infinite;
+        }
+
+        .mini-gear:nth-child(2) {
+            top: 20px;
+            left: 80px;
+            transition-delay: 0.1s;
+            animation-direction: reverse;
+        }
+
+        .mini-gear:nth-child(3) {
+            top: 60px;
+            left: 140px;
+            transition-delay: 0.2s;
+        }
+
+        .mini-gear:nth-child(4) {
+            top: 120px;
+            left: 150px;
+            transition-delay: 0.3s;
+            animation-direction: reverse;
+        }
+
+        .mini-gear:nth-child(5) {
+            top: 160px;
+            left: 90px;
+            transition-delay: 0.4s;
+        }
+
+        .mini-gear:nth-child(6) {
+            top: 120px;
+            left: 30px;
+            transition-delay: 0.5s;
+            animation-direction: reverse;
+        }
+
+        /* Design 7: Portal Gateway */
+        .portal-fab {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+        }
+
+        .portal-main {
+            width: 80px;
+            height: 80px;
+            background: conic-gradient(from 0deg, #8e44ad, #3498db, #2ecc71, #f39c12, #e74c3c, #8e44ad);
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(142, 68, 173, 0.5);
+            transition: all 0.4s ease;
+            animation: portalSpin 4s linear infinite;
+        }
+
+        .portal-main::before {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            background: radial-gradient(circle, transparent 40%, rgba(15, 15, 35, 0.8) 60%);
+            border-radius: 50%;
+        }
+
+        .portal-main::after {
+            content: '🌀';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            z-index: 2;
+            animation: portalPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes portalSpin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes portalPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+        }
+
+        .portal-main:hover {
+            animation-duration: 1s;
+            box-shadow: 0 0 50px rgba(142, 68, 173, 0.8);
+        }
+
+        .portal-destinations {
+            position: absolute;
+            width: 280px;
+            height: 220px;
+            bottom: 90px;
+            right: -100px;
+            background: rgba(15, 15, 35, 0.95);
+            border-radius: 20px;
+            border: 2px solid #8e44ad;
+            opacity: 0;
+            transform: rotateX(-90deg);
+            transform-origin: bottom center;
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .portal-fab.active .portal-destinations {
+            opacity: 1;
+            transform: rotateX(0deg);
+            pointer-events: all;
+        }
+
+        .portal-destination {
+            background: linear-gradient(135deg, rgba(142, 68, 173, 0.3), rgba(52, 152, 219, 0.3));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+
+        .portal-destination:hover {
+            background: linear-gradient(135deg, rgba(142, 68, 173, 0.5), rgba(52, 152, 219, 0.5));
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3);
+        }
+
+        .destination-icon {
+            font-size: 20px;
+            width: 30px;
+            text-align: center;
+        }
+
+        /* Common styles */
+        .reset-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <button class="reset-btn" onclick="resetAllFabs()">Reset All FABs</button>
+    
+    <div class="demo-container">
+        <h2>Design 4: Compass Rose Navigation</h2>
+        <p class="description">
+            A classic D&D compass that expands into directional navigation points. Perfect for RPG navigation and could represent different "directions" in your app - North for Character Info, East for Combat, South for Social/Chat, etc. Each direction could be color-coded and represent logical groupings of your features.
+        </p>
+        <div class="compass-fab" id="compassFab">
+            <div class="compass-main" onclick="toggleFab('compassFab')"></div>
+            <div class="compass-directions">
+                <div class="compass-direction">📊<br><small>Stats</small></div>
+                <div class="compass-direction">⚔️<br><small>Combat</small></div>
+                <div class="compass-direction">🔮<br><small>Magic</small></div>
+                <div class="compass-direction">🎮<br><small>Games</small></div>
+                <div class="compass-direction">💬<br><small>Social</small></div>
+                <div class="compass-direction">📝<br><small>Notes</small></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-container">
+        <h2>Design 5: Constellation Map</h2>
+        <p class="description">
+            A mystical star map that opens to reveal constellation clusters. Each star cluster represents a different app section. The twinkling stars and celestial theme fit perfectly with fantasy RPGs. The map layout could mirror your hexagon grid concept with stars positioned like hex tiles.
+        </p>
+        <div class="constellation-fab" id="constellationFab">
+            <div class="constellation-main" onclick="toggleFab('constellationFab')"></div>
+            <div class="constellation-map">
+                <div class="star-cluster cluster-1">📦</div>
+                <div class="star-cluster cluster-2">🔮</div>
+                <div class="star-cluster cluster-3">⚔️</div>
+                <div class="star-cluster cluster-4">📝</div>
+                <div class="star-cluster cluster-5">💬</div>
+                <div class="star-cluster cluster-6">🎮</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-container">
+        <h2>Design 6: Mechanical Gear System</h2>
+        <p class="description">
+            A steampunk-inspired gear mechanism where clicking the main gear causes smaller gears to emerge and rotate. Each gear represents a different system in your app. The mechanical theme suggests interconnected systems and could visually represent how different parts of your character sheet work together.
+        </p>
+        <div class="gear-fab" id="gearFab">
+            <div class="gear-main" onclick="toggleFab('gearFab')"></div>
+            <div class="gear-system">
+                <div class="mini-gear">📦</div>
+                <div class="mini-gear">🔮</div>
+                <div class="mini-gear">⚔️</div>
+                <div class="mini-gear">📝</div>
+                <div class="mini-gear">💬</div>
+                <div class="mini-gear">🎮</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-container">
+        <h2>Design 7: Portal Gateway</h2>
+        <p class="description">
+            A magical portal that opens dimensional gateways to different sections of your app. The swirling portal effect is mesmerizing and each "destination" could represent a different area of your character sheet. Perfect for the magical theme and suggests quick travel between app sections.
+        </p>
+        <div class="portal-fab" id="portalFab">
+            <div class="portal-main" onclick="toggleFab('portalFab')"></div>
+            <div class="portal-destinations">
+                <div class="portal-destination">
+                    <div class="destination-icon">📦</div>
+                    <div>
+                        <div>Inventory Realm</div>
+                        <small style="color: #a0a0a0;">Items & Equipment</small>
+                    </div>
+                </div>
+                <div class="portal-destination">
+                    <div class="destination-icon">🔮</div>
+                    <div>
+                        <div>Arcane Library</div>
+                        <small style="color: #a0a0a0;">Spells & Magic</small>
+                    </div>
+                </div>
+                <div class="portal-destination">
+                    <div class="destination-icon">💬</div>
+                    <div>
+                        <div>Tavern Commons</div>
+                        <small style="color: #a0a0a0;">Chat & Social</small>
+                    </div>
+                </div>
+                <div class="portal-destination">
+                    <div class="destination-icon">🎮</div>
+                    <div>
+                        <div>Game Halls</div>
+                        <small style="color: #a0a0a0;">Mini Games</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleFab(fabId) {
+            // Close all other FABs first
+            const allFabs = document.querySelectorAll('[id$="Fab"]');
+            allFabs.forEach(fab => {
+                if (fab.id !== fabId) {
+                    fab.classList.remove('active');
+                }
+            });
+            
+            // Toggle the clicked FAB
+            const targetFab = document.getElementById(fabId);
+            targetFab.classList.toggle('active');
+        }
+
+        function resetAllFabs() {
+            const allFabs = document.querySelectorAll('[id$="Fab"]');
+            allFabs.forEach(fab => fab.classList.remove('active'));
+        }
+
+        // Close FABs when clicking outside
+        document.addEventListener('click', (e) => {
+            const isClickInsideFab = e.target.closest('[id$="Fab"]') || e.target.closest('.reset-btn');
+            if (!isClickInsideFab) {
+                resetAllFabs();
+            }
+        });
+
+        // Enhanced interactions
+        document.addEventListener('DOMContentLoaded', () => {
+            // Compass directions hover effects
+            const compassDirections = document.querySelectorAll('.compass-direction');
+            compassDirections.forEach(direction => {
+                direction.addEventListener('mouseenter', () => {
+                    direction.style.boxShadow = '0 0 20px rgba(243, 156, 18, 0.6)';
+                });
+                direction.addEventListener('mouseleave', () => {
+                    direction.style.boxShadow = '';
+                });
+            });
+
+            // Star cluster twinkling
+            const starClusters = document.querySelectorAll('.star-cluster');
+            starClusters.forEach((cluster, index) => {
+                setInterval(() => {
+                    cluster.style.textShadow = '0 0 10px rgba(255,255,255,0.8)';
+                    setTimeout(() => {
+                        cluster.style.textShadow = '';
+                    }, 200);
+                }, 2000 + (index * 500));
+            });
+
+            // Gear sound effect simulation (visual feedback)
+            const gears = document.querySelectorAll('.mini-gear');
+            gears.forEach(gear => {
+                gear.addEventListener('click', () => {
+                    gear.style.animationDuration = '0.5s';
+                    setTimeout(() => {
+                        gear.style.animationDuration = '6s';
+                    }, 1000);
+                });
+            });
+
+            // Portal destination hover effects
+            const destinations = document.querySelectorAll('.portal-destination');
+            destinations.forEach(dest => {
+                dest.addEventListener('mouseenter', () => {
+                    dest.style.borderColor = 'rgba(142, 68, 173, 0.8)';
+                });
+                dest.addEventListener('mouseleave', () => {
+                    dest.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

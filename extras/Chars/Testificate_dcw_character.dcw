@@ -1,0 +1,275 @@
+{
+  "name": "Testificate",
+  "level": 8,
+  "availablePoints": 0,
+  "stats": {
+    "strength": 10,
+    "dexterity": 10,
+    "constitution": 10,
+    "intelligence": 8,
+    "wisdom": 9,
+    "charisma": 8
+  },
+  "statMaximums": {
+    "strength": 15,
+    "dexterity": 15,
+    "constitution": 15,
+    "intelligence": 15,
+    "wisdom": 15,
+    "charisma": 15
+  },
+  "healthPoints": 18,
+  "currentHealthPoints": 18,
+  "magicPoints": 17,
+  "currentMagicPoints": 17,
+  "customSkills": [
+    {
+      "name": "Adaptability",
+      "stat": "charisma",
+      "source": "race"
+    },
+    {
+      "name": "Teaching",
+      "stat": "charisma",
+      "source": "job"
+    },
+    {
+      "name": "Research",
+      "stat": "intelligence",
+      "source": "job"
+    },
+    {
+      "name": "Martial Arts",
+      "stat": "dexterity",
+      "source": "class"
+    },
+    {
+      "name": "Ki Control",
+      "stat": "wisdom",
+      "source": "class"
+    },
+    {
+      "name": "Iron Stomach",
+      "stat": "constitution",
+      "source": "achievement",
+      "grantedBy": "Iron Stomach Gourmand"
+    }
+  ],
+  "personal": {
+    "age": "",
+    "backstory": "",
+    "avatarUrl": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/testificate.png"
+  },
+  "race": "human",
+  "customRace": "",
+  "raceBonuses": [
+    "+1 Charisma (Human)",
+    "Adaptability [CHA] skill (Human)"
+  ],
+  "customRaceData": {
+    "selectedStats": [],
+    "skills": [],
+    "maximums": {}
+  },
+  "job": "teacher",
+  "customJob": "",
+  "class": "monk",
+  "customClass": "",
+  "jobBonuses": [
+    "+1 Wisdom (Teacher)",
+    "+1 Charisma (Teacher)",
+    "Teaching [CHA] skill (Teacher)",
+    "Research [INT] skill (Teacher)"
+  ],
+  "classBonuses": [
+    "+1 Dexterity (Monk)",
+    "+1 Wisdom (Monk)",
+    "Martial Arts [DEX] skill (Monk)",
+    "Ki Control [WIS] skill (Monk)"
+  ],
+  "customJobData": {
+    "selectedStats": [],
+    "skills": []
+  },
+  "customClassData": {
+    "selectedStats": [],
+    "skills": []
+  },
+  "rollHistory": [
+    {
+      "type": "Attribute",
+      "name": "Constitution",
+      "diceRolls": [
+        4
+      ],
+      "diceTotal": 4,
+      "levelBonus": 1,
+      "statBonus": 4,
+      "finalTotal": 9,
+      "config": {
+        "diceCount": 1,
+        "diceType": 10,
+        "levelBonus": 1,
+        "description": "1d10 + 1 (Level 1)"
+      },
+      "timestamp": "4:51:52 PM"
+    }
+  ],
+  "spells": [
+    {
+      "id": "dcc_1755727113390_du5gpvfc4",
+      "name": "Infusion",
+      "element": "arcane",
+      "damageType": "",
+      "damageAmount": 2,
+      "healingType": "",
+      "healingAmount": 0,
+      "primaryEffect": "Enhances item properties temporarily",
+      "secondaryEffect": "",
+      "cost": 1,
+      "effects": [
+        "Temporarily improves equipment"
+      ],
+      "cooldown": 10,
+      "level": 1
+    }
+  ],
+  "inventory": [
+    {
+      "id": "dcc_1755727103699_t48gdeec8",
+      "name": "Pistol",
+      "type": "weapon",
+      "size": "light",
+      "defense": 0,
+      "twoHanded": false,
+      "ranged": true,
+      "healing": false,
+      "description": "Compact and concealable",
+      "special": [
+        "Concealable",
+        "Ammunition"
+      ]
+    },
+    {
+      "id": "dcc_1755731690962_qutacckey",
+      "name": "test",
+      "type": "armor",
+      "size": null,
+      "defense": 3,
+      "twoHanded": false,
+      "ranged": false,
+      "healing": false
+    },
+    {
+      "id": "dcc_1755732652577_wf4nyueg6",
+      "name": "Small Pistol",
+      "type": "weapon",
+      "size": "light",
+      "defense": 0,
+      "twoHanded": false,
+      "ranged": true,
+      "healing": false
+    },
+    {
+      "id": "dcc_1755732675472_l1t3um1hh",
+      "name": "Old Buckler Shield",
+      "type": "armor",
+      "size": null,
+      "defense": 1,
+      "twoHanded": false,
+      "ranged": false,
+      "healing": false
+    }
+  ],
+  "equipment": {
+    "mainHand": "dcc_1755727103699_t48gdeec8",
+    "offHand": "dcc_1755732652577_wf4nyueg6",
+    "armor": "dcc_1755732675472_l1t3um1hh",
+    "accessory": null
+  },
+  "statusEffects": [],
+  "notes": {
+    "personal": "",
+    "party": "",
+    "session": "",
+    "barter": "",
+    "world": "",
+    "combat": ""
+  },
+  "skillLevels": {},
+  "achievements": [
+    {
+      "id": "human_adaptability",
+      "name": "Human Adaptability",
+      "description": "Prove that humans can survive anything",
+      "effect": "+1 to all stats, can learn any skill regardless of restrictions",
+      "rarity": "uncommon",
+      "category": "race",
+      "dateEarned": "2025-08-20T22:46:08.489Z"
+    },
+    {
+      "id": "explorer",
+      "name": "Explorer",
+      "description": "Discover 10 secret areas",
+      "effect": "+1 to Wisdom, +20% chance to find secret areas",
+      "rarity": "common",
+      "category": "exploration",
+      "dateEarned": "2025-08-20T22:46:51.274Z"
+    },
+    {
+      "id": "dungeon_veteran",
+      "name": "Dungeon Veteran",
+      "description": "Clear 5 floors without dying",
+      "effect": "+1 to all stats, +5% damage to dungeon creatures",
+      "rarity": "uncommon",
+      "category": "progression",
+      "dateEarned": "2025-08-20T22:47:11.876Z"
+    },
+    {
+      "id": "first_steps",
+      "name": "First Steps",
+      "description": "Survive your first day in the dungeon",
+      "effect": "+1 to Constitution",
+      "rarity": "common",
+      "category": "survival",
+      "dateEarned": "2025-08-20T22:47:20.357Z"
+    },
+    {
+      "id": "night_vision_darkness_walker",
+      "name": "Darkness Walker",
+      "description": "Navigate 100 areas in complete darkness",
+      "effect": "Perfect night vision, +2 to Wisdom",
+      "rarity": "uncommon",
+      "category": "absurd",
+      "earnedAt": 6,
+      "earnedDate": "2025-08-20T23:03:48.300Z"
+    },
+    {
+      "id": "pathfinder_navigator",
+      "name": "Master Navigator",
+      "description": "Never get lost in the dungeon",
+      "effect": "+3 to Pathfinder skill, always know the fastest route",
+      "rarity": "uncommon",
+      "category": "skill",
+      "requiredSkill": "Pathfinder",
+      "skillLevel": 8,
+      "earnedAt": 7,
+      "earnedDate": "2025-08-20T23:07:26.787Z"
+    },
+    {
+      "id": "iron_stomach_gourmand",
+      "name": "Iron Stomach Gourmand",
+      "description": "Eat 100 different questionable foods without getting sick",
+      "effect": "+3 to Iron Stomach skill, gain nutrition from any organic matter",
+      "rarity": "uncommon",
+      "category": "skill",
+      "requiredSkill": "Iron Stomach",
+      "skillLevel": 6,
+      "earnedAt": 8,
+      "earnedDate": "2025-08-20T23:13:16.278Z"
+    }
+  ],
+  "specialEffects": [
+    "Special Ability: +1 to all stats, can learn any skill regardless of restrictions"
+  ]
+}

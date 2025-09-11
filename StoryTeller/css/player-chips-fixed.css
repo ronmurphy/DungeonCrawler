@@ -1,0 +1,255 @@
+/* Player Chips - Adapted from V4-network for StoryTeller panel layout */
+
+/* Adjust chat interface when player chips are present */
+.chat-interface {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* StoryTeller-specific chat layout adjustments with static math */
+.chat-interface .chat-messages {
+    overflow-y: auto;
+    /* Override StoryTeller's default calc(100vh - 280px) to account for player-chips */
+    /* Original: 280px for (toolbar + input + panel-header + padding) */
+    /* Add: ~60px for player-chips area */
+    /* Add: ~20px for panel-content padding (10px top + 10px bottom) */
+    /* Total: 280px + 60px + 20px = 360px */
+    height: calc(100vh - 360px) !important;
+    max-height: calc(100vh - 360px) !important;
+    min-height: 200px !important;
+    flex: none !important; /* Prevent flex from overriding our height calculations */
+    flex-shrink: 0 !important;
+}
+
+/* Responsive adjustments for StoryTeller panels */
+@media (max-height: 900px) {
+    .chat-interface .chat-messages {
+        /* Original: 240px, add 60px for chips + 20px for padding = 320px */
+        height: calc(100vh - 320px) !important;
+        max-height: calc(100vh - 320px) !important;
+        min-height: 180px !important;
+    }
+}
+
+@media (max-height: 800px) {
+    .chat-interface .chat-messages {
+        /* Original: 200px, add 50px for chips (smaller padding) + 20px for panel padding = 270px */
+        height: calc(100vh - 270px) !important;
+        max-height: calc(100vh - 270px) !important;
+        min-height: 150px !important;
+    }
+    
+    .player-chips-area {
+        padding: 8px !important;
+    }
+}
+
+@media (max-height: 700px) {
+    .chat-interface .chat-messages {
+        /* Original: 180px, add 40px for chips (smaller padding) + 20px for panel padding = 240px */
+        height: calc(100vh - 240px) !important;
+        max-height: calc(100vh - 240px) !important;
+        min-height: 120px !important;
+    }
+    
+    .player-chips-area {
+        padding: 6px !important;
+    }
+}
+
+.chat-interface .chat-toolbar,
+.chat-interface .player-chips-area,
+.chat-interface .chat-input-area {
+    flex-shrink: 0; /* Don't shrink */
+}
+
+/* Player Chips */
+.player-chips-area {
+    background: rgba(30, 30, 45, 0.8);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+    padding: 12px;
+    flex-shrink: 0; /* Don't shrink when space is limited */
+    display: block !important; /* Always visible */
+}
+
+.player-chips-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 215, 0, 0.3) transparent;
+}
+
+.player-chip {
+    background: rgba(40, 40, 60, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: fit-content;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.player-chip:hover {
+    background: rgba(60, 60, 80, 0.9);
+    border-color: rgba(255, 215, 0, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+/* Touch device interactions */
+@media (hover: none) and (pointer: coarse) {
+    .player-chip:not(.self) {
+        /* Always show that it's interactive on touch devices */
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .player-chip:not(.self):active {
+        background: rgba(60, 60, 80, 0.9);
+        border-color: rgba(102, 126, 234, 0.6);
+        transform: scale(0.98);
+        transition: all 0.1s ease;
+    }
+}
+
+/* Add visual indicator for clickable chips - updated for selection mode */
+.player-chip:not(.self)::after {
+    content: '🎯';  /* Changed from 📝 to indicate selection */
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 0.7em;
+    opacity: 0;
+    transition: opacity 0.2s;
+    background: rgba(102, 126, 234, 0.9);
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid white;
+    pointer-events: none; /* Prevent icon from blocking chip clicks */
+}
+
+.player-chip:not(.self):hover::after {
+    opacity: 1;
+}
+
+/* Show selection icon on touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .player-chip:not(.self)::after {
+        opacity: 0.8;
+    }
+    
+    .player-chip:not(.self):active::after {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+.player-chip.self {
+    background: rgba(0, 123, 255, 0.2);
+    border-color: rgba(0, 123, 255, 0.4);
+}
+
+.player-chip.storyteller {
+    background: rgba(220, 53, 69, 0.2);
+    border-color: rgba(220, 53, 69, 0.4);
+}
+
+.player-chip.storyteller:hover {
+    background: rgba(220, 53, 69, 0.3);
+}
+
+.chip-avatar {
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.chip-name {
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Ensure player chips area works well with StoryTeller color scheme */
+.dark-theme .player-chips-area {
+    background: rgba(20, 20, 30, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-theme .player-chip {
+    background: rgba(30, 30, 45, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-theme .player-chip:hover {
+    background: rgba(45, 45, 65, 0.9);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark-theme .chip-avatar {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Hide player chips area by default until players connect */
+.player-chips-area[style*="display: none"] {
+    display: none !important;
+}
+
+/* Show when there are connected players */
+.player-chips-area.has-players {
+    display: block !important;
+}
+
+/* Selected state for command mode */
+.player-chip.selected {
+    background: rgba(0, 123, 255, 0.3) !important;
+    border-color: rgba(0, 123, 255, 0.6) !important;
+    box-shadow: 0 0 12px rgba(0, 123, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.player-chip.selected::before {
+    content: '⚡';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    font-size: 0.8em;
+    background: rgba(0, 123, 255, 0.9);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.dark-theme .player-chip.selected {
+    background: rgba(102, 126, 234, 0.3) !important;
+    border-color: rgba(102, 126, 234, 0.6) !important;
+    box-shadow: 0 0 12px rgba(102, 126, 234, 0.4);
+}
+
+.dark-theme .player-chip.selected::before {
+    background: rgba(102, 126, 234, 0.9);
+}

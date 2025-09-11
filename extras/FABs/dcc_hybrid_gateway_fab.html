@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCC Gateway FAB - Hybrid Design</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0f0f23, #1a1a3e);
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .demo-container {
+            margin-bottom: 120px;
+            position: relative;
+            height: 400px;
+        }
+
+        h2 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .description {
+            margin-bottom: 30px;
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            max-width: 700px;
+            line-height: 1.5;
+        }
+
+        /* Design A: Gateway Arc Layout */
+        .gateway-arc-fab {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+        }
+
+        .gateway-arc-main {
+            width: 80px;
+            height: 80px;
+            background: conic-gradient(from 0deg, #8e44ad, #3498db, #2ecc71, #f39c12, #e74c3c, #8e44ad);
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(142, 68, 173, 0.5);
+            transition: all 0.4s ease;
+            animation: portalSpin 4s linear infinite;
+        }
+
+        .gateway-arc-main::before {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            background: radial-gradient(circle, transparent 40%, rgba(15, 15, 35, 0.8) 60%);
+            border-radius: 50%;
+        }
+
+        .gateway-arc-main::after {
+            content: '🌀';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            z-index: 2;
+            animation: portalPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes portalSpin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes portalPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+        }
+
+        .gateway-arc-main:hover {
+            animation-duration: 1s;
+            box-shadow: 0 0 50px rgba(142, 68, 173, 0.8);
+        }
+
+        .gateway-arc-options {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            pointer-events: none;
+        }
+
+        .gateway-arc-option {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #8e44ad, #3498db);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            opacity: 0;
+            transform: scale(0);
+            pointer-events: none;
+            font-size: 18px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .gateway-arc-fab.active .gateway-arc-option {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: all;
+        }
+
+        /* Arc positioning - spreads from bottom-right upward and leftward */
+        .gateway-arc-option:nth-child(2) {
+            bottom: 90px;
+            right: 15px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            transition-delay: 0.1s;
+        }
+
+        .gateway-arc-option:nth-child(3) {
+            bottom: 120px;
+            right: 45px;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            transition-delay: 0.2s;
+        }
+
+        .gateway-arc-option:nth-child(4) {
+            bottom: 130px;
+            right: 85px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            transition-delay: 0.3s;
+        }
+
+        .gateway-arc-option:nth-child(5) {
+            bottom: 120px;
+            right: 125px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            transition-delay: 0.4s;
+        }
+
+        .gateway-arc-option:nth-child(6) {
+            bottom: 90px;
+            right: 155px;
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            transition-delay: 0.5s;
+        }
+
+        .gateway-arc-option:nth-child(7) {
+            bottom: 50px;
+            right: 175px;
+            background: linear-gradient(135deg, #f1c40f, #f39c12);
+            transition-delay: 0.6s;
+        }
+
+        /* Design B: Feral Gateway Stack */
+        .feral-gateway-fab {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+        }
+
+        .feral-gateway-main {
+            width: 80px;
+            height: 80px;
+            background: 
+                radial-gradient(circle at 30% 30%, rgba(231, 76, 60, 0.8), transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(52, 152, 219, 0.8), transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(142, 68, 173, 0.9), transparent 70%);
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 
+                0 0 20px rgba(142, 68, 173, 0.5),
+                inset 0 0 20px rgba(0,0,0,0.3);
+            transition: all 0.4s ease;
+            animation: feralPulse 3s ease-in-out infinite;
+            border: 2px solid #ffd700;
+        }
+
+        .feral-gateway-main::before {
+            content: '';
+            position: absolute;
+            inset: 6px;
+            border-radius: 50%;
+            background: radial-gradient(circle, transparent 30%, rgba(15, 15, 35, 0.6) 70%);
+            animation: feralRotate 8s linear infinite;
+        }
+
+        .feral-gateway-main::after {
+            content: '👁️';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            z-index: 2;
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+        }
+
+        @keyframes feralPulse {
+            0%, 100% { 
+                box-shadow: 
+                    0 0 20px rgba(142, 68, 173, 0.5),
+                    inset 0 0 20px rgba(0,0,0,0.3);
+            }
+            50% { 
+                box-shadow: 
+                    0 0 40px rgba(142, 68, 173, 0.8),
+                    0 0 60px rgba(231, 76, 60, 0.4),
+                    inset 0 0 20px rgba(0,0,0,0.3);
+            }
+        }
+
+        @keyframes feralRotate {
+            to { transform: rotate(360deg); }
+        }
+
+        .feral-gateway-main:hover {
+            transform: scale(1.1);
+            animation-duration: 1s;
+        }
+
+        .feral-stack {
+            position: absolute;
+            bottom: 90px;
+            right: -10px;
+            width: 120px;
+            height: 300px;
+            pointer-events: none;
+        }
+
+        .feral-option {
+            position: absolute;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            opacity: 0;
+            transform: scale(0) translateX(50px);
+            pointer-events: none;
+            font-size: 16px;
+            color: white;
+            text-align: center;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .feral-gateway-fab.active .feral-option {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+            pointer-events: all;
+        }
+
+        .feral-option:nth-child(2) {
+            bottom: 0;
+            right: 30px;
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.9), rgba(192, 57, 43, 0.9));
+            transition-delay: 0.1s;
+        }
+
+        .feral-option:nth-child(3) {
+            bottom: 40px;
+            right: 0;
+            background: linear-gradient(135deg, rgba(243, 156, 18, 0.9), rgba(230, 126, 34, 0.9));
+            transition-delay: 0.2s;
+        }
+
+        .feral-option:nth-child(4) {
+            bottom: 80px;
+            right: 30px;
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.9), rgba(39, 174, 96, 0.9));
+            transition-delay: 0.3s;
+        }
+
+        .feral-option:nth-child(5) {
+            bottom: 120px;
+            right: 0;
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.9), rgba(41, 128, 185, 0.9));
+            transition-delay: 0.4s;
+        }
+
+        .feral-option:nth-child(6) {
+            bottom: 160px;
+            right: 30px;
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.9), rgba(142, 68, 173, 0.9));
+            transition-delay: 0.5s;
+        }
+
+        .feral-option:nth-child(7) {
+            bottom: 200px;
+            right: 0;
+            background: linear-gradient(135deg, rgba(241, 196, 15, 0.9), rgba(243, 156, 18, 0.9));
+            transition-delay: 0.6s;
+        }
+
+        /* Design C: Compact Gateway Wheel */
+        .compact-gateway-fab {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+        }
+
+        .compact-gateway-main {
+            width: 70px;
+            height: 70px;
+            background: 
+                conic-gradient(from 0deg, #8e44ad 0deg 60deg, #3498db 60deg 120deg, #2ecc71 120deg 180deg, #f39c12 180deg 240deg, #e74c3c 240deg 300deg, #9b59b6 300deg 360deg);
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(142, 68, 173, 0.6);
+            transition: all 0.4s ease;
+            animation: portalSpin 6s linear infinite;
+        }
+
+        .compact-gateway-main::before {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            background: radial-gradient(circle, rgba(15, 15, 35, 0.8) 50%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .compact-gateway-main::after {
+            content: '⚡';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 22px;
+            z-index: 2;
+            animation: portalPulse 2s ease-in-out infinite;
+        }
+
+        .compact-gateway-main:hover {
+            animation-duration: 2s;
+            box-shadow: 0 0 40px rgba(142, 68, 173, 0.8);
+        }
+
+        .compact-ring {
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .compact-option {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            opacity: 0;
+            transform: scale(0);
+            pointer-events: none;
+            font-size: 16px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .compact-gateway-fab.active .compact-option {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: all;
+        }
+
+        /* Tight circular arrangement */
+        .compact-option:nth-child(2) {
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            transition-delay: 0.1s;
+        }
+
+        .compact-option:nth-child(3) {
+            top: 35px;
+            right: 15px;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            transition-delay: 0.2s;
+        }
+
+        .compact-option:nth-child(4) {
+            bottom: 35px;
+            right: 15px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            transition-delay: 0.3s;
+        }
+
+        .compact-option:nth-child(5) {
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            transition-delay: 0.4s;
+        }
+
+        .compact-option:nth-child(6) {
+            bottom: 35px;
+            left: 15px;
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            transition-delay: 0.5s;
+        }
+
+        .compact-option:nth-child(7) {
+            top: 35px;
+            left: 15px;
+            background: linear-gradient(135deg, #f1c40f, #f39c12);
+            transition-delay: 0.6s;
+        }
+
+        .compact-gateway-fab.active .compact-option:nth-child(2),
+        .compact-gateway-fab.active .compact-option:nth-child(5) {
+            transform: translateX(-50%) scale(1);
+        }
+
+        /* Common styles */
+        .reset-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <button class="reset-btn" onclick="resetAllFabs()">Reset All FABs</button>
+    
+    <div class="demo-container">
+        <h2>Design A: Gateway Arc Layout</h2>
+        <p class="description">
+            Perfect for bottom-right positioning! The portal opens mini-gateways in an arc that flows upward and leftward from the main gateway. Each mini-portal represents a realm in your app. The arc layout naturally works with screen edge constraints while maintaining the magical portal theme.
+        </p>
+        <div class="gateway-arc-fab" id="gatewayArcFab">
+            <div class="gateway-arc-main" onclick="toggleFab('gatewayArcFab')"></div>
+            <div class="gateway-arc-options">
+                <div class="gateway-arc-option">📦</div>
+                <div class="gateway-arc-option">🔮</div>
+                <div class="gateway-arc-option">⚔️</div>
+                <div class="gateway-arc-option">📝</div>
+                <div class="gateway-arc-option">💬</div>
+                <div class="gateway-arc-option">🎮</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-container">
+        <h2>Design B: Feral Gateway Stack</h2>
+        <p class="description">
+            Inspired directly by the Gateway of the Feral Gods! The main portal has a more ominous, divine eye design with multiple energy layers. Mini-portals stack vertically in an alternating pattern, creating a "divine pillar" effect. Each portal pulses with feral energy and the layout works perfectly from bottom-right.
+        </p>
+        <div class="feral-gateway-fab" id="feralGatewayFab">
+            <div class="feral-gateway-main" onclick="toggleFab('feralGatewayFab')">
+                <i class="fa-solid fa-dungeon dungeon-icon"></i>
+            </div>
+            <div class="feral-stack">
+                <div class="feral-option">📦</div>
+                <div class="feral-option">🔮</div>
+                <div class="feral-option">⚔️</div>
+                <div class="feral-option">📝</div>
+                <div class="feral-option">💬</div>
+                <div class="feral-option">🎮</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-container">
+        <h2>Design C: Compact Gateway Wheel</h2>
+        <p class="description">
+            A tighter, more space-efficient version that maintains the portal magic but arranges mini-portals in a perfect circle around the main gateway. Great for when you want the full portal experience but need to conserve screen space. The lightning bolt suggests the raw power of the Feral Gods.
+        </p>
+        <div class="compact-gateway-fab" id="compactGatewayFab">
+            <div class="compact-gateway-main" onclick="toggleFab('compactGatewayFab')"></div>
+            <div class="compact-ring">
+                <div class="compact-option">📦</div>
+                <div class="compact-option">🔮</div>
+                <div class="compact-option">⚔️</div>
+                <div class="compact-option">📝</div>
+                <div class="compact-option">💬</div>
+                <div class="compact-option">🎮</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleFab(fabId) {
+            // Close all other FABs first
+            const allFabs = document.querySelectorAll('[id$="Fab"]');
+            allFabs.forEach(fab => {
+                if (fab.id !== fabId) {
+                    fab.classList.remove('active');
+                }
+            });
+            
+            // Toggle the clicked FAB
+            const targetFab = document.getElementById(fabId);
+            targetFab.classList.toggle('active');
+        }
+
+        function resetAllFabs() {
+            const allFabs = document.querySelectorAll('[id$="Fab"]');
+            allFabs.forEach(fab => fab.classList.remove('active'));
+        }
+
+        // Close FABs when clicking outside
+        document.addEventListener('click', (e) => {
+            const isClickInsideFab = e.target.closest('[id$="Fab"]') || e.target.closest('.reset-btn');
+            if (!isClickInsideFab) {
+                resetAllFabs();
+            }
+        });
+
+        // Enhanced portal effects
+        document.addEventListener('DOMContentLoaded', () => {
+            // Arc options hover effects
+            const arcOptions = document.querySelectorAll('.gateway-arc-option');
+            arcOptions.forEach(option => {
+                option.addEventListener('mouseenter', () => {
+                    option.style.transform = 'scale(1.2)';
+                    option.style.boxShadow = '0 0 20px rgba(142, 68, 173, 0.6)';
+                });
+                option.addEventListener('mouseleave', () => {
+                    option.style.transform = 'scale(1)';
+                    option.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
+                });
+            });
+
+            // Feral options divine glow
+            const feralOptions = document.querySelectorAll('.feral-option');
+            feralOptions.forEach((option, index) => {
+                option.addEventListener('mouseenter', () => {
+                    option.style.borderColor = 'rgba(255, 215, 0, 0.8)';
+                    option.style.boxShadow = '0 0 25px rgba(255, 215, 0, 0.5)';
+                });
+                option.addEventListener('mouseleave', () => {
+                    option.style.borderColor = 'rgba(255, 215, 0, 0.3)';
+                    option.style.boxShadow = '';
+                });
+            });
+
+            // Compact options energy pulse
+            const compactOptions = document.querySelectorAll('.compact-option');
+            compactOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    option.style.transform = 'scale(0.8)';
+                    option.style.boxShadow = '0 0 30px rgba(142, 68, 173, 0.8)';
+                    setTimeout(() => {
+                        option.style.transform = 'scale(1.1)';
+                        setTimeout(() => {
+                            option.style.transform = 'scale(1)';
+                            option.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
+                        }, 150);
+                    }, 100);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

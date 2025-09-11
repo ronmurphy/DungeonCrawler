@@ -1,0 +1,159 @@
+{
+  "effects": {
+    "basic": {
+      "bounce": {
+        "name": "Bounce",
+        "class": "chat-bounce",
+        "description": "Bouncy text animation",
+        "command": ":bounce:",
+        "duration": "1s",
+        "cycles": 3
+      },
+      "throb": {
+        "name": "Throb",
+        "class": "chat-pulse", 
+        "description": "Gentle scaling pulse (renamed from pulse to avoid :p: emoji conflict)",
+        "command": ":throb:",
+        "duration": "1s",
+        "cycles": 3
+      },
+      "shake": {
+        "name": "Shake",
+        "class": "chat-shake",
+        "description": "Horizontal shake motion",
+        "command": ":shake:",
+        "duration": "0.8s",
+        "cycles": 3
+      },
+      "glow": {
+        "name": "Glow",
+        "class": "chat-glow",
+        "description": "Text glow effect",
+        "command": ":glow:",
+        "duration": "1.5s",
+        "cycles": 3
+      },
+      "fade": {
+        "name": "Fade In",
+        "class": "chat-fade-in",
+        "description": "Smooth fade in animation",
+        "command": ":fade:",
+        "duration": "1s",
+        "cycles": 1
+      },
+      "spin": {
+        "name": "Spin",
+        "class": "chat-spin",
+        "description": "360 degree rotation",
+        "command": ":spin:",
+        "duration": "2s",
+        "cycles": 3
+      }
+    },
+    "gaming": {
+      "crit": {
+        "name": "Critical Hit",
+        "class": "chat-crit",
+        "description": "Explosive critical hit effect with color change",
+        "command": ":crit:",
+        "duration": "1.2s",
+        "cycles": 3,
+        "category": "DCC"
+      },
+      "sparkle": {
+        "name": "Magic Sparkle", 
+        "class": "chat-sparkle",
+        "description": "Magical sparkle with color cycling",
+        "command": ":magic:",
+        "duration": "2s", 
+        "cycles": 3,
+        "category": "DCC"
+      },
+      "doom": {
+        "name": "Doom",
+        "class": "chat-doom",
+        "description": "Ominous dark effect",
+        "command": ":doom:",
+        "duration": "1.5s",
+        "cycles": 3,
+        "category": "DCC"
+      }
+    },
+    "modifiers": {
+      "fast": {
+        "name": "Fast",
+        "class": "effect-fast",
+        "description": "Halves animation duration",
+        "command": ":fast:",
+        "modifier": true
+      },
+      "slow": {
+        "name": "Slow", 
+        "class": "effect-slow",
+        "description": "Doubles animation duration",
+        "command": ":slow:",
+        "modifier": true
+      },
+      "once": {
+        "name": "Once",
+        "class": "effect-once", 
+        "description": "Play animation only once",
+        "command": ":once:",
+        "modifier": true
+      },
+      "infinite": {
+        "name": "Infinite",
+        "class": "effect-infinite",
+        "description": "Loop animation continuously",
+        "command": ":loop:",
+        "modifier": true
+      },
+      "big": {
+        "name": "Big",
+        "class": "effect-big",
+        "description": "Makes text larger",
+        "command": ":big:",
+        "modifier": true
+      },
+      "small": {
+        "name": "Small",
+        "class": "effect-small", 
+        "description": "Makes text smaller",
+        "command": ":small:",
+        "modifier": true
+      },
+      "delay1": {
+        "name": "Short Delay",
+        "class": "effect-delay-1",
+        "description": "Delays animation start by 0.5 seconds",
+        "command": ":delay:",
+        "modifier": true
+      },
+      "delay2": {
+        "name": "Long Delay", 
+        "class": "effect-delay-2",
+        "description": "Delays animation start by 1 second",
+        "command": ":delay2:",
+        "modifier": true
+      }
+    }
+  },
+  "combinations": {
+    "examples": [
+      ":bounce: :fast: This text bounces quickly!",
+      ":glow: :slow: This text glows slowly",
+      ":crit: :once: CRITICAL HIT!",
+      ":magic: :loop: ✨ Endless magic ✨",
+      ":pulse: :delay: This text waits then pulses",
+      ":shake: :delay2: :big: Big delayed shake!"
+    ]
+  },
+  "config": {
+    "maxEffectsPerMessage": 3,
+    "defaultDuration": "1s",
+    "defaultCycles": 3,
+    "mobileOptimized": true,
+    "respectMotionPreference": true,
+    "cleanupAfterAnimation": true
+  }
+}

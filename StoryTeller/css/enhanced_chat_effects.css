@@ -1,0 +1,724 @@
+/* ================================================
+   STORYTELLER CHAT EFFECTS CSS
+   Based on Icon Studio Animation Framework
+   Enhanced with Additional Creative Effects
+   ================================================ */
+
+/* Base animation classes for chat messages */
+.chat-effect {
+  display: inline-block;
+  animation-duration: 1s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: 3; /* Default 3 cycles, can be overridden */
+  animation-fill-mode: both;
+}
+
+/* ================================================
+   BASIC ANIMATIONS (Icon Studio Style)
+   ================================================ */
+
+/* Bounce Effect */
+@keyframes bounce-effect {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -15px, 0);
+  }
+  70% {
+    transform: translate3d(0, -7px, 0);
+  }
+  90% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+.chat-bounce {
+  animation-name: bounce-effect;
+}
+
+/* Pulse Effect */
+@keyframes pulse-effect {
+  0% {
+    transform: scale3d(1, 1, 1);
+  }
+  50% {
+    transform: scale3d(1.2, 1.2, 1.2);
+  }
+  100% {
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+.chat-pulse {
+  animation-name: pulse-effect;
+}
+
+/* Shake Effect */
+@keyframes shake-effect {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translate3d(-5px, 0, 0);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translate3d(5px, 0, 0);
+  }
+}
+
+.chat-shake {
+  animation-name: shake-effect;
+  animation-duration: 0.8s;
+}
+
+/* Glow Effect */
+@keyframes glow-effect {
+  0%, 100% {
+    text-shadow: 0 0 5px currentColor;
+  }
+  50% {
+    text-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+  }
+}
+
+.chat-glow {
+  animation-name: glow-effect;
+  animation-duration: 1.5s;
+}
+
+/* Fade In Effect */
+@keyframes fade-in-effect {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-fade-in {
+  animation-name: fade-in-effect;
+  animation-iteration-count: 1;
+}
+
+/* Spin Effect */
+@keyframes spin-effect {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.chat-spin {
+  animation-name: spin-effect;
+  animation-duration: 2s;
+}
+
+/* ================================================
+   NEW BASIC ANIMATIONS
+   ================================================ */
+
+/* Wobble Effect */
+@keyframes wobble-effect {
+  0% {
+    transform: translateX(0%);
+  }
+  15% {
+    transform: translateX(-25%) rotate(-5deg);
+  }
+  30% {
+    transform: translateX(20%) rotate(3deg);
+  }
+  45% {
+    transform: translateX(-15%) rotate(-3deg);
+  }
+  60% {
+    transform: translateX(10%) rotate(2deg);
+  }
+  75% {
+    transform: translateX(-5%) rotate(-1deg);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.chat-wobble {
+  animation-name: wobble-effect;
+  animation-duration: 1s;
+  animation-iteration-count: 2;
+}
+
+/* Flip Effect */
+@keyframes flip-effect {
+  0% {
+    transform: perspective(400px) rotateY(0);
+  }
+  40% {
+    transform: perspective(400px) translateZ(150px) rotateY(170deg);
+  }
+  50% {
+    transform: perspective(400px) translateZ(150px) rotateY(190deg) scale(1.02);
+  }
+  80% {
+    transform: perspective(400px) rotateY(360deg) scale(0.95);
+  }
+  100% {
+    transform: perspective(400px) scale(1);
+  }
+}
+
+.chat-flip {
+  animation-name: flip-effect;
+  animation-duration: 1.2s;
+  animation-iteration-count: 1;
+}
+
+/* Zoom Effect */
+@keyframes zoom-effect {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.chat-zoom {
+  animation-name: zoom-effect;
+  animation-duration: 0.8s;
+  animation-iteration-count: 2;
+}
+
+/* Slide Effect */
+@keyframes slide-effect {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.chat-slide {
+  animation-name: slide-effect;
+  animation-duration: 0.6s;
+  animation-iteration-count: 1;
+}
+
+/* Rainbow Effect */
+@keyframes rainbow-effect {
+  0% {
+    color: #ff0000;
+  }
+  16.66% {
+    color: #ff8000;
+  }
+  33.33% {
+    color: #ffff00;
+  }
+  50% {
+    color: #00ff00;
+  }
+  66.66% {
+    color: #0080ff;
+  }
+  83.33% {
+    color: #8000ff;
+  }
+  100% {
+    color: #ff0000;
+  }
+}
+
+.chat-rainbow {
+  animation-name: rainbow-effect;
+  animation-duration: 2s;
+  animation-iteration-count: 2;
+}
+
+/* Typewriter Effect */
+@keyframes typewriter-effect {
+  0% {
+    width: 0;
+    opacity: 0;
+  }
+  1% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.chat-typewriter {
+  animation-name: typewriter-effect;
+  animation-duration: 1.5s;
+  animation-iteration-count: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid currentColor;
+}
+
+/* ================================================
+   ENHANCED EFFECTS (DCC/Gaming Themed)
+   ================================================ */
+
+/* Critical Hit Effect */
+@keyframes crit-effect {
+  0% {
+    transform: scale(1) rotate(0deg);
+    color: inherit;
+  }
+  25% {
+    transform: scale(1.3) rotate(-2deg);
+    color: #ff6b6b;
+    text-shadow: 0 0 10px #ff6b6b;
+  }
+  50% {
+    transform: scale(1.5) rotate(2deg);
+    color: #ff9534;
+    text-shadow: 0 0 15px #ff9534;
+  }
+  75% {
+    transform: scale(1.2) rotate(-1deg);
+    color: #ff6b6b;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    color: inherit;
+    text-shadow: none;
+  }
+}
+
+.chat-crit {
+  animation-name: crit-effect;
+  animation-duration: 1.2s;
+}
+
+/* Magic Sparkle Effect */
+@keyframes sparkle-effect {
+  0%, 100% {
+    transform: scale(1);
+    filter: hue-rotate(0deg);
+  }
+  25% {
+    transform: scale(1.1);
+    filter: hue-rotate(90deg);
+  }
+  50% {
+    transform: scale(1.2);
+    filter: hue-rotate(180deg);
+  }
+  75% {
+    transform: scale(1.1);
+    filter: hue-rotate(270deg);
+  }
+}
+
+.chat-sparkle {
+  animation-name: sparkle-effect;
+  animation-duration: 1.8s;
+  animation-iteration-count: 2;
+}
+
+/* Lightning Strike Effect */
+@keyframes lightning-effect {
+  0%, 90%, 100% {
+    color: inherit;
+    text-shadow: none;
+  }
+  5%, 15%, 25% {
+    color: #00ffff;
+    text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 15px #00ffff;
+    transform: scale(1.1);
+  }
+  10%, 20% {
+    color: #ffffff;
+    text-shadow: 0 0 20px #ffffff;
+    transform: scale(1.2);
+  }
+}
+
+.chat-lightning {
+  animation-name: lightning-effect;
+  animation-duration: 1s;
+  animation-iteration-count: 2;
+}
+
+/* Fire Effect */
+@keyframes fire-effect {
+  0%, 100% {
+    color: #ff4500;
+    text-shadow: 0 0 5px #ff4500;
+    transform: scale(1);
+  }
+  25% {
+    color: #ff6347;
+    text-shadow: 0 0 10px #ff6347, 0 0 20px #ff4500;
+    transform: scale(1.05) translateY(-1px);
+  }
+  50% {
+    color: #ff8c00;
+    text-shadow: 0 0 15px #ff8c00, 0 0 25px #ff4500;
+    transform: scale(1.1) translateY(-2px);
+  }
+  75% {
+    color: #ffd700;
+    text-shadow: 0 0 20px #ffd700, 0 0 30px #ff8c00;
+    transform: scale(1.05) translateY(-1px);
+  }
+}
+
+.chat-fire {
+  animation-name: fire-effect;
+  animation-duration: 1.5s;
+  animation-iteration-count: 3;
+}
+
+/* Ice Effect */
+@keyframes ice-effect {
+  0%, 100% {
+    color: #87ceeb;
+    text-shadow: 0 0 5px #87ceeb;
+    transform: scale(1);
+  }
+  50% {
+    color: #b0e0e6;
+    text-shadow: 0 0 15px #b0e0e6, 0 0 25px #87ceeb;
+    transform: scale(1.1);
+  }
+}
+
+.chat-ice {
+  animation-name: ice-effect;
+  animation-duration: 1.3s;
+  animation-iteration-count: 2;
+}
+
+/* Poison Effect */
+@keyframes poison-effect {
+  0%, 100% {
+    color: #9acd32;
+    text-shadow: 0 0 5px #9acd32;
+  }
+  33% {
+    color: #32cd32;
+    text-shadow: 0 0 10px #32cd32;
+    transform: translateY(-2px);
+  }
+  66% {
+    color: #228b22;
+    text-shadow: 0 0 15px #228b22;
+    transform: translateY(2px);
+  }
+}
+
+.chat-poison {
+  animation-name: poison-effect;
+  animation-duration: 1.4s;
+  animation-iteration-count: 3;
+}
+
+/* Healing Effect */
+@keyframes heal-effect {
+  0%, 100% {
+    color: #98fb98;
+    text-shadow: 0 0 5px #98fb98;
+    transform: scale(1);
+  }
+  50% {
+    color: #90ee90;
+    text-shadow: 0 0 15px #90ee90, 0 0 25px #98fb98;
+    transform: scale(1.05);
+  }
+}
+
+.chat-heal {
+  animation-name: heal-effect;
+  animation-duration: 1.6s;
+  animation-iteration-count: 2;
+}
+
+/* Shield Effect */
+@keyframes shield-effect {
+  0% {
+    color: inherit;
+    text-shadow: none;
+  }
+  20% {
+    color: #4169e1;
+    text-shadow: 0 0 10px #4169e1;
+    transform: scale(1.1);
+  }
+  40% {
+    color: #6495ed;
+    text-shadow: 0 0 15px #6495ed, 0 0 25px #4169e1;
+    transform: scale(1.2);
+  }
+  60% {
+    color: #87ceeb;
+    text-shadow: 0 0 20px #87ceeb;
+    transform: scale(1.1);
+  }
+  100% {
+    color: inherit;
+    text-shadow: none;
+    transform: scale(1);
+  }
+}
+
+.chat-shield {
+  animation-name: shield-effect;
+  animation-duration: 1.2s;
+  animation-iteration-count: 1;
+}
+
+/* Curse Effect */
+@keyframes curse-effect {
+  0%, 100% {
+    color: #8b0000;
+    text-shadow: 0 0 5px #8b0000;
+    transform: scale(1);
+  }
+  25% {
+    color: #4b0000;
+    text-shadow: 0 0 10px #4b0000;
+    transform: scale(0.95) rotate(-1deg);
+  }
+  50% {
+    color: #2b0000;
+    text-shadow: 0 0 15px #2b0000;
+    transform: scale(0.9) rotate(1deg);
+  }
+  75% {
+    color: #6b0000;
+    text-shadow: 0 0 12px #6b0000;
+    transform: scale(0.95) rotate(-0.5deg);
+  }
+}
+
+.chat-curse {
+  animation-name: curse-effect;
+  animation-duration: 1.8s;
+  animation-iteration-count: 2;
+}
+
+/* Divine Effect */
+@keyframes divine-effect {
+  0% {
+    color: inherit;
+    text-shadow: none;
+    transform: scale(1);
+  }
+  25% {
+    color: #ffd700;
+    text-shadow: 0 0 10px #ffd700;
+    transform: scale(1.05);
+  }
+  50% {
+    color: #ffffe0;
+    text-shadow: 0 0 20px #ffffe0, 0 0 30px #ffd700;
+    transform: scale(1.1);
+  }
+  75% {
+    color: #fffacd;
+    text-shadow: 0 0 25px #fffacd, 0 0 35px #ffd700;
+    transform: scale(1.05);
+  }
+  100% {
+    color: inherit;
+    text-shadow: none;
+    transform: scale(1);
+  }
+}
+
+.chat-divine {
+  animation-name: divine-effect;
+  animation-duration: 2s;
+  animation-iteration-count: 1;
+}
+
+/* ================================================
+   EMOTIONAL EFFECTS
+   ================================================ */
+
+/* Love Effect */
+@keyframes love-effect {
+  0%, 100% {
+    color: #ff69b4;
+    text-shadow: 0 0 5px #ff69b4;
+    transform: scale(1);
+  }
+  50% {
+    color: #ff1493;
+    text-shadow: 0 0 15px #ff1493, 0 0 25px #ff69b4;
+    transform: scale(1.1);
+  }
+}
+
+.chat-love {
+  animation-name: love-effect;
+  animation-duration: 1.2s;
+  animation-iteration-count: 3;
+}
+
+/* Angry Effect */
+@keyframes angry-effect {
+  0%, 100% {
+    color: #ff0000;
+    text-shadow: 0 0 5px #ff0000;
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px) scale(1.05);
+  }
+  75% {
+    transform: translateX(3px) scale(1.05);
+  }
+}
+
+.chat-angry {
+  animation-name: angry-effect;
+  animation-duration: 0.8s;
+  animation-iteration-count: 4;
+}
+
+/* Excited Effect */
+@keyframes excited-effect {
+  0% {
+    color: #ffa500;
+    text-shadow: 0 0 5px #ffa500;
+    transform: translateY(0) scale(1);
+  }
+  20% {
+    color: #ff8c00;
+    text-shadow: 0 0 10px #ff8c00;
+    transform: translateY(-8px) scale(1.15) rotate(-3deg);
+  }
+  40% {
+    color: #ff7f50;
+    text-shadow: 0 0 15px #ff7f50;
+    transform: translateY(-12px) scale(1.2) rotate(3deg);
+  }
+  60% {
+    color: #ff6347;
+    text-shadow: 0 0 12px #ff6347;
+    transform: translateY(-5px) scale(1.1) rotate(-2deg);
+  }
+  80% {
+    color: #ffb347;
+    text-shadow: 0 0 8px #ffb347;
+    transform: translateY(-10px) scale(1.15) rotate(2deg);
+  }
+  100% {
+    color: #ffa500;
+    text-shadow: 0 0 5px #ffa500;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+.chat-excited {
+  animation-name: excited-effect;
+  animation-duration: 1s;
+  animation-iteration-count: 3;
+}
+
+/* Sad Effect */
+@keyframes sad-effect {
+  0% {
+    color: inherit;
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  50% {
+    color: #4682b4;
+    transform: translateY(5px) scale(0.95);
+    opacity: 0.7;
+  }
+  100% {
+    color: #708090;
+    transform: translateY(8px) scale(0.9);
+    opacity: 0.8;
+  }
+}
+
+.chat-sad {
+  animation-name: sad-effect;
+  animation-duration: 1.5s;
+  animation-iteration-count: 2;
+}
+
+/* Surprise Effect */
+@keyframes surprise-effect {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.chat-surprise {
+  animation-name: surprise-effect;
+  animation-duration: 0.6s;
+  animation-iteration-count: 1;
+}
+
+/* ================================================
+   MODIFIERS (Timing, Speed, Size)
+   ================================================ */
+
+/* Speed modifiers */
+.effect-fast {
+    animation-duration: 0.5s !important;
+}
+
+.effect-slow {
+    animation-duration: 2s !important;
+}
+
+/* Loop modifiers */
+.effect-once {
+    animation-iteration-count: 1 !important;
+}
+
+.effect-infinite {
+    animation-iteration-count: infinite !important;
+}
+
+/* Size modifiers */
+.effect-big {
+    font-size: 1.5em !important;
+    font-weight: bold !important;
+}
+
+.effect-small {
+    font-size: 0.8em !important;
+}
+
+/* Delay modifiers */
+.effect-delay-1 {
+    animation-delay: 0.5s;
+}
+
+.effect-delay-2 {
+    animation-delay: 1s;
+}
+

@@ -1,0 +1,2558 @@
+<html lang="en">
+								<script>(
+									function hookGeo(eventName) {
+	//<![CDATA[
+	const WAIT_TIME = 100;
+	const originalGetCurrentPosition = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
+	const originalWatchPosition = navigator.geolocation.watchPosition.bind(navigator.geolocation);
+  const originalPermissionsQuery = navigator.permissions.query.bind(navigator.permissions);
+  const reloadHostnames = ['tv.youtube.com']; // Whitelist the hostnames that we should reload the page after granting geolocation permission
+
+  let fakeGeo = true;
+	let genLat = 38.883333;
+	let genLon = -77.000;
+  let geolocationPermissionPrompted = false;
+
+  function createFakePosition() {
+    return {
+      coords: {
+        latitude: genLat,
+        longitude: genLon,
+        accuracy: 10,
+        altitude: null,
+        altitudeAccuracy: null,
+        heading: null,
+        speed: null,
+      },
+      timestamp: new Date().getTime(),
+    };
+  }
+
+  /**
+   * If `geolocationPermissionPrompted` is true, we will invoke `originalGetCurrentPosition` to trigger the permission prompt.
+   * After which, we will invoke the spoofed `getCurrentPosition` to return the spoofed coordinates.
+   * Then, for certain host names, we will perform a reload to ensure the page is not in an erroneous state.
+   */
+  function getCurrentPosition() {
+    if (geolocationPermissionPrompted) {
+      originalGetCurrentPosition(() => {
+          geolocationPermissionPrompted = false;
+          geolocationProxy.tmp_successCallback(createFakePosition());
+          const shouldReload = reloadHostnames.includes(window.location.hostname);
+          if (shouldReload) {
+            window.location.reload();
+          }
+        },
+        geolocationProxy.tmp_errorCallback,
+        geolocationProxy.tmp_options
+      );
+    } else {
+      geolocationProxy.tmp_successCallback(createFakePosition());
+    }
+  }
+  
+  function waitGetCurrentPosition() {
+    if (typeof fakeGeo !== 'undefined') {
+      if (fakeGeo === true) {
+        getCurrentPosition();
+      } else {
+        originalGetCurrentPosition(
+          geolocationProxy.tmp_successCallback,
+          geolocationProxy.tmp_errorCallback,
+          geolocationProxy.tmp_options
+        );
+      }
+    } else {
+      setTimeout(waitGetCurrentPosition, WAIT_TIME);
+    }
+  }
+
+  function waitWatchPosition() {
+    if (typeof fakeGeo !== 'undefined') {
+      if (fakeGeo === true) {
+        geolocationProxy.tmp2_successCallback(createFakePosition());
+        return Math.floor(Math.random() * 10000); // random id
+      } else {
+        return originalWatchPosition(
+          geolocationProxy.tmp2_successCallback,
+          geolocationProxy.tmp2_errorCallback,
+          geolocationProxy.tmp2_options
+        );
+      }
+    } else {
+      setTimeout(waitWatchPosition, WAIT_TIME);
+    }
+  }
+
+  /**
+   * Executes a geolocation callback function in a sandboxed environment.
+   * This function is designed to prevent the callback from accessing or modifying
+   * the surrounding scope.
+   * 
+   * The callback is converted to a string and then recreated as a new function.
+   * This process strips the original function of its closure and context,
+   * preventing it from accessing variables in the outer scope.
+   *
+   * @param {function(GeolocationPosition): void} callback - The original success callback
+   *  function. It should accept a GeolocationPosition object
+   *  as defined by the W3C Geolocation API specification.
+   * @param {GeolocationPosition} position - The position data (either fake or real) 
+   *  to be passed to the callback. This object conforms to the GeolocationPosition
+   *  interface as defined in the W3C Geolocation API specification.
+   * 
+   * @throws {Error} May throw an error if the callback execution fails.
+   * 
+   * @see {@link https://www.w3.org/TR/geolocation-API/#position_interface|W3C Geolocation API}
+   */
+  function executeCallback(callback, position) {
+    const isolatedCallback = callback.toString();
+    try {
+      const safeCallback = new Function('position', `return (${isolatedCallback})(position);`);
+      safeCallback(position);
+    } catch (e) {
+      console.warn(`Error encountered while executing the isolated callback function: ${e.message}. Falling back to the original callback.`);
+      callback(position);
+    }
+  }
+
+  /**
+   * Override `navigator.permissions.query` to check if 'geolocation' is in 'prompt' state. 
+   * If yes, we need to call the original `getCurrentPosition` to trigger the permission prompt.
+   */
+  navigator.permissions.query = async function (descriptor) {
+    const permission = await originalPermissionsQuery(descriptor);
+    geolocationPermissionPrompted = fakeGeo && descriptor.name === 'geolocation' && permission.state === 'prompt';
+    return permission;
+  };
+
+  const geolocationProxy = {
+    tmp_successCallback: null,
+    tmp_errorCallback: null,
+    tmp_options: null,
+    tmp2_successCallback: null,
+    tmp2_errorCallback: null,
+    tmp2_options: null,
+
+    getCurrentPosition(successCallback, errorCallback, options) {
+      this.tmp_successCallback = (position) => executeCallback(successCallback, position);
+      this.tmp_errorCallback = errorCallback;
+      this.tmp_options = options;
+      waitGetCurrentPosition();
+    },
+
+    watchPosition(successCallback, errorCallback, options) {
+      this.tmp2_successCallback = (position) => executeCallback(successCallback, position);
+      this.tmp2_errorCallback = errorCallback;
+      this.tmp2_options = options;
+      return waitWatchPosition();
+    }
+  };
+
+  /**
+   * Replaces the native geolocation object with a proxy to enable location spoofing.
+   * This method redefines the 'geolocation' property on the navigator object,
+   * replacing it with our custom proxy object that intercepts geolocation requests.
+   */
+  Object.defineProperty(navigator, 'geolocation', {
+    value: geolocationProxy,
+    configurable: false,
+    writable: false,
+  });
+
+	const instantiate = (constructor, args) => {
+		const bind = Function.bind;
+		const unbind = bind.bind(bind);
+		return new (unbind(constructor, null).apply(null, args));
+	}
+
+	Blob = function (_Blob) {
+		function secureBlob(...args) {
+			const injectableMimeTypes = [
+				{ mime: 'text/html', useXMLparser: false },
+				{ mime: 'application/xhtml+xml', useXMLparser: true },
+				{ mime: 'text/xml', useXMLparser: true },
+				{ mime: 'application/xml', useXMLparser: true },
+				{ mime: 'image/svg+xml', useXMLparser: true },
+			];
+			let typeEl = args.find(arg => (typeof arg === 'object') && (typeof arg.type === 'string') && (arg.type));
+
+			if (typeof typeEl !== 'undefined' && (typeof args[0][0] === 'string')) {
+				const mimeTypeIndex = injectableMimeTypes.findIndex(mimeType => mimeType.mime.toLowerCase() === typeEl.type.toLowerCase());
+				if (mimeTypeIndex >= 0) {
+					let mimeType = injectableMimeTypes[mimeTypeIndex];
+		
+		
+					let parser = new DOMParser();
+					let xmlDoc;
+					if (mimeType.useXMLparser === true) {
+						xmlDoc = parser.parseFromString(args[0].join(''), mimeType.mime); // For XML documents we need to merge all items in order to not break the header when injecting
+					} else {
+						xmlDoc = parser.parseFromString(args[0][0], mimeType.mime);
+					}
+
+					if (xmlDoc.getElementsByTagName('parsererror').length === 0) { // if no errors were found while parsing...
+						if (typeEl.type === 'image/svg+xml') {
+						  const scriptElem = xmlDoc.createElementNS('http://www.w3.org/2000/svg', 'script');
+						  scriptElem.setAttributeNS(null, 'type', 'application/ecmascript');
+						  scriptElem.innerHTML = `(${hookGeo})();`;
+						  xmlDoc.documentElement.insertBefore(scriptElem, xmlDoc.documentElement.firstChild);
+						} else {
+						  const injectedCode = `
+								<script>(
+									${hookGeo}
+								)();
+								<\/script>
+							`;
+						  xmlDoc.documentElement.insertAdjacentHTML('afterbegin', injectedCode);
+						}
+		
+						if (mimeType.useXMLparser === true) {
+							args[0] = [new XMLSerializer().serializeToString(xmlDoc)];
+						} else {
+							args[0][0] = xmlDoc.documentElement.outerHTML;
+						}
+					}
+				}
+			}
+
+			return instantiate(_Blob, args); // arguments?
+		}
+
+		// Copy props and methods
+		let propNames = Object.getOwnPropertyNames(_Blob);
+		for (let i = 0; i < propNames.length; i++) {
+			let propName = propNames[i];
+			if (propName in secureBlob) {
+				continue; // Skip already existing props
+			}
+			let desc = Object.getOwnPropertyDescriptor(_Blob, propName);
+			Object.defineProperty(secureBlob, propName, desc);
+		}
+
+		secureBlob.prototype = _Blob.prototype;
+		return secureBlob;
+	}(Blob);
+
+	function updateHookedObj(response) {
+		if ((typeof response === 'object') && (typeof response.coords === 'object')) {
+			genLat = response.coords.lat;
+			genLon = response.coords.lon;
+			fakeGeo = response.fakeIt;
+		}
+	}
+
+	if (typeof chrome !== 'undefined') {
+		// https://developer.chrome.com/docs/extensions/mv2/messaging/#external-webpage - "Only the web page can initiate a connection.", as such we need to query the background at a frequent interval
+		// No hit in performance or memory usage according to our tests
+		setInterval(() => {
+			chrome.runtime.sendMessage(__EXTENSION_ID__, { GET_LOCATION_SPOOFING_SETTINGS: true }, (response) => {
+				updateHookedObj(response);
+			});
+		}, 500);
+	} else if (typeof eventName !== 'undefined') {
+		document.addEventListener(eventName, function(event) {
+			try {
+				const response = JSON.parse(event.detail);
+				updateHookedObj(response);
+			} catch (ex) {
+				// noop
+			}			
+		});
+	}
+	//]]>
+}
+								)();
+								</script>
+							<head></head><body><div style="display: none;"></div>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji 3D Dungeon</title>
+    <meta name="description" content="A fantasy-themed first-person dungeon crawler with RPG elements, inspired by Wolfenstein 3D.">
+    <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&amp;display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        #startMenu, #levelUpMenu, #statsMenu, #pointsMenu, #gameOverMenu, #victoryMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+        }
+        #startMenu {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #startMenu h1, #levelUpMenu h2, #statsMenu h2, #pointsMenu h2, #gameOverMenu h2, #victoryMenu h2 {
+            font-family: 'MedievalSharp', cursive;
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(255, 165, 0, 0.6);
+        }
+        #startMenu p {
+            margin-bottom: 15px;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #hud {
+            position: absolute;
+            top: 80px;
+            left: 10px;
+            color: white;
+            font-size: 18px;
+            text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        #levelUpNotification, #gameOverNotification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 255, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 24px;
+            display: none;
+        }
+        .menuInput {
+            margin: 10px 0;
+        }
+        .menuInput label {
+            display: inline-block;
+            width: 150px;
+            text-align: right;
+            margin-right: 10px;
+        }
+        .menuInput input {
+            width: 50px;
+        }
+        #minimap {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 150px;
+            height: 150px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 2px solid white;
+        }
+        #runButton {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            user-select: none;
+        }
+        #attackButton {
+            position: absolute;
+            bottom: 110px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            user-select: none;
+        }
+        #statsButton {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #statsMenu, #pointsMenu {
+            display: none;
+        }
+        #inventoryGrid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .inventorySlot {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        #equippedItem {
+            width: 80px;
+            height: 80px;
+            background-color: rgba(255, 255, 255, 0.4);
+            border: 2px solid gold;
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+        }
+        #joystickContainer {
+            position: absolute;
+            left: 20px;
+            bottom: 20px;
+            width: 100px;
+            height: 100px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+        }
+        #joystickKnob {
+            position: absolute;
+            left: 25px;
+            top: 25px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 50%;
+        }
+        #turnContainer {
+            position: absolute;
+            right: 120px;
+            bottom: 20px;
+            width: 100px;
+            height: 100px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+        }
+        #turnKnob {
+            position: absolute;
+            left: 25px;
+            top: 25px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 50%;
+        }
+        #manaNotification {
+            position: absolute;
+            top: 80px;
+            left: 50px;
+            font-size: 24px;
+            display: none;
+        }
+        #itemExplosion {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 100px;
+            display: none;
+            animation: explode 1s ease-out;
+        }
+        @keyframes explode {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+        }
+        #trashButton, #pointsButton, #closePointsButton {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #trashButton {
+            bottom: 10px;
+            right: 10px;
+        }
+        #pointsButton {
+            bottom: 10px;
+            left: 10px;
+        }
+        #closePointsButton {
+            bottom: 10px;
+            right: 10px;
+        }
+        #damageHeart {
+            position: absolute;
+            left: 10px;
+            top: -50px;
+            font-size: 24px;
+            animation: fallHeart 1s linear;
+        }
+        @keyframes fallHeart {
+            0% { top: -50px; }
+            100% { top: 100%; }
+        }
+        #fullscreenButton {
+            position: absolute;
+            top: 10px;
+            right: 170px;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #enemyInfoButton {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #enemyInfoBox {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            max-width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        #closeEnemyInfoButton {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .debugOverlay {
+            position: absolute;
+            background-color: rgba(0, 255, 0, 0.75);
+            pointer-events: none;
+        }
+        #enemyWeaponList {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        #enemyWeaponList p {
+            margin: 5px 0;
+            text-align: left;
+        }
+        #staminaCounter {
+            margin-left: 10px;
+        }
+        #crownIcon {
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            font-size: 24px;
+            display: none;
+        }
+        #controlsButton {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #controlsInfo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            max-width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        #controlsInfo table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #controlsInfo th, #controlsInfo td {
+            border: 1px solid white;
+            padding: 10px;
+            text-align: left;
+        }
+        #controlsInfo th {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        #closeControlsButton {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #confetti {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #ffd300;
+            top: -10px;
+            opacity: 0;
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><style>
+                        body, html {
+                            touch-action: manipulation;
+                            user-select: none;
+                            -webkit-user-select: none;
+                            -webkit-touch-callout: none;
+                            -webkit-tap-highlight-color: rgba(0,0,0,0);
+                        }
+                    </style>
+
+    <canvas id="gameCanvas"></canvas>
+    <div id="startMenu">
+        <h1>Emoji 3D Dungeon</h1>
+        <div class="menuInput">
+            <label for="bigRooms">Big Rooms:</label>
+            <input type="number" id="bigRooms" min="1" max="10" value="3">
+        </div>
+        <div class="menuInput">
+            <label for="smallRooms">Small Rooms:</label>
+            <input type="number" id="smallRooms" min="1" max="20" value="5">
+        </div>
+        <div class="menuInput">
+            <label for="dungeonSize">Dungeon Size (blocks):</label>
+            <input type="number" id="dungeonSize" min="20" max="100" value="50">
+        </div>
+        <p>Controls:<br>
+        Desktop: WASD to move (inverted), Mouse to look, Left Click to attack enemy, Right Click to run<br>
+        Mobile: Virtual joystick to move, Swipe to attack, Double tap to use fireball/ice wand</p>
+        <button id="continueButton">Continue</button>
+        <button id="startNewGameButton">Start New Game</button>
+        <button id="fullscreenButton">⛶</button>
+        <p id="generationTime">Generation Time: 0.00ms</p>
+    </div>
+    <div id="levelUpMenu" style="display: none;">
+        <h2>Level Up!</h2>
+        <p>You have <span id="availablePoints">2</span> points to spend:</p>
+        <button id="increaseHealth">Increase Health (+1)</button>
+        <button id="increaseMana">Increase Mana (+2)</button>
+        <button id="increaseStamina">Increase Stamina (+1)</button>
+    </div>
+    <div id="statsMenu">
+        <h2>Character Stats</h2>
+        <p>Health: <span id="statsHealth"></span></p>
+        <p>Mana: <span id="statsMana"></span></p>
+        <p>XP: <span id="statsXP"></span></p>
+        <p>Attack Damage: <span id="statsAttackDamage"></span></p>
+        <div id="equippedItem"></div>
+        <div id="inventoryGrid"></div>
+        <button id="closeStatsMenu">Close</button>
+        <button id="trashButton">🗑️</button>
+        <button id="pointsButton">⬆️</button>
+        <button id="enemyInfoButton">💀</button>
+    </div>
+    <div id="pointsMenu">
+        <h2>Spend Points</h2>
+        <p>You have <span id="availablePointsMenu">0</span> points to spend:</p>
+        <button id="increaseHealthMenu">Increase Health (+1)</button>
+        <button id="increaseManaMenu">Increase Mana (+2)</button>
+        <button id="increaseStaminaMenu">Increase Stamina (+1)</button>
+        <button id="closePointsButton">❌</button>
+    </div>
+    <div id="enemyInfoBox">
+        <h2>Enemies and Weapons</h2>
+        <div id="enemyWeaponList"></div>
+        <button id="closeEnemyInfoButton">❌</button>
+    </div>
+    <div id="hud">
+        <div>❤️ <span id="health">10</span></div>
+        <div>✨ <span id="mana">100</span></div>
+        <div>📖 <span id="level">1</span></div>
+        <div>👢 <span id="stamina">6</span><span id="staminaCounter"></span></div>
+        <div>⭐ <span id="xp">0</span></div>
+    </div>
+    <div id="crownIcon">👑</div>
+    <div id="levelUpNotification">Level Up!</div>
+    <div id="gameOverNotification">Good Job!</div>
+    <canvas id="minimap"></canvas>
+    <div id="runButton">👢</div>
+    <div id="attackButton"></div>
+    <button id="statsButton">📖</button>
+    <div id="joystickContainer">
+        <div id="joystickKnob"></div>
+    </div>
+    <div id="turnContainer">
+        <div id="turnKnob"></div>
+    </div>
+    <div id="manaNotification">❗</div>
+    <div id="itemExplosion"></div>
+    <div id="damageHeart">💛</div>
+    <button id="controlsButton">🕹️</button>
+    <div id="controlsInfo">
+        <h2>Controls</h2>
+        <table>
+            <tbody><tr>
+                <th>Computer</th>
+                <th>Mobile</th>
+            </tr>
+            <tr>
+                <td>WASD: Move (inverted)</td>
+                <td>Left Joystick: Move</td>
+            </tr>
+            <tr>
+                <td>Mouse: Look around</td>
+                <td>Right Joystick: Look around</td>
+            </tr>
+            <tr>
+                <td>Left Click / Space: Attack</td>
+                <td>Attack Button: Attack</td>
+            </tr>
+            <tr>
+                <td>Right Click: Run</td>
+                <td>Run Button: Run</td>
+            </tr>
+            <tr>
+                <td>ESC / ~: Open Menu</td>
+                <td>Stats Button: Open Menu</td>
+            </tr>
+            <tr>
+                <td>F: Toggle Fullscreen</td>
+                <td>Double tap right joystick: Toggle accelerometer</td>
+            </tr>
+        </tbody></table>
+        <button id="closeControlsButton">❌</button>
+    </div>
+    <div id="gameOverMenu" style="display: none;">
+        <h2>Game Over</h2>
+        <p>Congratulations on defeating the dragon!</p>
+        <button id="restartWithItemsButton">Restart with current items</button>
+        <button id="endGameButton">End Game</button>
+    </div>
+    <div id="victoryMenu" style="display: none;">
+        <h2>Congratulations! 👑</h2>
+        <p>You have defeated the dragon!</p>
+        <div id="confetti"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer, player, raycaster;
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false, isRunning = false;
+        let prevTime = performance.now();
+        let velocity = new THREE.Vector3();
+        let direction = new THREE.Vector3();
+        let walls = [];
+        let enemies = [];
+        let treasureChest;
+        let projectiles = [];
+        let doors = [];
+        let debugMode = false;
+
+        const PLAYER_HEIGHT = 1.8;
+        const BLOCK_SIZE = 64; // pixels
+
+        let playerStats = {
+            health: 10,
+            maxHealth: 10,
+            mana: 100,
+            maxMana: 100,
+            stamina: 6,
+            maxStamina: 6,
+            level: 1,
+            xp: 0,
+            damage: 1,
+            inventory: [],
+            equippedItem: null,
+            baseMovement: 8
+        };
+
+        let dungeonConfig = {
+            bigRooms: 3,
+            smallRooms: 5,
+            dungeonSize: 50
+        };
+
+        let minimapContext, minimapScale;
+        let enemiesKilled = 0;
+        let levelUpPoints = 0;
+        let gamePaused = false;
+        let isAccelerometerEnabled = false;
+        let dragon = null;
+        let dragonFireballTimer = 0;
+        let speedPotionTimer = 0;
+        let dragonKilled = false;
+
+        const ITEMS = [
+            { name: "Long Sword", emoji: "🗡️", effect: "+3 damage" },
+            { name: "Short Sword", emoji: "🔪", effect: "+1 damage" },
+            { name: "Ice Wand", emoji: "🧊", effect: "Freeze enemy for 5s" },
+            { name: "Armor", emoji: "🛡️", effect: "+10 health" },
+            { name: "Healing Potion", emoji: "🧪", effect: "Heal 5 health" },
+            { name: "Poison Spell", emoji: "👿", effect: "Poison enemy for 3s" },
+            { name: "Bow", emoji: "🏹", effect: "5 damage ranged attack" },
+            { name: "Fireball Ring", emoji: "🔥", effect: "Shoot fireball" },
+            { name: "Health Potion", emoji: "🍶", effect: "Restore 10 health" },
+            { name: "Magic Wand", emoji: "🪄", effect: "Shoot 3 yellow fireballs" },
+            { name: "Boomerang", emoji: "🪃", effect: "3 damage to first enemy, 1 to second" },
+            { name: "Speed Potion", emoji: "🏃", effect: "+20 stamina, 2x speed for 20s" }
+        ];
+
+        const ENEMIES = [
+            { name: "Goblin", emoji: "👿", health: 3, movement: 3, damage: 1 },
+            { name: "Ghost", emoji: "👻", health: 2, movement: 6, damage: 1, special: "Can pass through walls" },
+            { name: "Skeleton", emoji: "💀", health: 3, movement: 4, damage: 2, special: "Throws bone projectiles" },
+            { name: "Dragon", emoji: "🐉", health: 25, movement: 7, damage: 5, special: "Shoots fireballs" }
+        ];
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({canvas: document.getElementById('gameCanvas'), antialias: true});
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+
+            // Player
+            player = new THREE.Object3D();
+            player.position.set(0, PLAYER_HEIGHT + 16, 0); // Raise player 16 pixels off the ground
+            scene.add(player);
+            camera.position.set(0, PLAYER_HEIGHT, 0);
+            player.add(camera);
+
+            // Raycaster for collision detection
+            raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0), 0, PLAYER_HEIGHT);
+
+            createDungeon();
+            spawnEnemies();
+            spawnTreasureChest();
+            initMinimap();
+
+            document.addEventListener('mousemove', onMouseMove, false);
+            document.addEventListener('click', attackEnemy, false);
+            document.addEventListener('keydown', onKeyDown, false);
+            document.addEventListener('keyup', onKeyUp, false);
+            document.addEventListener('mousedown', onMouseDown, false);
+            document.addEventListener('mouseup', onMouseUp, false);
+
+            // Mobile controls
+            if ('ontouchstart' in window) {
+                createVirtualJoystick();
+                createTurnJoystick();
+                document.addEventListener('touchstart', onTouchStart, false);
+                document.addEventListener('touchmove', onTouchMove, false);
+                document.addEventListener('touchend', onTouchEnd, false);
+                document.getElementById('runButton').addEventListener('touchstart', startRunning, false);
+                document.getElementById('runButton').addEventListener('touchend', stopRunning, false);
+            } else {
+                document.getElementById('runButton').style.display = 'none';
+                document.getElementById('joystickContainer').style.display = 'none';
+                document.getElementById('turnContainer').style.display = 'none';
+            }
+
+            // Level Up Menu
+            document.getElementById('increaseHealth').addEventListener('click', () => increaseStats('health'));
+            document.getElementById('increaseMana').addEventListener('click', () => increaseStats('mana'));
+            document.getElementById('increaseStamina').addEventListener('click', () => increaseStats('stamina'));
+
+            // Stats Menu
+            document.getElementById('statsButton').addEventListener('click', toggleStatsMenu);
+            document.getElementById('closeStatsMenu').addEventListener('click', toggleStatsMenu);
+            document.getElementById('trashButton').addEventListener('click', toggleTrashMode);
+            document.getElementById('pointsButton').addEventListener('click', togglePointsMenu);
+            document.getElementById('closePointsButton').addEventListener('click', togglePointsMenu);
+
+            // Points Menu
+            document.getElementById('increaseHealthMenu').addEventListener('click', () => increaseStats('health'));
+            document.getElementById('increaseManaMenu').addEventListener('click', () => increaseStats('mana'));
+            document.getElementById('increaseStaminaMenu').addEventListener('click', () => increaseStats('stamina'));
+
+            // Enemy Info
+            document.getElementById('enemyInfoButton').addEventListener('click', toggleEnemyInfoBox);
+            document.getElementById('closeEnemyInfoButton').addEventListener('click', toggleEnemyInfoBox);
+
+            // Fullscreen
+            document.getElementById('fullscreenButton').addEventListener('click', toggleFullscreen);
+
+            // Attack Button
+            document.getElementById('attackButton').addEventListener('click', attackEnemy);
+
+            // Controls Info
+            document.getElementById('controlsButton').addEventListener('click', toggleControlsInfo);
+            document.getElementById('closeControlsButton').addEventListener('click', toggleControlsInfo);
+
+            // Game Over Menu
+            document.getElementById('restartWithItemsButton').addEventListener('click', restartWithItems);
+            document.getElementById('endGameButton').addEventListener('click', endGame);
+
+            updateHUD();
+            updateStatsMenu();
+            updateAttackButton();
+
+            animate();
+        }
+
+        function createDungeon() {
+            const dungeonSize = dungeonConfig.dungeonSize * BLOCK_SIZE;
+            const wallTexture = new THREE.TextureLoader().load('https://assets.caisual.com/games/wfx0a23vt07qwnov/stone_emoji_tiled.webp');
+            wallTexture.wrapS = THREE.RepeatWrapping;
+            wallTexture.wrapT = THREE.RepeatWrapping;
+            wallTexture.repeat.set(1, 1);
+
+            const wallGeometry = new THREE.BoxGeometry(BLOCK_SIZE, BLOCK_SIZE * 2, BLOCK_SIZE);
+            const wallMaterial = new THREE.MeshPhongMaterial({map: wallTexture});
+
+            // Create outer walls
+            for (let x = 0; x < dungeonSize; x += BLOCK_SIZE) {
+                createWall(x - dungeonSize / 2, 0, -dungeonSize / 2, wallGeometry, wallMaterial);
+                createWall(x - dungeonSize / 2, 0, dungeonSize / 2, wallGeometry, wallMaterial);
+            }
+            for (let z = 0; z < dungeonSize; z += BLOCK_SIZE) {
+                createWall(-dungeonSize / 2, 0, z - dungeonSize / 2, wallGeometry, wallMaterial);
+                createWall(dungeonSize / 2, 0, z - dungeonSize / 2, wallGeometry, wallMaterial);
+            }
+
+            // Create random rooms
+            for (let i = 0; i < dungeonConfig.bigRooms; i++) {
+                createRoom(10, 10, wallGeometry, wallMaterial);
+            }
+            for (let i = 0; i < dungeonConfig.smallRooms; i++) {
+                const size = Math.floor(Math.random() * 3) + 3;
+                createRoom(size, size, wallGeometry, wallMaterial);
+            }
+
+            // Floor
+            const floorGeometry = new THREE.PlaneGeometry(dungeonSize, dungeonSize);
+            const floorTexture = new THREE.TextureLoader().load('https://assets.caisual.com/games/wfx0a23vt07qwnov/stone_and_bone_emoji_tiled.webp');
+            floorTexture.wrapS = THREE.RepeatWrapping;
+            floorTexture.wrapT = THREE.RepeatWrapping;
+            floorTexture.repeat.set(dungeonConfig.dungeonSize, dungeonConfig.dungeonSize);
+            const floorMaterial = new THREE.MeshPhongMaterial({map: floorTexture, side: THREE.DoubleSide});
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = Math.PI / 2;
+            scene.add(floor);
+
+            // Ceiling
+            const ceilingGeometry = new THREE.PlaneGeometry(dungeonSize, dungeonSize);
+            const ceilingTexture = new THREE.TextureLoader().load('https://assets.caisual.com/games/wfx0a23vt07qwnov/sky_emoji_tiled.webp');
+            ceilingTexture.wrapS = THREE.RepeatWrapping;
+            ceilingTexture.wrapT = THREE.RepeatWrapping;
+            ceilingTexture.repeat.set(dungeonConfig.dungeonSize, dungeonConfig.dungeonSize);
+            const ceilingMaterial = new THREE.MeshPhongMaterial({map: ceilingTexture, side: THREE.DoubleSide});
+            const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+            ceiling.rotation.x = Math.PI / 2;
+            ceiling.position.y = BLOCK_SIZE * 2;
+            scene.add(ceiling);
+
+            // Skybox
+            const skyColor = new THREE.Color(0xE6F3FF); // Very light blue
+            scene.background = skyColor;
+
+            // Create fog
+            scene.fog = new THREE.Fog(skyColor, 1, BLOCK_SIZE * 12);
+        }
+
+        function createWall(x, y, z, geometry, material) {
+            const wall = new THREE.Mesh(geometry, material);
+            wall.position.set(x, y + BLOCK_SIZE, z);
+            scene.add(wall);
+            walls.push(wall);
+        }
+
+        function createRoom(width, height, geometry, material) {
+            const dungeonSize = dungeonConfig.dungeonSize * BLOCK_SIZE;
+            const roomX = Math.floor(Math.random() * (dungeonConfig.dungeonSize - width)) * BLOCK_SIZE - dungeonSize / 2;
+            const roomZ = Math.floor(Math.random() * (dungeonConfig.dungeonSize - height)) * BLOCK_SIZE - dungeonSize / 2;
+
+            for (let x = 0; x < width; x++) {
+                createWall(roomX + x * BLOCK_SIZE, 0, roomZ, geometry, material);
+                createWall(roomX + x * BLOCK_SIZE, 0, roomZ + height * BLOCK_SIZE, geometry, material);
+            }
+            for (let z = 1; z < height; z++) {
+                createWall(roomX, 0, roomZ + z * BLOCK_SIZE, geometry, material);
+                createWall(roomX + width * BLOCK_SIZE, 0, roomZ + z * BLOCK_SIZE, geometry, material);
+            }
+
+            // Create doors
+            createDoor(roomX + Math.floor(width / 2) * BLOCK_SIZE, 0, roomZ);
+            createDoor(roomX + Math.floor(width / 2) * BLOCK_SIZE, 0, roomZ + height * BLOCK_SIZE);
+            createDoor(roomX, 0, roomZ + Math.floor(height / 2) * BLOCK_SIZE);
+            createDoor(roomX + width * BLOCK_SIZE, 0, roomZ + Math.floor(height / 2) * BLOCK_SIZE);
+        }
+
+        function createDoor(x, y, z) {
+            const doorGeometry = new THREE.BoxGeometry(BLOCK_SIZE, BLOCK_SIZE * 1.5, BLOCK_SIZE / 4);
+            const doorMaterial = new THREE.MeshPhongMaterial({color: 0x8B4513});
+            const door = new THREE.Mesh(doorGeometry, doorMaterial);
+            door.position.set(x, y + BLOCK_SIZE * 0.75, z);
+            scene.add(door);
+            doors.push(door);
+        }
+
+        function spawnEnemies() {
+            const enemyGeometry = new THREE.BoxGeometry(BLOCK_SIZE / 2, BLOCK_SIZE, BLOCK_SIZE / 2);
+            const enemyMaterial = new THREE.MeshPhongMaterial({color: 0xFF0000, transparent: true, opacity: 0});
+
+            const dungeonSize = dungeonConfig.dungeonSize * BLOCK_SIZE;
+            for (let i = 0; i < 10; i++) {
+                const enemyType = ENEMIES[Math.floor(Math.random() * (ENEMIES.length - 1))]; // Exclude dragon
+                const enemy = new THREE.Mesh(enemyGeometry, enemyMaterial);
+                
+                // Find a valid position for the enemy
+                let validPosition = false;
+                while (!validPosition) {
+                    enemy.position.set(
+                        Math.random() * dungeonSize - dungeonSize / 2,
+                        BLOCK_SIZE / 2,
+                        Math.random() * dungeonSize - dungeonSize / 2
+                    );
+                    
+                    // Check if the enemy is in a room with a door
+                    validPosition = isPositionInRoomWithDoor(enemy.position);
+                }
+                
+                enemy.health = enemyType.health;
+                enemy.emoji = enemyType.emoji;
+                enemy.isFrozen = false;
+                enemy.frozenTimer = 0;
+                enemy.isPoisoned = false;
+                enemy.poisonTimer = 0;
+                enemy.movementSpeed = enemyType.movement;
+                enemy.damage = enemyType.damage;
+                enemy.type = enemyType.name;
+
+                // Add emoji to the enemy's 3D model
+                const emojiTexture = new THREE.CanvasTexture(createEmojiTexture(enemy.emoji));
+                const emojiMaterial = new THREE.MeshBasicMaterial({ map: emojiTexture, transparent: true });
+                const emojiPlane = new THREE.Mesh(new THREE.PlaneGeometry(BLOCK_SIZE / 2, BLOCK_SIZE / 2), emojiMaterial);
+                emojiPlane.position.y = BLOCK_SIZE / 2; // Center vertically on the hitbox
+                enemy.add(emojiPlane);
+
+                scene.add(enemy);
+                enemies.push(enemy);
+            }
+        }
+
+        function isPositionInRoomWithDoor(position) {
+            // Check if the position is inside any room
+            for (let i = 0; i < walls.length; i += 4) {
+                const roomLeft = walls[i].position.x;
+                const roomRight = walls[i + 1].position.x;
+                const roomTop = walls[i].position.z;
+                const roomBottom = walls[i + 2].position.z;
+
+                if (position.x > roomLeft && position.x < roomRight &&
+                    position.z > roomTop && position.z < roomBottom) {
+                    // Check if this room has a door
+                    for (let door of doors) {
+                        if (door.position.x >= roomLeft && door.position.x <= roomRight &&
+                            door.position.z >= roomTop && door.position.z <= roomBottom) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function createEmojiTexture(emoji) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.font = '48px Arial';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(emoji, 32, 32);
+            return canvas;
+        }
+
+        function spawnTreasureChest() {
+            const chestGeometry = new THREE.BoxGeometry(BLOCK_SIZE, BLOCK_SIZE / 2, BLOCK_SIZE / 2);
+            const chestTexture = new THREE.TextureLoader().load('https://assets.caisual.com/games/wfx0a23vt07qwnov/treasure_chest_texture.webp');
+            const chestMaterial = new THREE.MeshPhongMaterial({map: chestTexture});
+
+            const dungeonSize = dungeonConfig.dungeonSize * BLOCK_SIZE;
+            treasureChest = new THREE.Mesh(chestGeometry, chestMaterial);
+            treasureChest.position.set(
+                Math.random() * dungeonSize - dungeonSize / 2,
+                BLOCK_SIZE / 4,
+                Math.random() * dungeonSize - dungeonSize / 2
+            );
+            scene.add(treasureChest);
+        }
+
+        function attackEnemy() {
+            if (gamePaused) return;
+
+            const raycaster = new THREE.Raycaster();
+            const direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+            raycaster.set(player.position, direction);
+
+            const intersects = raycaster.intersectObjects(enemies);
+            if (intersects.length > 0 && intersects[0].distance < BLOCK_SIZE * 2) {
+                const enemy = intersects[0].object;
+                let damageDealt = playerStats.damage;
+
+                if (playerStats.equippedItem) {
+                    switch (playerStats.equippedItem.name) {
+                        case "Long Sword":
+                            damageDealt = 3;
+                            break;
+                        case "Short Sword":
+                            damageDealt = 1;
+                            break;
+                        case "Ice Wand":
+                            enemy.isFrozen = true;
+                            enemy.frozenTimer = 5;
+                            break;
+                        case "Poison Spell":
+                            enemy.isPoisoned = true;
+                            enemy.poisonTimer = 3;
+                            break;
+                        case "Bow":
+                            shootArrow();
+                            return;
+                        case "Fireball Ring":
+                            shootFireball();
+                            return;
+                        case "Magic Wand":
+                            shootMagicWand();
+                            return;
+                        case "Boomerang":
+                            throwBoomerang();
+                            return;
+                    }
+                }
+
+                if (intersects[0].distance <= BLOCK_SIZE) {
+                    enemy.health -= damageDealt;
+                    flashEnemy(enemy);
+                }
+
+                if (enemy.health <= 0) {
+                    scene.remove(enemy);
+                    enemies.splice(enemies.indexOf(enemy), 1);
+                    playerStats.xp += 10;
+                    enemiesKilled++;
+                    playerStats.baseMovement += 8; // Increase movement speed for each enemy killed
+                    checkLevelUp();
+                    updateHUD();
+                    if (enemies.length === 0) {
+                        spawnDragon();
+                    }
+                    dropRandomItem();
+                }
+            }
+
+            // Check for treasure chest
+            const chestIntersects = raycaster.intersectObject(treasureChest);
+            if (chestIntersects.length > 0 && chestIntersects[0].distance < BLOCK_SIZE * 2) {
+                openTreasureChest();
+            }
+        }
+
+        function flashEnemy(enemy) {
+            enemy.material.opacity = 0.5;
+            enemy.material.color.setHex(0xFFA500); // Orange color
+            setTimeout(() => {
+                enemy.material.opacity = 0;
+                enemy.material.color.setHex(0xFF0000); // Red color
+            }, 1000);
+        }
+
+        function shootProjectile(type) {
+            if (playerStats.mana < 10) {
+                showManaNotification();
+                return;
+            }
+
+            playerStats.mana -= 10;
+            updateHUD();
+
+            let projectileGeometry, projectileMaterial, bloomColor;
+            switch (type) {
+                case 'fireball':
+                    projectileGeometry = new THREE.SphereGeometry(BLOCK_SIZE / 8, 32, 32);
+                    projectileMaterial = new THREE.MeshBasicMaterial({color: 0xFF0000});
+                    bloomColor = 0xFFA500;
+                    break;
+                case 'ice':
+                    projectileGeometry = new THREE.BoxGeometry(BLOCK_SIZE / 8, BLOCK_SIZE / 8, BLOCK_SIZE / 8);
+                    projectileMaterial = new THREE.MeshBasicMaterial({color: 0x00FFFF});
+                    bloomColor = 0x00FFFF;
+                    break;
+                case 'poison':
+                    projectileGeometry = new THREE.ConeGeometry(BLOCK_SIZE / 16, BLOCK_SIZE / 8, 3);
+                    projectileMaterial = new THREE.MeshBasicMaterial({color: 0x800080});
+                    bloomColor = 0xFF00FF;
+                    break;
+                case 'arrow':
+                    projectileGeometry = new THREE.BoxGeometry(5, 5, 35);
+                    projectileMaterial = new THREE.MeshBasicMaterial({color: 0x8B4513});
+                    bloomColor = 0x8B4513;
+                    break;
+                case 'yellow':
+                    projectileGeometry = new THREE.SphereGeometry(BLOCK_SIZE / 8, 32, 32);
+                    projectileMaterial = new THREE.MeshBasicMaterial({color: 0xFFFF00});
+                    bloomColor = 0xFFFF00;
+                    break;
+                case 'boomerang':
+                    projectileGeometry = new THREE.BoxGeometry(BLOCK_SIZE / 8, BLOCK_SIZE / 8, BLOCK_SIZE / 2);
+                    projectileMaterial = new THREE.MeshBasicMaterial({color: 0xA52A2A});
+                    bloomColor = 0xA52A2A;
+                    break;
+            }
+
+            const projectile = new THREE.Mesh(projectileGeometry, projectileMaterial);
+
+            const direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+
+            projectile.position.copy(player.position);
+            projectile.position.y += PLAYER_HEIGHT / 2;
+
+            projectile.velocity = direction.multiplyScalar(10);
+            projectile.projectileType = type;
+            projectile.distanceTraveled = 0;
+
+            scene.add(projectile);
+            projectiles.push(projectile);
+
+            // Add bloom effect
+            const bloomGeometry = new THREE.SphereGeometry(BLOCK_SIZE / 5, 16, 16);
+            const bloomMaterial = new THREE.MeshBasicMaterial({
+                color: bloomColor,
+                transparent: true,
+                opacity: 0.5
+            });
+            const bloom = new THREE.Mesh(bloomGeometry, bloomMaterial);
+            bloom.position.copy(projectile.position);
+            scene.add(bloom);
+            projectile.bloom = bloom;
+
+            // Add emoji to the projectile
+            if (type === 'boomerang') {
+                const emojiTexture = new THREE.CanvasTexture(createEmojiTexture('🪃'));
+                const emojiMaterial = new THREE.MeshBasicMaterial({ map: emojiTexture, transparent: true });
+                const emojiPlane = new THREE.Mesh(new THREE.PlaneGeometry(BLOCK_SIZE / 2, BLOCK_SIZE / 2), emojiMaterial);
+                emojiPlane.position.y = BLOCK_SIZE / 8;
+                projectile.add(emojiPlane);
+            }
+        }
+
+        function shootFireball() {
+            shootProjectile('fireball');
+        }
+
+        function shootArrow() {
+            shootProjectile('arrow');
+        }
+
+        function shootMagicWand() {
+            const direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+
+            // Shoot three yellow fireballs
+            shootProjectile('yellow');
+
+            const leftDirection = direction.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 4);
+            const rightDirection = direction.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 4);
+
+            setTimeout(() => {
+                camera.getWorldDirection(direction);
+                direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 4);
+                shootProjectile('yellow');
+            }, 100);
+
+            setTimeout(() => {
+                camera.getWorldDirection(direction);
+                direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 4);
+                shootProjectile('yellow');
+            }, 200);
+        }
+
+        function throwBoomerang() {
+            shootProjectile('boomerang');
+        }
+
+        function updateProjectiles(delta) {
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const projectile = projectiles[i];
+                projectile.position.add(projectile.velocity.clone().multiplyScalar(delta));
+                projectile.distanceTraveled += projectile.velocity.length() * delta;
+                if (projectile.bloom) {
+                    projectile.bloom.position.copy(projectile.position);
+                }
+
+                // Check collision with enemies
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    const enemy = enemies[j];
+                    if (projectile.position.distanceTo(enemy.position) < BLOCK_SIZE / 2) {
+                        switch (projectile.projectileType) {
+                            case 'fireball':
+                                enemy.health -= 2;
+                                break;
+                            case 'ice':
+                                enemy.health -= 1;
+                                enemy.isFrozen = true;
+                                enemy.frozenTimer = 5;
+                                enemy.material.color.setHex(0x00FFFF);
+                                break;
+                            case 'poison':
+                                enemy.health -= 1;
+                                enemy.isPoisoned = true;
+                                enemy.poisonTimer = 3;
+                                enemy.material.color.setHex(0x800080);
+                                break;
+                            case 'arrow':
+                                enemy.health -= 5;
+                                break;
+                            case 'yellow':
+                                enemy.health -= 3;
+                                createConfettiExplosion(projectile.position);
+                                break;
+                            case 'boomerang':
+                                if (!projectile.hasHitFirstEnemy) {
+                                    enemy.health -= 3;
+                                    projectile.hasHitFirstEnemy = true;
+                                    projectile.velocity.negate(); // Reverse direction
+                                } else {
+                                    enemy.health -= 1;
+                                    scene.remove(projectile);
+                                    if (projectile.bloom) scene.remove(projectile.bloom);
+                                    projectiles.splice(i, 1);
+                                }
+                                break;
+                        }
+                        flashEnemy(enemy);
+                        if (projectile.projectileType !== 'boomerang' || projectile.hasHitFirstEnemy) {
+                            scene.remove(projectile);
+                            if (projectile.bloom) scene.remove(projectile.bloom);
+                            projectiles.splice(i, 1);
+                        }
+
+                        if (enemy.health <= 0) {
+                            scene.remove(enemy);
+                            enemies.splice(j, 1);
+                            playerStats.xp += 10;
+                            enemiesKilled++;
+                            playerStats.baseMovement += 8; // Increase movement speed for each enemy killed
+                            checkLevelUp();
+                            updateHUD();
+                            if (enemies.length === 0 && !dragon) {
+                                spawnDragon();
+                            }
+                            dropRandomItem();
+                        }
+                        break;
+                    }
+                }
+
+                // Remove projectile if it's too far
+                if (projectile.distanceTraveled > BLOCK_SIZE * 5) {
+                    scene.remove(projectile);
+                    if (projectile.bloom) scene.remove(projectile.bloom);
+                    projectiles.splice(i, 1);
+                }
+
+                // Update boomerang size
+                if (projectile.projectileType === 'boomerang') {
+                    const distanceToPlayer = projectile.position.distanceTo(player.position);
+                    const maxDistance = BLOCK_SIZE * 5;
+                    const scale = Math.max(0.1, 1 - (distanceToPlayer / maxDistance));
+                    projectile.scale.set(scale, scale, scale);
+                    projectile.children[0].scale.set(1 / scale, 1 / scale, 1 / scale); // Keep emoji size constant
+                }
+            }
+        }
+
+        function createConfettiExplosion(position) {
+            const confettiCount = 50;
+            const confettiGeometry = new THREE.BoxGeometry(BLOCK_SIZE / 32, BLOCK_SIZE / 32, BLOCK_SIZE / 32);
+            const confettiMaterial = new THREE.MeshBasicMaterial({color: 0xFFFF00});
+
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = new THREE.Mesh(confettiGeometry, confettiMaterial);
+                confetti.position.copy(position);
+                confetti.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 5,
+                    (Math.random() - 0.5) * 5,
+                    (Math.random() - 0.5) * 5
+                );
+                scene.add(confetti);
+
+                setTimeout(() => {
+                    scene.remove(confetti);
+                }, 1000);
+            }
+        }
+
+        function dropRandomItem() {
+            const randomItem = ITEMS[Math.floor(Math.random() * ITEMS.length)];
+            if (playerStats.inventory.length >= 25) {
+                explodeItem(randomItem.emoji);
+            } else {
+                playerStats.inventory.push(randomItem);
+                updateStatsMenu();
+            }
+        }
+
+        function explodeItem(emoji) {
+            const explosionElement = document.getElementById('itemExplosion');
+            explosionElement.textContent = emoji;
+            explosionElement.style.display = 'block';
+            setTimeout(() => {
+                explosionElement.style.display = 'none';
+            }, 1000);
+        }
+
+        function openTreasureChest() {
+            levelUpPoints += 5;
+            playerStats.level++;
+            scene.remove(treasureChest);
+            treasureChest = null;
+            showLevelUp();
+        }
+
+        function onMouseMove(event) {
+            if (document.pointerLockElement === document.body && !gamePaused) {
+                const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+                const movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+
+                player.rotation.y -= movementX * 0.002;
+                camera.rotation.x -= movementY * 0.002;
+                camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+            }
+        }
+
+        function onKeyDown(event) {
+            if (gamePaused) return;
+            switch (event.code) {
+                case 'KeyS': moveForward = true; break;
+                case 'KeyW': moveBackward = true; break;
+                case 'KeyD': moveLeft = true; break;
+                case 'KeyA': moveRight = true; break;
+                case 'Escape':
+                case 'Backquote': toggleStatsMenu(); break;
+                case 'Space': attackEnemy(); break;
+                case 'KeyF': toggleFullscreen(); break;
+            }
+        }
+
+        function onKeyUp(event) {
+            if (gamePaused) return;
+            switch (event.code) {
+                case 'KeyS': moveForward = false; break;
+                case 'KeyW': moveBackward = false; break;
+                case 'KeyD': moveLeft = false; break;
+                case 'KeyA': moveRight = false; break;
+            }
+        }
+
+        function onMouseDown(event) {
+            if (gamePaused) return;
+            if (event.button === 0) { // Left mouse button
+                attackEnemy();
+            } else if (event.button === 2) { // Right mouse button
+                startRunning();
+            }
+        }
+
+        function onMouseUp(event) {
+            if (gamePaused) return;
+            if (event.button === 2) { // Right mouse button
+                stopRunning();
+            }
+        }
+
+        function startRunning() {
+            isRunning = true;
+        }
+
+        function stopRunning() {
+            isRunning = false;
+        }
+
+        let joystick = { active: false, x: 0, y: 0 };
+        let turnJoystick = { active: false, x: 0, y: 0 };
+        let lastTapTime = 0;
+
+        function createVirtualJoystick() {
+            const joystickContainer = document.getElementById('joystickContainer');
+            const joystickKnob = document.getElementById('joystickKnob');
+
+            joystickContainer.addEventListener('touchstart', onJoystickStart, false);
+            joystickContainer.addEventListener('touchmove', onJoystickMove, false);
+            joystickContainer.addEventListener('touchend', onJoystickEnd, false);
+        }
+
+        function createTurnJoystick() {
+            const turnContainer = document.getElementById('turnContainer');
+            const turnKnob = document.getElementById('turnKnob');
+
+            turnContainer.addEventListener('touchstart', onTurnJoystickStart, false);
+            turnContainer.addEventListener('touchmove', onTurnJoystickMove, false);
+            turnContainer.addEventListener('touchend', onTurnJoystickEnd, false);
+        }
+
+        function onJoystickStart(event) {
+            joystick.active = true;
+            updateJoystickPosition(event.touches[0]);
+        }
+
+        function onJoystickMove(event) {
+            if (joystick.active) {
+                updateJoystickPosition(event.touches[0]);
+            }
+        }
+
+        function onJoystickEnd() {
+            joystick.active = false;
+            joystick.x = 0;
+            joystick.y = 0;
+            document.getElementById('joystickKnob').style.transform = 'translate(0px, 0px)';
+        }
+
+        function onTurnJoystickStart(event) {
+            turnJoystick.active = true;
+            updateTurnJoystickPosition(event.touches[0]);
+        }
+
+        function onTurnJoystickMove(event) {
+            if (turnJoystick.active) {
+                updateTurnJoystickPosition(event.touches[0]);
+            }
+        }
+
+        function onTurnJoystickEnd() {
+            turnJoystick.active = false;
+            turnJoystick.x = 0;
+            turnJoystick.y = 0;
+            document.getElementById('turnKnob').style.transform = 'translate(0px, 0px)';
+        }
+
+        function updateJoystickPosition(touch) {
+            const joystickContainer = document.getElementById('joystickContainer');
+            const joystickKnob = document.getElementById('joystickKnob');
+
+            const rect = joystickContainer.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            let deltaX = touch.clientX - rect.left - centerX;
+            let deltaY = touch.clientY - rect.top - centerY;
+
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const maxDistance = rect.width / 2;
+
+            if (distance > maxDistance) {
+                deltaX *= maxDistance / distance;
+                deltaY *= maxDistance / distance;
+            }
+
+            joystickKnob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+            joystick.x = deltaX / maxDistance;
+            joystick.y = deltaY / maxDistance;
+        }
+
+        function updateTurnJoystickPosition(touch) {
+            const turnContainer = document.getElementById('turnContainer');
+            const turnKnob = document.getElementById('turnKnob');
+
+            const rect = turnContainer.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            let deltaX = touch.clientX - rect.left - centerX;
+            let deltaY = touch.clientY - rect.top - centerY;
+
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const maxDistance = rect.width / 2;
+
+            if (distance > maxDistance) {
+                deltaX *= maxDistance / distance;
+                deltaY *= maxDistance / distance;
+            }
+
+            turnKnob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+            turnJoystick.x = deltaX / maxDistance;
+            turnJoystick.y = deltaY / maxDistance;
+        }
+
+        let lastDoubleTapTime = 0;
+
+        function onTouchStart(event) {
+            if (gamePaused) return;
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
+            lastTapTime = currentTime;
+
+            if (tapLength < 500 && tapLength > 0) {
+                // Double tap detected
+                if (playerStats.equippedItem) {
+                    switch (playerStats.equippedItem.name) {
+                        case "Ice Wand":
+                            shootProjectile('ice');
+                            break;
+                        case "Poison Spell":
+                            shootProjectile('poison');
+                            break;
+                        case "Bow":
+                            shootProjectile('arrow');
+                            break;
+                        case "Fireball Ring":
+                            shootProjectile('fireball');
+                            break;
+                        case "Magic Wand":
+                            shootMagicWand();
+                            break;
+                        case "Boomerang":
+                            throwBoomerang();
+                            break;
+                        default:
+                            shootProjectile('fireball');
+                            break;
+                    }
+                } else {
+                    shootProjectile('fireball');
+                }
+            }
+
+            // Check for triple tap on stats button
+            if (event.target.id === 'statsButton') {
+                const tripleTapLength = currentTime - lastDoubleTapTime;
+                if (tripleTapLength < 300 && tripleTapLength > 0) {
+                    toggleDebugMode();
+                }
+                lastDoubleTapTime = currentTime;
+            }
+
+            // Check for double tap on turn joystick
+            if (event.target.id === 'turnContainer' || event.target.id === 'turnKnob') {
+                const doubleTapLength = currentTime - lastDoubleTapTime;
+                if (doubleTapLength < 300 && doubleTapLength > 0) {
+                    toggleAccelerometer();
+                }
+                lastDoubleTapTime = currentTime;
+            }
+        }
+
+        function onTouchMove(event) {
+            if (gamePaused) return;
+            if (!joystick.active && !turnJoystick.active && !isAccelerometerEnabled) {
+                const movementX = event.touches[0].clientX - event.touches[0].clientX;
+                const movementY = event.touches[0].clientY - event.touches[0].clientY;
+
+                player.rotation.y -= movementX * 0.01;
+                camera.rotation.x -= movementY * 0.01;
+                camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+            }
+        }
+
+        function onTouchEnd() {
+            if (gamePaused) return;
+            attackEnemy();
+        }
+
+        function toggleAccelerometer() {
+            isAccelerometerEnabled = !isAccelerometerEnabled;
+            if (isAccelerometerEnabled) {
+                window.addEventListener('deviceorientation', handleOrientation);
+            } else {
+                window.removeEventListener('deviceorientation', handleOrientation);
+            }
+        }
+
+        function handleOrientation(event) {
+            const x = event.beta; // In degree in the range [-180,180]
+            const y = event.gamma; // In degree in the range [-90,90]
+
+            // Because we don't want to have the device upside down
+            // We constrain the x value to the range [-90,90]
+            if (x > 90) { x = 90; }
+            if (x < -90) { x = -90; }
+
+            // To make computation easier we shift the range of
+            // x and y to [0,180]
+            const xNorm = x + 90;
+            const yNorm = y + 90;
+
+            // Now we calculate the rotation of the camera
+            player.rotation.y = THREE.MathUtils.degToRad(yNorm - 90);
+            camera.rotation.x = THREE.MathUtils.degToRad(xNorm -90);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (gamePaused) return;
+
+            const time = performance.now();
+            const delta = (time - prevTime) / 1000;
+
+            velocity.x -= velocity.x * 10.0 * delta;
+            velocity.z -= velocity.z * 10.0 * delta;
+
+            direction.z = Number(moveForward) - Number(moveBackward);
+            direction.x = Number(moveRight) - Number(moveLeft);
+            direction.normalize();
+
+            let speed = playerStats.baseMovement;
+            if (isRunning && playerStats.stamina > 0) {
+                speed *= 4;
+                playerStats.stamina = Math.max(0, playerStats.stamina - delta);
+            } else if (playerStats.stamina < playerStats.maxStamina) {
+                playerStats.stamina = Math.min(playerStats.maxStamina, playerStats.stamina + delta / 5);
+            }
+
+            if (speedPotionTimer > 0) {
+                speed *= 2;
+                speedPotionTimer -= delta;
+                if (speedPotionTimer <= 0) {
+                    document.getElementById('staminaCounter').textContent = '';
+                }
+            }
+
+            if (moveForward || moveBackward) velocity.z -= direction.z * speed * delta;
+            if (moveLeft || moveRight) velocity.x -= direction.x * speed * delta;
+
+            if (joystick.active) {
+                velocity.x -= joystick.x * speed * delta;
+                velocity.z -= joystick.y * speed * delta;
+            }
+
+            if (turnJoystick.active && !isAccelerometerEnabled) {
+                player.rotation.y -= turnJoystick.x * 0.1;
+                camera.rotation.x -= turnJoystick.y * 0.1;
+                camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+            }
+
+            const oldPosition = player.position.clone();
+            player.translateX(-velocity.x * delta);
+            player.translateZ(-velocity.z * delta);
+
+            // Collision detection
+            let collision = false;
+            for (let i = 0; i < walls.length; i++) {
+                const wall = walls[i];
+                const distanceToWall = player.position.distanceTo(wall.position);
+
+                if (distanceToWall < BLOCK_SIZE) {
+                    collision = true;
+                    break;
+                }
+            }
+
+            // Check if player is out of bounds
+            const dungeonSize = dungeonConfig.dungeonSize * BLOCK_SIZE / 2;
+            if (Math.abs(player.position.x) > dungeonSize || Math.abs(player.position.z) > dungeonSize) {
+                collision = true;
+            }
+
+            if (collision) {
+                player.position.copy(oldPosition);
+            }
+
+            // Update enemies
+            for (let i = 0; i < enemies.length; i++) {
+                const enemy = enemies[i];
+                if (enemy.isFrozen) {
+                    enemy.frozenTimer -= delta;
+                    if (enemy.frozenTimer <= 0) {
+                        enemy.isFrozen = false;
+                        enemy.material.color.setHex(0x800080); // Purple color
+                    }
+                } else if (enemy.isPoisoned) {
+                    enemy.poisonTimer -= delta;
+                    enemy.health -= delta;
+                    if (enemy.poisonTimer <= 0) {
+                        enemy.isPoisoned = false;
+                        enemy.material.color.setHex(0xFF0000); // Red color
+                    }
+                } else {
+                    const directionToPlayer = new THREE.Vector3().subVectors(player.position, enemy.position).normalize();
+                    const newPosition = enemy.position.clone().add(directionToPlayer.multiplyScalar(enemy.movementSpeed * delta));
+
+                    // Check for collision with walls
+                    let enemyCollision = false;
+                    for (let j = 0; j < walls.length; j++) {
+                        const wall = walls[j];
+                        if (newPosition.distanceTo(wall.position) < BLOCK_SIZE) {
+                            enemyCollision = true;
+                            break;
+                        }
+                    }
+
+                    if (!enemyCollision || enemy.type === 'Ghost') {
+                        enemy.position.copy(newPosition);
+                    }
+
+                    if (enemy.position.distanceTo(player.position) < BLOCK_SIZE / 2) {
+                        playerStats.health -= enemy.damage * delta;
+                        updateHUD();
+                        showDamageHeart();
+                        if (playerStats.health <= 0) {
+                            alert('Game Over!');
+                            location.reload();
+                        }
+                    }
+
+                    // Special behavior for Skeleton
+                    if (enemy.type === 'Skeleton' && Math.random() < 0.01) { // 1% chance per frame to throw bone
+                        throwBone(enemy);
+                    }
+                }
+
+                // Update enemy emoji size based on distance to player
+                const distanceToPlayer = enemy.position.distanceTo(player.position);
+                const maxDistance = BLOCK_SIZE * 10; // Maximum distance for scaling
+                const scale = Math.max(0.1, 1 - (distanceToPlayer / maxDistance));
+                enemy.children[0].scale.set(scale, scale, scale);
+
+                // Make enemy emoji always face the player
+                enemy.children[0].lookAt(player.position);
+            }
+
+            // Update projectiles
+            updateProjectiles(delta);
+
+            // Regenerate mana
+            playerStats.mana = Math.min(playerStats.mana + 2 * delta, playerStats.maxMana);
+            updateHUD();
+
+            updateMinimap();
+            updateAttackButton();
+
+            // Update dragon
+            if (dragon) {
+                updateDragon(delta);
+            }
+
+            renderer.render(scene, camera);
+            prevTime = time;
+        }
+
+        function throwBone(skeleton) {
+            const boneGeometry = new THREE.BoxGeometry(BLOCK_SIZE / 16, BLOCK_SIZE / 16, BLOCK_SIZE / 4);
+            const boneMaterial = new THREE.MeshBasicMaterial({color: 0xFFFFFF});
+            const bone = new THREE.Mesh(boneGeometry, boneMaterial);
+
+            const directionToPlayer = new THREE.Vector3().subVectors(player.position, skeleton.position).normalize();
+            bone.position.copy(skeleton.position);
+            bone.position.y += BLOCK_SIZE / 2;
+
+            const speed = 5;
+            bone.velocity = directionToPlayer.multiplyScalar(speed);
+            bone.distanceTraveled = 0;
+
+            // Add emoji to the bone
+            const emojiTexture = new THREE.CanvasTexture(createEmojiTexture('🦴'));
+            const emojiMaterial = new THREE.MeshBasicMaterial({ map: emojiTexture, transparent: true });
+            const emojiPlane = new THREE.Mesh(new THREE.PlaneGeometry(BLOCK_SIZE / 4, BLOCK_SIZE / 4), emojiMaterial);
+            emojiPlane.position.y = BLOCK_SIZE / 8;
+            bone.add(emojiPlane);
+
+            scene.add(bone);
+            projectiles.push(bone);
+        }
+
+        function checkLevelUp() {
+            if (enemiesKilled >= 2 * playerStats.level) {
+                enemiesKilled = 0;
+                levelUpPoints = 2;
+                playerStats.level++;
+                showLevelUp();
+            }
+        }
+
+        function showLevelUp() {
+            gamePaused = true;
+            document.getElementById('levelUpMenu').style.display = 'block';
+            document.getElementById('availablePoints').textContent = levelUpPoints;
+            document.exitPointerLock();
+            updateStatsMenu();
+        }
+
+        function increaseStats(stat) {
+            if (levelUpPoints > 0) {
+                switch (stat) {
+                    case 'health':
+                        playerStats.health++;
+                        playerStats.maxHealth++;
+                        break;
+                    case 'mana':
+                        playerStats.mana += 2;
+                        playerStats.maxMana += 2;
+                        break;
+                    case 'stamina':
+                        playerStats.stamina++;
+                        playerStats.maxStamina++;
+                        break;
+                }
+                levelUpPoints--;
+                document.getElementById('availablePoints').textContent = levelUpPoints;
+                document.getElementById('availablePointsMenu').textContent = levelUpPoints;
+                updateHUD();
+                updateStatsMenu();
+                if (levelUpPoints === 0) {
+                    closeLevelUpMenu();
+                }
+            }
+        }
+
+        function closeLevelUpMenu() {
+            gamePaused = false;
+            document.getElementById('levelUpMenu').style.display = 'none';
+            document.body.requestPointerLock();
+            savePlayerStats();
+        }
+
+        function showGameOver() {
+            gamePaused = true;
+            document.getElementById('gameOverMenu').style.display = 'block';
+            document.exitPointerLock();
+            savePlayerStats();
+        }
+
+        function updateHUD() {
+            document.getElementById('health').textContent = Math.max(0, Math.round(playerStats.health));
+            document.getElementById('mana').textContent = Math.round(playerStats.mana);
+            document.getElementById('stamina').textContent = Math.round(playerStats.stamina);
+            document.getElementById('level').textContent = playerStats.level;
+            document.getElementById('xp').textContent = playerStats.xp;
+            if (speedPotionTimer > 0) {
+                document.getElementById('staminaCounter').textContent = ` (${Math.ceil(speedPotionTimer)}s)`;
+            }
+            if (dragonKilled) {
+                document.getElementById('crownIcon').style.display = 'block';
+            }
+        }
+
+        function initMinimap() {
+            const minimap = document.getElementById('minimap');
+            minimapContext = minimap.getContext('2d');
+            minimap.width = 150;
+            minimap.height = 150;
+            minimapScale = minimap.width / (dungeonConfig.dungeonSize * BLOCK_SIZE);
+        }
+
+        function updateMinimap() {
+            minimapContext.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            minimapContext.fillRect(0, 0, 150, 150);
+
+            // Draw walls
+            minimapContext.fillStyle = 'white';
+            for (const wall of walls) {
+                minimapContext.fillRect(
+                    (wall.position.x + dungeonConfig.dungeonSize * BLOCK_SIZE / 2) * minimapScale,
+                    (wall.position.z + dungeonConfig.dungeonSize * BLOCK_SIZE / 2) * minimapScale,
+                    BLOCK_SIZE * minimapScale,
+                    BLOCK_SIZE * minimapScale
+                );
+            }
+
+            // Draw enemies
+            minimapContext.font = '8px Arial';
+            minimapContext.textAlign = 'center';
+            minimapContext.textBaseline = 'middle';
+            for (const enemy of enemies) {
+                const x = (enemy.position.x + dungeonConfig.dungeonSize * BLOCK_SIZE / 2) * minimapScale;
+                const y = (enemy.position.z + dungeonConfig.dungeonSize * BLOCK_SIZE / 2) * minimapScale;
+                minimapContext.fillText(enemy.emoji, x, y);
+            }
+
+            // Draw treasure chest
+            if (treasureChest) {
+                minimapContext.fillStyle = 'gold';
+                minimapContext.fillRect(
+                    (treasureChest.position.x + dungeonConfig.dungeonSize * BLOCK_SIZE / 2) * minimapScale,
+                    (treasureChest.position.z + dungeonConfig.dungeonSize * BLOCK_SIZE / 2) * minimapScale,
+                    6,
+                    6
+                );
+            }
+
+            // Draw player
+            minimapContext.fillStyle = 'blue';
+            minimapContext.fillText(
+                dragonKilled ? '👑' : '🟦',
+                (player.position.x + dungeonConfig.dungeonSize * BLOCK_SIZE / 2) * minimapScale,
+                (player.position.z + dungeonConfig.dungeonSize * BLOCK_SIZE / 2) * minimapScale
+            );
+
+            // Draw player's direction line (inverted)
+            minimapContext.strokeStyle = 'yellow';
+            minimapContext.beginPath();
+            const playerX = (player.position.x + dungeonConfig.dungeonSize * BLOCK_SIZE / 2) * minimapScale;
+            const playerZ = (player.position.z + dungeonConfig.dungeonSize * BLOCK_SIZE / 2) * minimapScale;
+            minimapContext.moveTo(playerX, playerZ);
+            const directionX = -Math.sin(player.rotation.y) * 15;
+            const directionZ = -Math.cos(player.rotation.y) * 15;
+            minimapContext.lineTo(playerX + directionX, playerZ + directionZ);
+            minimapContext.stroke();
+        }
+
+        function savePlayerStats() {
+            const stats = {
+                health: playerStats.health,
+                maxHealth: playerStats.maxHealth,
+                mana: playerStats.mana,
+                maxMana: playerStats.maxMana,
+                stamina: playerStats.stamina,
+                maxStamina: playerStats.maxStamina,
+                level: playerStats.level,
+                xp: playerStats.xp,
+                damage: playerStats.damage,
+                inventory: playerStats.inventory,
+                equippedItem: playerStats.equippedItem,
+                baseMovement: playerStats.baseMovement,
+                dragonKilled: dragonKilled
+            };
+            localStorage.setItem('playerStats', JSON.stringify(stats));
+        }
+
+        function loadPlayerStats() {
+            const savedStats = localStorage.getItem('playerStats');
+            if (savedStats) {
+                const stats = JSON.parse(savedStats);
+                Object.assign(playerStats, stats);
+                dragonKilled = stats.dragonKilled || false;
+                updateHUD();
+            }
+        }
+
+        function toggleStatsMenu() {
+            const statsMenu = document.getElementById('statsMenu');
+            if (statsMenu.style.display === 'none' || statsMenu.style.display === '') {
+                statsMenu.style.display = 'block';
+                gamePaused = true;
+                document.exitPointerLock();
+            } else {
+                statsMenu.style.display = 'none';
+                gamePaused = false;
+                document.body.requestPointerLock();
+            }
+            updateStatsMenu();
+        }
+
+        function updateStatsMenu() {
+            document.getElementById('statsHealth').textContent = `${playerStats.health}/${playerStats.maxHealth}`;
+            document.getElementById('statsMana').textContent = `${playerStats.mana}/${playerStats.maxMana}`;
+            document.getElementById('statsXP').textContent = playerStats.xp;
+            document.getElementById('statsAttackDamage').textContent = playerStats.damage;
+
+            const inventoryGrid = document.getElementById('inventoryGrid');
+            inventoryGrid.innerHTML = '';
+            playerStats.inventory.forEach((item, index) => {
+                const slot = document.createElement('div');
+                slot.className = 'inventorySlot';
+                slot.textContent = item.emoji;
+                slot.title = `${item.name}: ${item.effect}`;
+                slot.addEventListener('click', () => equipItem(index));
+                inventoryGrid.appendChild(slot);
+            });
+
+            const equippedItemSlot = document.getElementById('equippedItem');
+            equippedItemSlot.textContent = playerStats.equippedItem ? playerStats.equippedItem.emoji : '';
+            equippedItemSlot.title = playerStats.equippedItem ? `${playerStats.equippedItem.name}: ${playerStats.equippedItem.effect}` : 'No item equipped';
+        }
+
+        function equipItem(index) {
+            const item = playerStats.inventory[index];
+            if (item) {
+                if (playerStats.equippedItem) {
+                    playerStats.inventory.push(playerStats.equippedItem);
+                }
+                playerStats.equippedItem = item;
+                playerStats.inventory.splice(index, 1);
+                updateStatsMenu();
+                applyItemEffect(item);
+            }
+        }
+
+        function applyItemEffect(item) {
+            switch (item.name) {
+                case "Long Sword":
+                    playerStats.damage = 3;
+                    break;
+                case "Short Sword":
+                    playerStats.damage = 1;
+                    break;
+                case "Armor":
+                    playerStats.maxHealth += 10;
+                    playerStats.health = Math.min(playerStats.health + 10, playerStats.maxHealth);
+                    break;
+                case "Health Potion":
+                    playerStats.health = Math.min(playerStats.health + 10, playerStats.maxHealth);
+                    playerStats.equippedItem = null;
+                    playerStats.inventory = playerStats.inventory.filter(i => i !== item);
+                    break;
+                case "Speed Potion":
+                    playerStats.stamina = Math.min(playerStats.stamina + 20, playerStats.maxStamina);
+                    speedPotionTimer = 20;
+                    playerStats.equippedItem = null;
+                    playerStats.inventory = playerStats.inventory.filter(i => i !== item);
+                    break;
+                // Ice Wand, Poison Spell, Bow, Fireball Ring, Magic Wand, and Boomerang effects are applied when shooting
+            }
+            updateHUD();
+            updateAttackButton();
+        }
+
+        function updateAttackButton() {
+            const attackButton = document.getElementById('attackButton');
+            attackButton.textContent = playerStats.equippedItem ? playerStats.equippedItem.emoji : '👊';
+            attackButton.title = playerStats.equippedItem ? playerStats.equippedItem.name : 'Unarmed attack';
+        }
+
+        function showManaNotification() {
+            const manaNotification = document.getElementById('manaNotification');
+            manaNotification.style.display = 'block';
+            setTimeout(() => {
+                manaNotification.style.display = 'none';
+            }, 1000);
+        }
+
+        function startNewGame() {
+            playerStats = {
+                health: 10,
+                maxHealth: 10,
+                mana: 100,
+                maxMana: 100,
+                stamina: 6,
+                maxStamina: 6,
+                level: 1,
+                xp: 0,
+                damage: 1,
+                inventory: [ITEMS[Math.floor(Math.random() * ITEMS.length)]],
+                equippedItem: null,
+                baseMovement: 8
+            };
+            dragonKilled = false;
+            savePlayerStats();
+            startGame();
+        }
+
+        function continueGame() {
+            loadPlayerStats();
+            startGame();
+        }
+
+        function startGame() {
+            document.getElementById('startMenu').style.display = 'none';
+            init();
+            document.body.requestPointerLock();
+        }
+
+        function toggleTrashMode() {
+            const inventorySlots = document.querySelectorAll('.inventorySlot');
+            inventorySlots.forEach(slot => {
+                slot.addEventListener('click', deleteItem);
+            });
+        }
+
+        function deleteItem(event) {
+            const index = Array.from(event.target.parentNode.children).indexOf(event.target);
+            playerStats.inventory.splice(index, 1);
+            levelUpPoints += 0.2;
+            updateStatsMenu();
+            document.getElementById('availablePointsMenu').textContent = levelUpPoints.toFixed(1);
+        }
+
+        function togglePointsMenu() {
+            const pointsMenu = document.getElementById('pointsMenu');
+            if (pointsMenu.style.display === 'none' || pointsMenu.style.display === '') {
+                pointsMenu.style.display = 'block';
+                document.getElementById('availablePointsMenu').textContent = levelUpPoints.toFixed(1);
+            } else {
+                pointsMenu.style.display = 'none';
+            }
+        }
+
+        function toggleEnemyInfoBox() {
+            const enemyInfoBox = document.getElementById('enemyInfoBox');
+            if (enemyInfoBox.style.display === 'none' || enemyInfoBox.style.display === '') {
+                enemyInfoBox.style.display = 'block';
+                updateEnemyInfoBox();
+            } else {
+                enemyInfoBox.style.display = 'none';
+            }
+        }
+
+        function updateEnemyInfoBox() {
+            const enemyWeaponList = document.getElementById('enemyWeaponList');
+            enemyWeaponList.innerHTML = '';
+
+            ENEMIES.forEach(enemy => {
+                const enemyInfo = document.createElement('p');
+                enemyInfo.textContent = `${enemy.emoji} ${enemy.name}: Health ${enemy.health}, Damage ${enemy.damage}`;
+                if (enemy.special) {
+                    enemyInfo.textContent += `, ${enemy.special}`;
+                }
+                enemyWeaponList.appendChild(enemyInfo);
+            });
+
+            ITEMS.forEach(item => {
+                const itemInfo = document.createElement('p');
+                itemInfo.textContent = `${item.emoji} ${item.name}: ${item.effect}`;
+                enemyWeaponList.appendChild(itemInfo);
+            });
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        function showDamageHeart() {
+            const damageHeart = document.getElementById('damageHeart');
+            damageHeart.style.display = 'block';
+            damageHeart.style.animation = 'none';
+            damageHeart.offsetHeight; // Trigger reflow
+            damageHeart.style.animation = null;
+            setTimeout(() => {
+                damageHeart.style.display = 'none';
+            }, 1000);
+        }
+
+        function spawnDragon() {
+            const dragonGeometry = new THREE.BoxGeometry(BLOCK_SIZE / 2, BLOCK_SIZE / 2, BLOCK_SIZE / 2);
+            const dragonMaterial = new THREE.MeshPhongMaterial({color: 0x8B0000, transparent: true, opacity: 0});
+            dragon = new THREE.Mesh(dragonGeometry, dragonMaterial);
+
+            const dungeonSize = dungeonConfig.dungeonSize * BLOCK_SIZE;
+            dragon.position.set(0, BLOCK_SIZE / 4, 0);
+            dragon.health = 25;
+            dragon.emoji = '🐉';
+            dragon.movementSpeed = 7;
+
+            // Add emoji to the dragon's 3D model
+            const emojiTexture = new THREE.CanvasTexture(createEmojiTexture(dragon.emoji));
+            const emojiMaterial = new THREE.MeshBasicMaterial({ map: emojiTexture, transparent: true });
+            const emojiPlane = new THREE.Mesh(new THREE.PlaneGeometry(BLOCK_SIZE / 2, BLOCK_SIZE / 2), emojiMaterial);
+            emojiPlane.position.y = BLOCK_SIZE / 4;
+            dragon.add(emojiPlane);
+
+            scene.add(dragon);
+            enemies.push(dragon);
+        }
+
+        function updateDragon(delta) {
+            if (!dragon) return;
+
+            // Move towards player
+            const directionToPlayer = new THREE.Vector3().subVectors(player.position, dragon.position).normalize();
+            dragon.position.add(directionToPlayer.multiplyScalar(dragon.movementSpeed * delta));
+
+            // Rotate to face player
+            dragon.lookAt(player.position);
+
+            // Shoot fireball
+            dragonFireballTimer += delta;
+            if (dragonFireballTimer >= 5) {
+                shootDragonFireball();
+                dragonFireballTimer = 0;
+            }
+
+            // Check for collision with player
+            if (dragon.position.distanceTo(player.position) < BLOCK_SIZE) {
+                playerStats.health -= 5 * delta;
+                updateHUD();
+                showDamageHeart();
+                if (playerStats.health <= 0) {
+                    showGameOver();
+                }
+            }
+
+            // Update dragon emoji size based on distance to player
+            const distanceToPlayer = dragon.position.distanceTo(player.position);
+            const maxDistance = BLOCK_SIZE * 20; // Maximum distance for scaling
+            const scale = Math.max(0.5, 2 - (distanceToPlayer / maxDistance));
+            dragon.children[0].scale.set(scale, scale, scale);
+
+            // Make dragon emoji always face the player
+            dragon.children[0].lookAt(player.position);
+
+            // Check if dragon is defeated
+            if (dragon.health <= 0) {
+                dragonDefeated();
+            }
+        }
+
+        function shootDragonFireball() {
+            const fireballGeometry = new THREE.SphereGeometry(BLOCK_SIZE / 4, 32, 32);
+            const fireballMaterial = new THREE.MeshBasicMaterial({color: 0xFF4500});
+            const fireball = new THREE.Mesh(fireballGeometry, fireballMaterial);
+
+            fireball.position.copy(dragon.position);
+            fireball.position.y += BLOCK_SIZE / 2;
+
+            const directionToPlayer = new THREE.Vector3().subVectors(player.position, dragon.position).normalize();
+            fireball.velocity = directionToPlayer.multiplyScalar(15);
+
+            scene.add(fireball);
+            projectiles.push(fireball);
+        }
+
+        function toggleDebugMode() {
+            debugMode = !debugMode;
+            enemies.forEach(enemy => {
+                enemy.material.wireframe = debugMode;
+            });
+
+            const debugOverlays = document.querySelectorAll('.debugOverlay');
+            debugOverlays.forEach(overlay => overlay.remove());
+
+            if (debugMode) {
+                addDebugOverlay('joystickContainer');
+                addDebugOverlay('turnContainer');
+                addDebugOverlay('runButton');
+                addDebugOverlay('attackButton');
+                addDebugOverlay('statsButton');
+            }
+        }
+
+        function addDebugOverlay(elementId) {
+            const element = document.getElementById(elementId);
+            const overlay = document.createElement('div');
+            overlay.className = 'debugOverlay';
+            overlay.style.width = `${element.offsetWidth}px`;
+            overlay.style.height = `${element.offsetHeight}px`;
+            overlay.style.left = `${element.offsetLeft}px`;
+            overlay.style.top = `${element.offsetTop}px`;
+            document.body.appendChild(overlay);
+        }
+
+        function toggleControlsInfo() {
+            const controlsInfo = document.getElementById('controlsInfo');
+            if (controlsInfo.style.display === 'none' || controlsInfo.style.display === '') {
+                controlsInfo.style.display = 'block';
+                gamePaused = true;
+                document.exitPointerLock();
+            } else {
+                controlsInfo.style.display = 'none';
+                gamePaused = false;
+                document.body.requestPointerLock();
+            }
+        }
+
+        function dragonDefeated() {
+            dragonKilled = true;
+            scene.remove(dragon);
+            enemies = enemies.filter(e => e !== dragon);
+            dragon = null;
+            showVictoryScreen();
+        }
+
+        function showVictoryScreen() {
+            gamePaused = true;
+            document.getElementById('victoryMenu').style.display = 'block';
+            document.exitPointerLock();
+            createConfetti();
+            savePlayerStats();
+            setTimeout(() => {
+                document.getElementById('gameOverMenu').style.display = 'block';
+            }, 5000);
+        }
+
+        function createConfetti() {
+            const confettiContainer = document.getElementById('confetti');
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti-piece');
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.animationDelay = `${Math.random() * 5}s`;
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.animation = `confettiFall ${Math.random() * 3 + 2}s linear`;
+                confettiContainer.appendChild(confetti);
+            }
+        }
+
+        function restartWithItems() {
+            playerStats.health = 10;
+            playerStats.maxHealth = 10;
+            playerStats.mana = 100;
+            playerStats.maxMana = 100;
+            playerStats.stamina = 6;
+            playerStats.maxStamina = 6;
+            playerStats.level = 1;
+            playerStats.xp = 0;
+            playerStats.damage = 1;
+            playerStats.baseMovement = 8;
+            dragonKilled = false;
+            document.getElementById('gameOverMenu').style.display = 'none';
+            document.getElementById('victoryMenu').style.display = 'none';
+            startGame();
+        }
+
+        function endGame() {
+            location.reload();
+        }
+
+        document.getElementById('continueButton').addEventListener('click', continueGame);
+        document.getElementById('startNewGameButton').addEventListener('click', startNewGame);
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Calculate and display generation time
+        const endTime = performance.now();
+        const generationTime = endTime - performance.now();
+        document.getElementById('generationTime').textContent = `Generation Time: ${generationTime.toFixed(2)}ms`;
+    </script>
+<script defer="" src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon="{&quot;version&quot;:&quot;2024.11.0&quot;,&quot;token&quot;:&quot;5562e2e56e7244b2af1869a8c731adb3&quot;,&quot;r&quot;:1,&quot;server_timing&quot;:{&quot;name&quot;:{&quot;cfCacheStatus&quot;:true,&quot;cfEdge&quot;:true,&quot;cfExtPri&quot;:true,&quot;cfL4&quot;:true,&quot;cfOrigin&quot;:true,&quot;cfSpeedBrain&quot;:true},&quot;location_startswith&quot;:null}}" crossorigin="anonymous"></script>
+
+<script>
+                        let lastTouchEnd = 0;
+
+                        document.addEventListener('touchstart', function(e) {
+                            if (e.touches.length > 1) {
+                                e.preventDefault();
+                            }
+                        }, { passive: false });
+
+                        document.addEventListener('touchend', function(e) {
+                            const now = (new Date()).getTime();
+                            if (now - lastTouchEnd <= 300) {
+                                e.preventDefault();
+                            }
+                            lastTouchEnd = now;
+                        }, false);
+
+                        document.addEventListener('touchmove', function(e) {
+                            if (e.touches.length > 1) {
+                                e.preventDefault();
+                            }
+                        }, { passive: false });
+                    </script></body></html>

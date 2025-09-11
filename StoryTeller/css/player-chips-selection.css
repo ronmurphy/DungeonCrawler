@@ -1,0 +1,35 @@
+/* Selected state for command mode */
+.player-chip.selected {
+    background: rgba(0, 123, 255, 0.3) !important;
+    border-color: rgba(0, 123, 255, 0.6) !important;
+    box-shadow: 0 0 12px rgba(0, 123, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.player-chip.selected::before {
+    content: '⚡';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    font-size: 0.8em;
+    background: rgba(0, 123, 255, 0.9);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.dark-theme .player-chip.selected {
+    background: rgba(102, 126, 234, 0.3) !important;
+    border-color: rgba(102, 126, 234, 0.6) !important;
+    box-shadow: 0 0 12px rgba(102, 126, 234, 0.4);
+}
+
+.dark-theme .player-chip.selected::before {
+    background: rgba(102, 126, 234, 0.9);
+}

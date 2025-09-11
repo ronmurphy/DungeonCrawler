@@ -1,0 +1,1708 @@
+/* ========================================
+   NPC MANAGER - REDESIGNED FOR TABLETS
+   Clean tabbed interface optimized for low-res tablets
+   Enhanced with JSON data support for races and jobs
+   ======================================== */
+
+/* ========================================
+   MAIN CONTAINER - Optimized for Low-Resolution Tablets
+   ======================================== */
+.npc-panel-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: calc(100vh - 120px); /* More conservative for low-res tablets */
+    overflow: hidden;
+}
+
+/* Specific height adjustments for very low resolution displays */
+@media (max-height: 600px) {
+    .npc-panel-container {
+        max-height: calc(100vh - 100px);
+    }
+    
+    .npc-tab-content {
+        max-height: calc(100vh - 160px);
+    }
+    
+    .npc-display {
+        max-height: calc(100vh - 200px);
+    }
+}
+
+/* For extremely low resolution (old tablets) */
+@media (max-height: 480px) {
+    .npc-panel-container {
+        max-height: calc(100vh - 80px);
+    }
+    
+    .npc-tab-content {
+        max-height: calc(100vh - 140px);
+    }
+    
+    .npc-display {
+        max-height: calc(100vh - 180px);
+    }
+    
+    .saved-npcs-container {
+        max-height: calc(100vh - 200px);
+    }
+    
+    /* More compact padding for very small screens */
+    .npc-display {
+        padding: 10px;
+    }
+    
+    .npc-tab-content {
+        padding: 6px;
+    }
+    
+    /* Reduce gaps and spacing */
+    .npc-card {
+        gap: 10px;
+    }
+    
+    .npc-info-grid {
+        gap: 8px;
+    }
+    
+    .npc-skills-equipment {
+        gap: 8px;
+    }
+}
+
+/* Enhanced skill display */
+.skill-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    margin: 2px 0;
+    border-left: 3px solid var(--action-gradient);
+    min-height: 32px; /* Ensure consistent height */
+    word-break: break-word; /* Prevent long skill names from breaking layout */
+}
+
+.skill-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1 1 auto;
+    min-width: 0; /* Allow text to shrink */
+}
+
+.skill-stat {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    background: rgba(102, 126, 234, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.skill-level {
+    font-size: 0.8em;
+    background: var(--success-gradient);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.skill-source {
+    font-size: 0.7em;
+    color: var(--text-secondary);
+    background: var(--border-color);
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.skill-source[data-source="racial"] {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.skill-source[data-source="background"] {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.skill-source[data-source="general"] {
+    background: #f1f8e9;
+    color: #388e3c;
+}
+
+/* Race and background descriptions */
+.npc-descriptions {
+    background: var(--bg-secondary);
+    padding: 12px;
+    border-radius: 6px;
+    margin: 8px 0;
+    border-left: 4px solid var(--panel-gradient);
+}
+
+.description-item {
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.description-item:last-child {
+    margin-bottom: 0;
+}
+
+.info-category {
+    display: block;
+    font-size: 0.7em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+/* ========================================
+   TAB NAVIGATION
+   ======================================== */
+.npc-tabs {
+    display: flex;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    border: 1px solid var(--border-color);
+    border-bottom: none;
+    overflow: hidden;
+}
+
+.npc-tab {
+    flex: 1;
+    padding: 12px 15px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: none;
+    border-right: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    position: relative;
+}
+
+.npc-tab:last-child {
+    border-right: none;
+}
+
+.npc-tab:hover {
+    background: var(--panel-bg);
+    color: var(--text-primary);
+}
+
+.npc-tab.active {
+    background: var(--panel-bg);
+    color: var(--text-primary);
+    font-weight: 600;
+    box-shadow: inset 0 -3px 0 #667eea;
+}
+
+.saved-count {
+    background: var(--danger-gradient);
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
+}
+
+/* ========================================
+   TAB CONTENT - Enhanced for Low-Res Tablets
+   ======================================== */
+.npc-tab-content {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    padding: 8px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: calc(100vh - 200px); /* Ensures content doesn't exceed viewport */
+    
+    /* Enhanced scrolling for touch devices */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+.npc-tab-content.active {
+    display: flex;
+}
+
+/* Scrollbar styling for tab content */
+.npc-tab-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.npc-tab-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.npc-tab-content::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.npc-tab-content::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* ========================================
+   NEW NPC TAB - QUICK GENERATE BUTTONS
+   ======================================== */
+.npc-quick-generate {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.npc-type-btn {
+    padding: 10px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    min-height: 80px;
+}
+
+.npc-type-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.npc-type-btn.friendly {
+    border-color: #00b894;
+}
+
+.npc-type-btn.friendly:hover {
+    background: linear-gradient(135deg, rgba(0, 184, 148, 0.1), rgba(0, 160, 133, 0.1));
+    border-color: #00b894;
+    box-shadow: 0 4px 12px rgba(0, 184, 148, 0.2);
+}
+
+.npc-type-btn.encounter {
+    border-color: #ff7675;
+}
+
+.npc-type-btn.encounter:hover {
+    background: linear-gradient(135deg, rgba(255, 118, 117, 0.1), rgba(214, 48, 49, 0.1));
+    border-color: #ff7675;
+    box-shadow: 0 4px 12px rgba(255, 118, 117, 0.2);
+}
+
+.npc-type-btn i {
+    font-size: 1.5rem;
+}
+
+.npc-type-btn span {
+    font-size: 0.9rem;
+}
+
+/* ========================================
+   CURRENT NPC DISPLAY
+   ======================================== */
+.npc-current-display {
+    flex: 1;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-bottom: 8px;
+    min-height: 200px;
+    
+    /* Enhanced scrolling */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+.npc-current-display::-webkit-scrollbar {
+    width: 6px;
+}
+
+.npc-current-display::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.npc-current-display::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.npc-current-display::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+.npc-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-secondary);
+    height: 100%;
+}
+
+.npc-placeholder i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    opacity: 0.6;
+}
+
+.npc-placeholder p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* ========================================
+   NPC DISPLAY CONTENT - Optimized for Low-Res Tablets
+   ======================================== */
+.npc-display {
+    padding: 15px;
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    
+    /* Enhanced scrolling for touch devices */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+/* Scrollbar styling for NPC display */
+.npc-display::-webkit-scrollbar {
+    width: 8px;
+}
+
+.npc-display::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.npc-display::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.npc-display::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+.npc-card {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Optimized Header Layout */
+.npc-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.npc-portrait {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.npc-portrait.encounter {
+    border-color: #ff7675;
+    background: linear-gradient(135deg, rgba(255, 118, 117, 0.1), rgba(214, 48, 49, 0.1));
+}
+
+.npc-portrait.npc {
+    border-color: #00b894;
+    background: linear-gradient(135deg, rgba(0, 184, 148, 0.1), rgba(0, 160, 133, 0.1));
+}
+
+.npc-header-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.npc-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    line-height: 1.2;
+}
+
+.npc-type-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.npc-type-badge.npc {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.npc-type-badge.encounter {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+/* Vital Stats next to Avatar */
+.npc-vital-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.vital-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 6px 8px;
+    min-width: 50px;
+}
+
+.vital-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.vital-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+/* Optimized Info Grid Layout */
+.npc-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.npc-basic-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    min-width: 80px;
+}
+
+.info-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: right;
+}
+
+/* Compact Stats Grid */
+.npc-stats {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 10px;
+}
+
+.stats-header {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.attribute-points {
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 2px 8px;
+    background: rgba(74, 158, 255, 0.2);
+    border: 1px solid #4a9eff;
+    border-radius: 4px;
+    color: #4a9eff;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    padding: 6px 4px;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+/* Section Headers */
+.section-header {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Skills Section */
+.npc-skills {
+    margin-bottom: 15px;
+}
+
+/* Skills and Equipment Side-by-Side Layout */
+.npc-skills-equipment {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.npc-skills-equipment .npc-skills,
+.npc-skills-equipment .npc-equipment {
+    margin-bottom: 0;
+}
+
+.skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.skill-badge {
+    display: inline-block;
+    background: var(--panel-gradient);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.no-content {
+    color: var(--text-secondary);
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+/* Equipment Section */
+.npc-equipment {
+    margin-bottom: 15px;
+}
+
+.equipment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.equipment-list span {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    padding: 2px 0;
+}
+
+/* Notes Section */
+.npc-notes {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-left: 3px solid #fdcb6e;
+    border-radius: var(--border-radius);
+    padding: 10px;
+}
+
+.notes-content {
+    color: var(--text-primary);
+    font-style: italic;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* ========================================
+   ACTION BUTTONS BAR
+   ======================================== */
+.npc-actions-bar {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: 10px 0;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    margin: 0 -8px -8px -8px;
+    padding: 10px 8px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    min-height: 36px;
+}
+
+.save-btn {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.copy-btn {
+    background: var(--action-gradient);
+    color: white;
+}
+
+.edit-btn {
+    background: var(--panel-gradient);
+    color: white;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* ========================================
+   MANUAL CONTROLS
+   ======================================== */
+.manual-controls {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.manual-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.manual-header h5 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-close {
+    background: var(--danger-gradient);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    padding: 15px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.control-group label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.control-input,
+.control-select {
+    padding: 6px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+
+.manual-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: 12px 15px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+.btn-secondary {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.btn-secondary:hover {
+    background: var(--panel-gradient);
+    color: white;
+    border-color: transparent;
+}
+
+/* ========================================
+   SAVED NPCS TAB
+   ======================================== */
+.saved-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.filter-select {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    min-width: 120px;
+}
+
+.clear-btn {
+    background: var(--danger-gradient);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.clear-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.saved-npcs-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-secondary);
+    max-height: calc(100vh - 300px); /* Ensure it doesn't exceed viewport */
+    
+    /* Enhanced scrolling */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+.saved-npcs-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.saved-npcs-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.saved-npcs-container::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.saved-npcs-container::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+.saved-npcs-grid {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.no-npcs {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-secondary);
+    height: 100%;
+}
+
+.no-npcs i {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    opacity: 0.6;
+}
+
+.no-npcs p {
+    margin: 0 0 8px 0;
+    font-size: 0.9rem;
+}
+
+/* ========================================
+   SAVED NPC CARDS - COMPACT DESIGN
+   ======================================== */
+.saved-npc-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.saved-npc-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: #667eea;
+}
+
+.saved-npc-portrait {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    border: 2px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.saved-npc-portrait.npc {
+    border-color: #00b894;
+    background: linear-gradient(135deg, rgba(0, 184, 148, 0.1), rgba(0, 160, 133, 0.1));
+}
+
+.saved-npc-portrait.encounter {
+    border-color: #ff7675;
+    background: linear-gradient(135deg, rgba(255, 118, 117, 0.1), rgba(214, 48, 49, 0.1));
+}
+
+.saved-npc-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.saved-npc-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    line-height: 1.2;
+}
+
+.saved-npc-details {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.saved-npc-type {
+    font-size: 0.7rem;
+    opacity: 0.8;
+}
+
+.saved-npc-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.btn-small {
+    padding: 4px 6px;
+    border: none;
+    border-radius: var(--border-radius);
+    background: var(--panel-gradient);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-small:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-small.danger {
+    background: var(--danger-gradient);
+}
+
+.btn-small i {
+    font-size: 0.75rem;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+@media (max-width: 768px) {
+    .npc-quick-generate {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .npc-type-btn {
+        min-height: 60px;
+        padding: 12px;
+    }
+    
+    .npc-type-btn i {
+        font-size: 1.2rem;
+    }
+    
+    .npc-type-btn span {
+        font-size: 0.85rem;
+    }
+    
+    .npc-actions-bar {
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .action-btn {
+        width: 100%;
+    }
+    
+    .npc-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Stack skills and equipment on mobile */
+    .npc-skills-equipment {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .controls-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .saved-controls {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+    }
+    
+    .filter-select {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .npc-tab {
+        padding: 10px 8px;
+        font-size: 0.8rem;
+    }
+    
+    .npc-tab i {
+        font-size: 0.9rem;
+    }
+    
+    .npc-tab-content {
+        padding: 10px;
+    }
+    
+    .npc-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .npc-portrait {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+}
+
+/* ========================================
+   NPC MODAL
+   ======================================== */
+.npc-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.npc-modal-content {
+    background: var(--panel-bg);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    max-height: 90vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.npc-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.npc-modal-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.npc-modal-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-modal-flag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+}
+
+.btn-modal-flag:hover {
+    background: var(--warning-gradient);
+    color: white;
+    border-color: transparent;
+}
+
+.btn-modal-flag.flagged {
+    background: var(--warning-gradient);
+    color: white;
+    border-color: transparent;
+}
+
+.btn-modal-close {
+    background: var(--danger-gradient);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-modal-close:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.npc-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
+    
+    /* Enhanced scrolling */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+.npc-modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.npc-modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.npc-modal-body::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.npc-modal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+.modal-npc-display {
+    padding: 20px;
+}
+
+.npc-modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    padding: 15px 20px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.npc-modal-footer .btn-secondary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 120px;
+    justify-content: center;
+}
+
+/* Modal Responsive Design */
+@media (max-width: 768px) {
+    .npc-modal {
+        padding: 10px;
+    }
+    
+    .npc-modal-content {
+        max-height: 95vh;
+    }
+    
+    .npc-modal-header {
+        padding: 12px 15px;
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    
+    .npc-modal-controls {
+        justify-content: space-between;
+    }
+    
+    .npc-modal-footer {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .npc-modal-footer .btn-secondary {
+        width: 100%;
+    }
+    
+    .modal-npc-display {
+        padding: 15px;
+    }
+    
+    .btn-modal-flag span {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .npc-modal {
+        padding: 5px;
+    }
+    
+    .npc-modal-header {
+        padding: 10px;
+    }
+    
+    .npc-modal-footer {
+        padding: 10px;
+    }
+    
+    .modal-npc-display {
+        padding: 10px;
+    }
+}
+
+/* ===== NPC EDIT MODE STYLES ===== */
+.npc-display.edit-mode {
+    background: linear-gradient(135deg, #2a3f5f 0%, #1e2938 100%);
+    border: 2px solid #4a9eff;
+    box-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
+}
+
+.npc-display.edit-mode .npc-card {
+    border: 1px solid #4a9eff;
+}
+
+/* Editable Fields */
+.editable-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+}
+
+.edit-input, .edit-select, .edit-textarea {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #4a9eff;
+    border-radius: 4px;
+    color: #e0e6ed;
+    padding: 6px 8px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.edit-input:focus, .edit-select:focus, .edit-textarea:focus {
+    outline: none;
+    border-color: #7fb8ff;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 8px rgba(74, 158, 255, 0.4);
+}
+
+.edit-name {
+    font-size: 18px;
+    font-weight: bold;
+    min-width: 200px;
+}
+
+.edit-level {
+    width: 60px;
+}
+
+.edit-select {
+    min-width: 120px;
+}
+
+.edit-textarea {
+    width: 100%;
+    min-height: 60px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* Edit Controls */
+.edit-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.edit-accept, .edit-cancel {
+    background: transparent;
+    border: 1px solid;
+    border-radius: 3px;
+    color: white;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 6px;
+    transition: all 0.2s ease;
+    min-width: 24px;
+    height: 24px;
+}
+
+.edit-accept {
+    border-color: #4caf50;
+    color: #4caf50;
+}
+
+.edit-accept:hover {
+    background: #4caf50;
+    color: white;
+}
+
+.edit-cancel {
+    border-color: #f44336;
+    color: #f44336;
+}
+
+.edit-cancel:hover {
+    background: #f44336;
+    color: white;
+}
+
+/* Stat Editors */
+.stat-editor {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
+}
+
+.stat-btn {
+    background: rgba(74, 158, 255, 0.2);
+    border: 1px solid #4a9eff;
+    border-radius: 3px;
+    color: #4a9eff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    height: 24px;
+    transition: all 0.2s ease;
+    width: 24px;
+}
+
+.stat-btn:hover {
+    background: #4a9eff;
+    color: white;
+}
+
+.stat-btn:active {
+    transform: scale(0.95);
+}
+
+.stat-value {
+    color: #ffd700;
+    font-weight: bold;
+    min-width: 24px;
+    text-align: center;
+}
+
+/* Skills and Equipment Edit */
+.skill-item-edit, .weapon-item-edit {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    display: flex;
+    gap: 8px;
+    margin: 4px 0;
+    padding: 8px;
+}
+
+.skill-edit-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.weapon-select {
+    flex: 1;
+    min-width: 120px;
+}
+
+.btn-small {
+    background: rgba(74, 158, 255, 0.2);
+    border: 1px solid #4a9eff;
+    border-radius: 4px;
+    color: #4a9eff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+    min-width: 100px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.btn-small:hover {
+    background: #4a9eff;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(74, 158, 255, 0.3);
+}
+
+.btn-small.btn-danger {
+    background: rgba(244, 67, 54, 0.2);
+    border-color: #f44336;
+    color: #f44336;
+    min-width: 32px;
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+}
+
+.btn-small.btn-danger:hover {
+    background: #f44336;
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Equipment Sections */
+.equipment-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.equipment-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.equipment-section label {
+    color: #b8c5d1;
+    display: block;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+/* Edit Actions Bar */
+.edit-actions {
+    background: linear-gradient(135deg, #1e2938 0%, #2a3f5f 100%);
+    border-top: 1px solid #4a9eff;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding: 16px;
+}
+
+.btn {
+    border: 1px solid;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 10px 16px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-success {
+    background: rgba(76, 175, 80, 0.2);
+    border-color: #4caf50;
+    color: #4caf50;
+}
+
+.btn-success:hover {
+    background: #4caf50;
+    color: white;
+}
+
+.btn-warning {
+    background: rgba(255, 152, 0, 0.2);
+    border-color: #ff9800;
+    color: #ff9800;
+}
+
+.btn-warning:hover {
+    background: #ff9800;
+    color: white;
+}
+
+.btn-secondary {
+    background: rgba(158, 158, 158, 0.2);
+    border-color: #9e9e9e;
+    color: #9e9e9e;
+}
+
+.btn-secondary:hover {
+    background: #9e9e9e;
+    color: white;
+}
+
+/* Mobile Optimizations for Edit Mode */
+@media (max-width: 600px) {
+    .editable-field {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+    }
+    
+    .edit-controls {
+        justify-content: center;
+    }
+    
+    .stat-editor {
+        gap: 8px;
+    }
+    
+    .stat-btn {
+        height: 32px;
+        width: 32px;
+        font-size: 16px;
+    }
+    
+    .skill-item-edit, .weapon-item-edit {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .edit-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .btn {
+        padding: 12px 16px;
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .edit-name {
+        font-size: 16px;
+        min-width: unset;
+        width: 100%;
+    }
+    
+    .npc-info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .equipment-edit {
+        gap: 8px;
+    }
+    
+    .equipment-section {
+        padding: 8px;
+    }
+}
+
+/* Dark theme adjustments */
+.dark-theme .filter-select,
+.dark-theme .control-input,
+.dark-theme .control-select {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.dark-theme .filter-select:focus,
+.dark-theme .control-input:focus,
+.dark-theme .control-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
+}

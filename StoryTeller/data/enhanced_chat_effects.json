@@ -1,0 +1,325 @@
+{
+  "effects": {
+    "basic": {
+      "bounce": {
+        "name": "Bounce",
+        "class": "chat-bounce",
+        "description": "Bouncy text animation",
+        "command": ":bounce:",
+        "duration": "1s",
+        "cycles": 3
+      },
+      "throb": {
+        "name": "Throb", 
+        "class": "chat-pulse",
+        "description": "Gentle scaling pulse (renamed from pulse to avoid :p: emoji conflict)",
+        "command": ":throb:",
+        "duration": "1s",
+        "cycles": 3
+      },
+      "shake": {
+        "name": "Shake",
+        "class": "chat-shake",
+        "description": "Horizontal shake motion",
+        "command": ":shake:",
+        "duration": "0.8s",
+        "cycles": 3
+      },
+      "glow": {
+        "name": "Glow",
+        "class": "chat-glow",
+        "description": "Text glow effect",
+        "command": ":glow:",
+        "duration": "1.5s",
+        "cycles": 3
+      },
+      "fade": {
+        "name": "Fade In",
+        "class": "chat-fade-in",
+        "description": "Smooth fade in animation",
+        "command": ":fade:",
+        "duration": "1s",
+        "cycles": 1
+      },
+      "spin": {
+        "name": "Spin",
+        "class": "chat-spin",
+        "description": "360 degree rotation",
+        "command": ":spin:",
+        "duration": "2s",
+        "cycles": 3
+      },
+      "wobble": {
+        "name": "Wobble",
+        "class": "chat-wobble",
+        "description": "Playful wobbling motion",
+        "command": ":wobble:",
+        "duration": "1s",
+        "cycles": 2
+      },
+      "flip": {
+        "name": "Flip",
+        "class": "chat-flip",
+        "description": "3D flip animation",
+        "command": ":flip:",
+        "duration": "1.2s",
+        "cycles": 1
+      },
+      "zoom": {
+        "name": "Zoom",
+        "class": "chat-zoom",
+        "description": "Zoom in and out effect",
+        "command": ":zoom:",
+        "duration": "0.8s",
+        "cycles": 2
+      },
+      "slide": {
+        "name": "Slide In",
+        "class": "chat-slide",
+        "description": "Slide in from the left",
+        "command": ":slide:",
+        "duration": "0.6s",
+        "cycles": 1
+      },
+      "rainbow": {
+        "name": "Rainbow",
+        "class": "chat-rainbow",
+        "description": "Cycling rainbow colors",
+        "command": ":rainbow:",
+        "duration": "2s",
+        "cycles": 2
+      },
+      "typewriter": {
+        "name": "Typewriter",
+        "class": "chat-typewriter",
+        "description": "Typewriter reveal effect",
+        "command": ":type:",
+        "duration": "1.5s",
+        "cycles": 1
+      }
+    },
+    "gaming": {
+      "crit": {
+        "name": "Critical Hit",
+        "class": "chat-crit",
+        "description": "Explosive critical hit effect with color change",
+        "command": ":crit:",
+        "duration": "1.2s",
+        "cycles": 3,
+        "category": "DCC"
+      },
+      "sparkle": {
+        "name": "Magic Sparkle",
+        "class": "chat-sparkle",
+        "description": "Magical sparkling effect with hue rotation",
+        "command": ":sparkle:",
+        "duration": "1.8s",
+        "cycles": 2,
+        "category": "DCC"
+      },
+      "lightning": {
+        "name": "Lightning Strike",
+        "class": "chat-lightning",
+        "description": "Electric lightning effect with flash",
+        "command": ":lightning:",
+        "duration": "1s",
+        "cycles": 2,
+        "category": "DCC"
+      },
+      "fire": {
+        "name": "Flame",
+        "class": "chat-fire",
+        "description": "Fiery burning text effect",
+        "command": ":fire:",
+        "duration": "1.5s",
+        "cycles": 3,
+        "category": "DCC"
+      },
+      "ice": {
+        "name": "Frost",
+        "class": "chat-ice",
+        "description": "Icy crystalline effect",
+        "command": ":ice:",
+        "duration": "1.3s",
+        "cycles": 2,
+        "category": "DCC"
+      },
+      "poison": {
+        "name": "Poison",
+        "class": "chat-poison",
+        "description": "Toxic bubbling effect",
+        "command": ":poison:",
+        "duration": "1.4s",
+        "cycles": 3,
+        "category": "DCC"
+      },
+      "heal": {
+        "name": "Healing",
+        "class": "chat-heal",
+        "description": "Gentle healing glow",
+        "command": ":heal:",
+        "duration": "1.6s",
+        "cycles": 2,
+        "category": "DCC"
+      },
+      "shield": {
+        "name": "Shield",
+        "class": "chat-shield",
+        "description": "Protective barrier effect",
+        "command": ":shield:",
+        "duration": "1.2s",
+        "cycles": 1,
+        "category": "DCC"
+      },
+      "curse": {
+        "name": "Curse",
+        "class": "chat-curse",
+        "description": "Dark cursed text effect",
+        "command": ":curse:",
+        "duration": "1.8s",
+        "cycles": 2,
+        "category": "DCC"
+      },
+      "divine": {
+        "name": "Divine",
+        "class": "chat-divine",
+        "description": "Holy radiant light effect",
+        "command": ":divine:",
+        "duration": "2s",
+        "cycles": 1,
+        "category": "DCC"
+      }
+    },
+    "emotional": {
+      "love": {
+        "name": "Love",
+        "class": "chat-love",
+        "description": "Romantic heart-beating effect",
+        "command": ":love:",
+        "duration": "1.2s",
+        "cycles": 3
+      },
+      "angry": {
+        "name": "Angry",
+        "class": "chat-angry",
+        "description": "Aggressive shaking with red glow",
+        "command": ":angry:",
+        "duration": "0.8s",
+        "cycles": 4
+      },
+      "excited": {
+        "name": "Excited",
+        "class": "chat-excited",
+        "description": "Energetic bouncing with sparkles",
+        "command": ":excited:",
+        "duration": "1s",
+        "cycles": 3
+      },
+      "sad": {
+        "name": "Sad",
+        "class": "chat-sad",
+        "description": "Drooping fade effect",
+        "command": ":sad:",
+        "duration": "1.5s",
+        "cycles": 2
+      },
+      "surprise": {
+        "name": "Surprise",
+        "class": "chat-surprise",
+        "description": "Sudden pop-in effect",
+        "command": ":surprise:",
+        "duration": "0.6s",
+        "cycles": 1
+      }
+    },
+    "modifiers": {
+      "fast": {
+        "name": "Fast",
+        "class": "effect-fast",
+        "description": "Halves animation duration",
+        "command": ":fast:",
+        "modifier": true,
+        "invisible": true
+      },
+      "slow": {
+        "name": "Slow", 
+        "class": "effect-slow",
+        "description": "Doubles animation duration",
+        "command": ":slow:",
+        "modifier": true,
+        "invisible": true
+      },
+      "once": {
+        "name": "Once",
+        "class": "effect-once", 
+        "description": "Play animation only once",
+        "command": ":once:",
+        "modifier": true,
+        "invisible": true
+      },
+      "infinite": {
+        "name": "Infinite",
+        "class": "effect-infinite",
+        "description": "Loop animation continuously",
+        "command": ":loop:",
+        "modifier": true,
+        "invisible": true
+      },
+      "big": {
+        "name": "Big",
+        "class": "effect-big",
+        "description": "Makes text larger and bold",
+        "command": ":big:",
+        "modifier": true,
+        "visible": true
+      },
+      "small": {
+        "name": "Small",
+        "class": "effect-small", 
+        "description": "Makes text smaller",
+        "command": ":small:",
+        "modifier": true,
+        "visible": true
+      },
+      "delay1": {
+        "name": "Short Delay",
+        "class": "effect-delay-1",
+        "description": "Delays animation start by 0.5 seconds",
+        "command": ":delay:",
+        "modifier": true,
+        "invisible": true
+      },
+      "delay2": {
+        "name": "Long Delay", 
+        "class": "effect-delay-2",
+        "description": "Delays animation start by 1 second",
+        "command": ":delay2:",
+        "modifier": true,
+        "invisible": true
+      }
+    }
+  },
+  "combinations": {
+    "examples": [
+      ":bounce: :fast: This text bounces quickly!",
+      ":glow: :slow: This text glows slowly",
+      ":crit: :once: CRITICAL HIT!",
+      ":sparkle: :loop: ✨ Endless magic ✨",
+      ":throb: :delay: This text waits then pulses",
+      ":shake: :delay2: :big: Big delayed shake!",
+      ":fire: :big: :fast: Quick big flames!",
+      ":divine: :slow: :big: Slow holy text"
+    ]
+  },
+  "config": {
+    "maxEffectsPerMessage": 5,
+    "defaultDuration": "1s",
+    "defaultCycles": 3,
+    "mobileOptimized": true,
+    "respectMotionPreference": true,
+    "cleanupAfterAnimation": true,
+    "chainEffects": true,
+    "supportInvisibleModifiers": true
+  }
+}
+

@@ -1,0 +1,535 @@
+/* ===============================================
+   VISUAL COMBAT MANAGER - INNOVATIVE DESIGN
+   =============================================== */
+
+.visual-combat-manager {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin: 10px 0;
+    box-shadow: 0 4px 16px var(--shadow-color);
+    overflow: hidden;
+}
+
+/* Ultra-Compact Status Bar */
+.combat-status-bar {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.status-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.combat-icon {
+    font-size: 1.2rem;
+}
+
+.divider {
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 300;
+}
+
+.combat-controls-inline {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-compact {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+}
+
+.btn-compact:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.btn-compact.start-combat {
+    background: var(--success);
+}
+
+.btn-compact.next-turn {
+    background: var(--warning);
+}
+
+.btn-compact.clear-combat {
+    background: var(--danger);
+}
+
+/* Enemy Builder Section */
+.enemy-builder {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px 16px;
+}
+
+.builder-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.level-select, .enemy-select, .attack-select {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 120px;
+}
+
+.level-select:focus, .enemy-select:focus, .attack-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.level-select:disabled, .enemy-select:disabled, .attack-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-add-enemy {
+    background: var(--success);
+    border: none;
+    color: white;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.btn-add-enemy:hover:not(:disabled) {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-add-enemy:disabled {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-add-enemy .icon {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+/* Current Enemies Chips */
+.current-enemies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    min-height: 32px;
+}
+
+.enemy-chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    box-shadow: 0 2px 4px var(--shadow-color);
+    transition: all 0.2s ease;
+}
+
+.enemy-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+.enemy-chip .name {
+    font-weight: 500;
+}
+
+.enemy-chip .level {
+    background: var(--primary);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.enemy-chip .remove {
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.enemy-chip .remove:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+/* Initiative Arena */
+.initiative-arena {
+    background: var(--bg-card);
+    min-height: 300px;
+    position: relative;
+    padding: 16px;
+}
+
+.arena-empty {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--text-secondary);
+    opacity: 0.8;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.6;
+}
+
+.arena-empty h3 {
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+    font-size: 1.2rem;
+}
+
+.arena-empty p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* Combatants Grid */
+.combatants-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    padding: 8px;
+}
+
+/* Combatant Cards */
+.combatant-card {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.combatant-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px var(--shadow-color);
+}
+
+.combatant-card.current-turn {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: white;
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+}
+
+.combatant-card.player {
+    border-left: 4px solid var(--success);
+}
+
+.combatant-card.enemy {
+    border-left: 4px solid var(--danger);
+}
+
+/* Card Header */
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    border: 2px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.combatant-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.combatant-name {
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 0 0 2px 0;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.combatant-card.current-turn .combatant-name {
+    color: white;
+}
+
+.combatant-stats {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: flex;
+    gap: 8px;
+}
+
+.combatant-card.current-turn .combatant-stats {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.initiative-badge {
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.combatant-card.current-turn .initiative-badge {
+    background: white;
+    color: var(--primary);
+}
+
+/* HP Bar */
+.hp-container {
+    margin: 8px 0;
+}
+
+.hp-bar {
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    height: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.hp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success) 0%, var(--warning) 70%, var(--danger) 100%);
+    transition: width 0.3s ease;
+    border-radius: 7px;
+}
+
+.hp-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.combatant-card.current-turn .hp-text {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Action Controls */
+.action-controls {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.action-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+    text-align: center;
+}
+
+.action-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.action-btn.selected {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Attack Dropdown for Enemies */
+.attack-dropdown {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    margin-top: 6px;
+}
+
+.combatant-card.current-turn .attack-dropdown {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+/* Status Indicators */
+.status-indicator {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-waiting {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+.status-ready {
+    background: var(--success);
+    color: white;
+}
+
+.status-acting {
+    background: var(--primary);
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .combat-status-bar {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .status-inline {
+        gap: 6px;
+    }
+    
+    .builder-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+    
+    .level-select, .enemy-select, .attack-select {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .combatants-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .combatant-card {
+        padding: 10px;
+    }
+    
+    .card-header {
+        gap: 8px;
+    }
+    
+    .avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .combat-status-bar {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+    
+    .enemy-builder {
+        padding: 8px 12px;
+    }
+    
+    .current-enemies {
+        justify-content: center;
+    }
+    
+    .initiative-arena {
+        padding: 12px;
+    }
+    
+    .combatant-card {
+        padding: 8px;
+    }
+    
+    .action-controls {
+        flex-direction: column;
+        gap: 4px;
+    }
+}

@@ -1,0 +1,419 @@
+/* ========================================
+   CONFIGURATION TAB STYLES
+   ======================================== */
+
+/* Configuration status indicator */
+.config-status {
+    font-size: 0.8em;
+    margin-left: 4px;
+}
+
+.config-status-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-dot.connected {
+    background-color: #10b981;
+    box-shadow: 0 0 4px rgba(16, 185, 129, 0.5);
+}
+
+.status-dot.offline {
+    background-color: #f59e0b;
+    box-shadow: 0 0 4px rgba(245, 158, 11, 0.5);
+}
+
+.status-text {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+}
+
+/* Configuration cards */
+.config-status-card .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.config-explanation {
+    background: var(--card-bg-secondary);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.config-explanation ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.config-explanation li {
+    margin: 0.25rem 0;
+    color: var(--text-secondary);
+}
+
+/* Setup steps */
+.setup-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.setup-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--card-bg-secondary);
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-color);
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    background: var(--accent-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.step-content h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+}
+
+.step-content p {
+    margin: 0 0 0.75rem 0;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+/* Configuration form */
+.config-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.9em;
+}
+
+.field-help {
+    font-weight: 400;
+    color: var(--text-secondary);
+    font-size: 0.8em;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.config-input {
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9em;
+    transition: border-color 0.2s ease;
+}
+
+.config-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+}
+
+.key-input {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8em;
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Form actions */
+.form-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.test-connection-btn,
+.save-config-btn,
+.clear-config-btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    font-size: 0.9em;
+}
+
+.test-connection-btn {
+    background: #3b82f6;
+    color: white;
+}
+
+.test-connection-btn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.save-config-btn {
+    background: #10b981;
+    color: white;
+}
+
+.save-config-btn:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+.clear-config-btn {
+    background: #ef4444;
+    color: white;
+}
+
+.clear-config-btn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+/* External link buttons */
+.external-link-btn,
+.copy-sql-btn {
+    padding: 8px 12px;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85em;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.external-link-btn:hover,
+.copy-sql-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+/* Configuration feedback */
+.config-feedback {
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 1rem;
+    display: none;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.config-feedback.success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+}
+
+.config-feedback.error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+.config-feedback.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #f59e0b;
+}
+
+.config-feedback.info {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #3b82f6;
+}
+
+/* Sharing instructions */
+.sharing-instructions {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.sharing-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sharing-option {
+    padding: 1rem;
+    background: var(--card-bg-secondary);
+    border-radius: 8px;
+}
+
+.sharing-option h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+}
+
+.sharing-option p {
+    margin: 0 0 0.75rem 0;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+/* Share link container */
+.share-link-container {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.share-link-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
+    font-size: 0.8em;
+}
+
+.copy-share-link-btn {
+    padding: 8px 12px;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8em;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.copy-share-link-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+/* Manual configuration display */
+.manual-config {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.config-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 8px 12px;
+    background: var(--input-bg);
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8em;
+}
+
+.config-value {
+    flex: 1;
+    color: var(--text-secondary);
+}
+
+.mini-copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.mini-copy-btn:hover {
+    background: var(--hover-color);
+}
+
+/* Chat error styling */
+.chat-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 1rem;
+}
+
+.error-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ef4444;
+    font-size: 0.9em;
+}
+
+.error-content .material-icons {
+    font-size: 18px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .test-connection-btn,
+    .save-config-btn,
+    .clear-config-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .share-link-container {
+        flex-direction: column;
+    }
+    
+    .share-link-input {
+        width: 100%;
+    }
+    
+    .setup-step {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .step-number {
+        align-self: center;
+    }
+}

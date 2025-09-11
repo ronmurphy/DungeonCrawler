@@ -1,0 +1,1273 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shape Match Mania</title>
+  <meta name="description" content="Match shapes and colors in this addictive puzzle game. Combine similar shapes or colors for points, match both for bonus points!">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    @keyframes wave {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    @keyframes float-up {
+      0% { transform: translateY(100vh); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(-20vh); opacity: 0; }
+    }
+
+    @keyframes twinkle {
+      0%, 100% { transform: scale(0.3); opacity: 0.3; }
+      50% { transform: scale(1); opacity: 1; }
+    }
+
+    .bubble {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      animation: float-up linear infinite;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 50%;
+      animation: twinkle 2s ease-in-out infinite;
+    }
+
+    .background-effect {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+      overflow: hidden;
+      transition: opacity 5s;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      animation: float 3s infinite;
+    }
+
+    .wave {
+      position: absolute;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      width: 200%;
+      animation: wave 8s linear infinite;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #1a1a2e;
+      font-family: Arial, sans-serif;
+      touch-action: none;
+      overflow: hidden;
+    }
+
+    .progress-container {
+      width: 100%;
+      max-width: 352px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: #4fd1c5;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    #gameContainer {
+      display: none;
+    }
+
+    #startMenu {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      color: white;
+    }
+
+    #startMenu h1 {
+      margin-bottom: 20px;
+      color: #4fd1c5;
+    }
+
+    #startMenu p {
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    #readyBtn {
+      background: #4fd1c5;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+
+    #readyBtn:hover {
+      background: #38b2ac;
+    }
+
+    #score {
+      color: white;
+      font-size: 24px;
+      margin: 20px 0;
+    }
+
+    #powerupButton {
+      background: #4fd1c5;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+      margin: 10px 0;
+    }
+
+    #powerupButton:disabled {
+      background: #2d7c76;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    #powerupDock {
+      display: flex;
+      gap: 10px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      margin-top: 15px;
+      min-height: 70px;
+      align-items: center;
+    }
+
+    .powerup-item {
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+      position: relative;
+    }
+
+    .powerup-item:hover {
+      transform: scale(1.1);
+    }
+
+    .powerup-tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      display: none;
+    }
+
+    .powerup-item:hover .powerup-tooltip {
+      display: block;
+    }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 12px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+
+    .cell {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.3s;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .cell:hover {
+      transform: scale(1.1);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .selected {
+      transform: scale(1.2);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    @keyframes swapLeft {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-44px); }
+    }
+
+    @keyframes swapRight {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(44px); }
+    }
+
+    @keyframes swapUp {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-44px); }
+    }
+
+    @keyframes swapDown {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(44px); }
+    }
+
+    @keyframes dropIn {
+      0% {
+        transform: translateY(-500px);
+        opacity: 0;
+      }
+      60% {
+        transform: translateY(20px);
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes explode {
+      0% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.5) rotate(180deg);
+        opacity: 0.5;
+      }
+      100% {
+        transform: scale(2) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    @keyframes colorBurst {
+      0% { filter: brightness(1); transform: scale(1); }
+      50% { filter: brightness(1.5); transform: scale(1.2); }
+      100% { filter: brightness(1); transform: scale(1); }
+    }
+
+    @keyframes shapeBurst {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.2); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    @keyframes rainbowPulse {
+      0% { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(360deg); }
+    }
+
+    @keyframes shuffle {
+      0% { transform: rotate(0deg); }
+      25% { transform: rotate(-30deg); }
+      75% { transform: rotate(30deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    .level-up-message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 20px 40px;
+      border-radius: 10px;
+      font-size: 24px;
+      z-index: 1000;
+      animation: fadeInOut 2s ease-in-out;
+    }
+
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
+    }
+
+    .swap-left { animation: swapLeft 0.3s ease-in-out; }
+    .swap-right { animation: swapRight 0.3s ease-in-out; }
+    .swap-up { animation: swapUp 0.3s ease-in-out; }
+    .swap-down { animation: swapDown 0.3s ease-in-out; }
+    .drop-in { animation: dropIn 0.5s ease-out; }
+
+    @media (max-width: 600px) {
+      .cell {
+        width: 35px;
+        height: 35px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="startMenu">
+  <h1>Shape Match Mania</h1>
+  <p>Welcome to an addictive puzzle adventure!<br>
+    Match 3+ pieces to score points:<br>
+    🎨 Same color: +1 point each<br>
+    ⭐ Same shape: +1 point each<br>
+    ✨ Both match: +3x points bonus!<br>
+    🔥 Chain matches in any direction for extra points!</p>
+  <p>🎮 How to play:<br>
+    • Swap adjacent pieces by clicking/tapping<br>
+    • Earn powerups every 100 points<br>
+    • Use up to 6 powerups at once<br>
+    • Level up at 500 points for bigger grids & more colors!</p>
+  <button id="readyBtn">Ready to Play!</button>
+</div>
+
+<div id="gameContainer">
+  <div class="progress-container">
+    <div class="progress-bar" style="width: 0%"></div>
+  </div>
+  <div style="display: flex; width: 100%; max-width: 352px; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <div id="score" style="font-size: 16px; padding: 10px 0;">Score: 0</div>
+    <div style="display: flex; gap: 10px;">
+      <button id="powerupButton" style="height: 41px;" disabled>? Powerup</button>
+      <button id="powerupInfoBtn" style="background: #4fd1c5; border: none; padding: 10px 20px; border-radius: 5px; color: white; cursor: pointer; font-size: 16px; transition: background 0.3s; height: 41px;">ℹ️ Info</button>
+    </div>
+  </div>
+  <div id="powerupInfoModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); padding: 20px; border-radius: 10px; color: white; z-index: 1000; max-width: 90%; max-height: 90%; overflow-y: auto;">
+    <h2 style="color: #4fd1c5; margin-bottom: 15px;">Available Powerups</h2>
+    <div id="powerupsList" style="display: grid; gap: 10px;"></div>
+    <button onclick="document.getElementById('powerupInfoModal').style.display='none'" style="background: #4fd1c5; border: none; padding: 8px 16px; border-radius: 5px; color: white; margin-top: 15px; cursor: pointer;">Close</button>
+  </div>
+  <div id="grid"></div>
+  <div id="powerupDock"></div>
+</div>
+
+<script>
+  // Game constants
+  const shapes = ['circle', 'square', 'triangle', 'diamond', 'star', 'hexagon', 'pentagon', 'octagon'];
+  const colors = ['#FF0000', '#FFA500', '#FFD700', '#008000', '#0000FF', '#DDA0DD', '#8A2BE2', '#FFFFFF'];
+  const backgroundColors = ['#1a1a2e', '#1e1e32', '#202040', '#2a2a45'];
+  const MAX_POWERUPS = 6;
+  const POINTS_PER_POWERUP = 100;
+  const LEVEL_UP_SCORE = 500;
+  const STARTING_GRID_SIZE = 8;
+  const MAX_GRID_SIZE = 12;
+  const EFFECT_DURATION = 60000; // 1 minute
+  const TRANSITION_DURATION = 10000; // 10 seconds
+
+  // Game state
+  let score = 0;
+  let selectedCell = null;
+  let gameBoard = [];
+  let GRID_SIZE = STARTING_GRID_SIZE;
+  let currentLevel = 1;
+  let powerups = [];
+  let activePowerup = null;
+  let frozenState = false;
+  let goldRushMoves = 0;
+  let moveCounter = 0;
+  let chainModeActive = false;
+  let chainMovesLeft = 0;
+
+  // Device detection
+  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+  const POWERUP_TYPES = [
+    {
+      name: 'Bomb',
+      description: 'Removes a 3x3 grid of blocks',
+      action: (row, col) => {
+        for(let i = -1; i <= 1; i++) {
+          for(let j = -1; j <= 1; j++) {
+            const newRow = row + i;
+            const newCol = col + j;
+            if(newRow >= 0 && newRow < GRID_SIZE && newCol >= 0 && newCol < GRID_SIZE) {
+              const cell = document.querySelector(`[data-row="${newRow}"][data-col="${newCol}"]`);
+              cell.style.animation = `explode 0.5s ease-out ${(Math.abs(i) + Math.abs(j)) * 0.1}s`;
+              setTimeout(() => replaceBlock(newRow, newCol), 500);
+            }
+          }
+        }
+        return true;
+      }
+    },
+    {
+      name: 'Line Clear',
+      description: 'Clears entire row and column',
+      action: (row, col) => {
+        for(let i = 0; i < GRID_SIZE; i++) {
+          replaceBlock(row, i);
+          replaceBlock(i, col);
+        }
+        return true;
+      }
+    },
+    {
+      name: 'Color Bomb',
+      description: 'Removes all blocks of the clicked color',
+      action: (row, col) => {
+        const targetColor = gameBoard[row][col].color;
+        for(let i = 0; i < GRID_SIZE; i++) {
+          for(let j = 0; j < GRID_SIZE; j++) {
+            if(gameBoard[i][j].color === targetColor) {
+              const cell = document.querySelector(`[data-row="${i}"][data-col="${j}"]`);
+              cell.style.animation = `colorBurst 0.5s ease-out ${(i + j) * 0.05}s`;
+              setTimeout(() => replaceBlock(i, j), 500);
+            }
+          }
+        }
+        return true;
+      }
+    },
+    {
+      name: 'Shape Bomb',
+      description: 'Removes all blocks of the clicked shape',
+      action: (row, col) => {
+        const targetShape = gameBoard[row][col].shape;
+        for(let i = 0; i < GRID_SIZE; i++) {
+          for(let j = 0; j < GRID_SIZE; j++) {
+            if(gameBoard[i][j].shape === targetShape) {
+              const cell = document.querySelector(`[data-row="${i}"][data-col="${j}"]`);
+              cell.style.animation = `shapeBurst 0.5s ease-out ${(i + j) * 0.05}s`;
+              setTimeout(() => replaceBlock(i, j), 500);
+            }
+          }
+        }
+        return true;
+      }
+    },
+    {
+      name: 'Points Boost',
+      description: '+100 points instantly!',
+      action: () => {
+        updateScore(score + 100);
+        return true;
+      }
+    },
+    {
+      name: 'Rainbow',
+      description: 'Changes all pieces to random colors!',
+      action: () => {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+          cell.style.animation = 'rainbowPulse 1s linear';
+        });
+        setTimeout(() => {
+          for(let i = 0; i < GRID_SIZE; i++) {
+            for(let j = 0; j < GRID_SIZE; j++) {
+              gameBoard[i][j].color = colors[Math.floor(Math.random() * colors.length)];
+            }
+          }
+          updateBoard();
+          cells.forEach(cell => {
+            cell.style.animation = '';
+          });
+        }, 1000);
+        return true;
+      }
+    },
+    {
+      name: 'Shuffle',
+      description: 'Randomly rearranges all pieces!',
+      action: () => {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+          cell.style.animation = 'shuffle 0.5s ease-in-out';
+        });
+        setTimeout(() => {
+          for(let i = GRID_SIZE-1; i > 0; i--) {
+            for(let j = GRID_SIZE-1; j > 0; j--) {
+              const randI = Math.floor(Math.random() * (i + 1));
+              const randJ = Math.floor(Math.random() * (j + 1));
+              const temp = gameBoard[i][j];
+              gameBoard[i][j] = gameBoard[randI][randJ];
+              gameBoard[randI][randJ] = temp;
+            }
+          }
+          updateBoard();
+          cells.forEach(cell => {
+            cell.style.animation = '';
+          });
+        }, 500);
+        return true;
+      }
+    },
+    {
+      name: 'Wild Card',
+      description: 'Next piece clicked matches everything!',
+      action: (row, col) => {
+        const clickedPiece = gameBoard[row][col];
+        for(let i = 0; i < GRID_SIZE; i++) {
+          for(let j = 0; j < GRID_SIZE; j++) {
+            if(i !== row || j !== col) {
+              gameBoard[i][j].shape = clickedPiece.shape;
+              gameBoard[i][j].color = clickedPiece.color;
+            }
+          }
+        }
+        updateBoard();
+        return true;
+      }
+    },
+    {
+      name: 'Time Freeze',
+      description: 'Stops new pieces for next 3 moves',
+      action: () => {
+        frozenState = true;
+        moveCounter = 3;
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+          cell.style.animation = 'colorBurst 0.5s ease-out';
+          cell.style.filter = 'brightness(0.7) saturate(1.5)';
+        });
+        setTimeout(() => {
+          cells.forEach(cell => {
+            cell.style.animation = '';
+          });
+        }, 500);
+        return true;
+      }
+    },
+    {
+      name: 'Gold Rush',
+      description: 'All matches give double points for next 3 moves',
+      action: () => {
+        goldRushMoves = 3;
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+          cell.style.animation = 'rainbowPulse 1s linear';
+          cell.style.filter = 'brightness(1.5)';
+        });
+        setTimeout(() => {
+          cells.forEach(cell => {
+            cell.style.animation = '';
+            cell.style.filter = '';
+          });
+        }, 1000);
+        return true;
+      }
+    },
+    {
+      name: 'Chain',
+      description: 'For 3 moves, matches can chain in any direction with 2x points!',
+      action: () => {
+        chainModeActive = true;
+        chainMovesLeft = 3;
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+          cell.style.animation = 'colorBurst 0.5s ease-out';
+        });
+        setTimeout(() => {
+          cells.forEach(cell => {
+            cell.style.animation = '';
+          });
+        }, 500);
+        return true;
+      }
+    },
+    {
+      name: 'Chaos Swap',
+      description: 'Randomly swaps 5 pairs of pieces',
+      action: () => {
+        for(let i = 0; i < 5; i++) {
+          const r1 = Math.floor(Math.random() * GRID_SIZE);
+          const c1 = Math.floor(Math.random() * GRID_SIZE);
+          const r2 = Math.floor(Math.random() * GRID_SIZE);
+          const c2 = Math.floor(Math.random() * GRID_SIZE);
+          const temp = gameBoard[r1][c1];
+          gameBoard[r1][c1] = gameBoard[r2][c2];
+          gameBoard[r2][c2] = temp;
+        }
+        updateBoard();
+        return true;
+      }
+    }
+  ];
+
+  function createSVG(shape, color) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.style.width = "100%";
+    svg.style.height = "100%";
+
+    let path;
+    switch(shape) {
+      case 'circle':
+        path = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        path.setAttribute("cx", "50");
+        path.setAttribute("cy", "50");
+        path.setAttribute("r", "40");
+        break;
+      case 'square':
+        path = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        path.setAttribute("x", "20");
+        path.setAttribute("y", "20");
+        path.setAttribute("width", "60");
+        path.setAttribute("height", "60");
+        break;
+      case 'triangle':
+        path = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        path.setAttribute("points", "50,20 80,80 20,80");
+        break;
+      case 'diamond':
+        path = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        path.setAttribute("points", "50,20 80,50 50,80 20,50");
+        break;
+      case 'star':
+        path = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        path.setAttribute("points", "50,10 61,40 92,40 67,60 76,90 50,73 24,90 33,60 8,40 39,40");
+        break;
+      case 'hexagon':
+        path = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        path.setAttribute("points", "50,20 80,35 80,65 50,80 20,65 20,35");
+        break;
+      case 'pentagon':
+        path = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        path.setAttribute("points", "50,20 80,40 70,80 30,80 20,40");
+        break;
+      case 'octagon':
+        path = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        path.setAttribute("points", "30,20 70,20 80,30 80,70 70,80 30,80 20,70 20,30");
+        break;
+    }
+    path.setAttribute("fill", color);
+    svg.appendChild(path);
+    return svg;
+  }
+
+  function initializeBoard(explode = false) {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    gameBoard = [];
+    grid.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
+
+    // Calculate available shapes and colors based on grid size
+    // Calculate available shapes and colors based on grid size
+    let availableShapes, availableColors;
+    if (GRID_SIZE <= 8) {
+      availableShapes = shapes.slice(0, 4);
+      availableColors = colors.slice(0, 4);
+    } else if (GRID_SIZE <= 9) {
+      availableShapes = shapes.slice(0, 5);
+      availableColors = colors.slice(0, 5);
+    } else if (GRID_SIZE <= 10) {
+      availableShapes = shapes.slice(0, 6);
+      availableColors = colors.slice(0, 6);
+    } else if (GRID_SIZE <= 11) {
+      availableShapes = shapes.slice(0, 7);
+      availableColors = colors.slice(0, 7);
+    } else {
+      availableShapes = shapes;
+      availableColors = colors;
+    }
+
+    for(let i = 0; i < GRID_SIZE; i++) {
+      gameBoard[i] = [];
+      for(let j = 0; j < GRID_SIZE; j++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        const shapeIndex = Math.floor(Math.random() * availableShapes.length);
+        const colorIndex = Math.floor(Math.random() * availableColors.length);
+
+        gameBoard[i][j] = {
+          shape: availableShapes[shapeIndex],
+          color: availableColors[colorIndex]
+        };
+
+        if (explode) {
+          cell.style.animation = `explode 0.5s ease-out ${(i + j) * 0.05}s`;
+        }
+
+        cell.appendChild(createSVG(shapes[shapeIndex], colors[colorIndex]));
+        cell.dataset.row = i;
+        cell.dataset.col = j;
+
+        cell.addEventListener('click', handleCellClick);
+        grid.appendChild(cell);
+      }
+    }
+  }
+
+  function handleCellClick(event) {
+    const cell = event.currentTarget;
+    const row = parseInt(cell.dataset.row);
+    const col = parseInt(cell.dataset.col);
+
+    if (activePowerup) {
+      if (activePowerup.action(row, col)) {
+        removePowerup(activePowerup);
+        activePowerup = null;
+        setTimeout(checkMatches, 300);
+      }
+      return;
+    }
+
+    if (!selectedCell) {
+      selectedCell = cell;
+      cell.classList.add('selected');
+    } else {
+      const selectedRow = parseInt(selectedCell.dataset.row);
+      const selectedCol = parseInt(selectedCell.dataset.col);
+
+      if (isAdjacent(row, col, selectedRow, selectedCol)) {
+        swapCells(row, col, selectedRow, selectedCol);
+        selectedCell.classList.remove('selected');
+        selectedCell = null;
+
+        setTimeout(checkMatches, 300);
+      } else {
+        selectedCell.classList.remove('selected');
+        selectedCell = cell;
+        cell.classList.add('selected');
+      }
+    }
+  }
+
+  function isAdjacent(row1, col1, row2, col2) {
+    return (Math.abs(row1 - row2) === 1 && col1 === col2) ||
+            (Math.abs(col1 - col2) === 1 && row1 === row2);
+  }
+
+  function swapCells(row1, col1, row2, col2) {
+    const cell1 = document.querySelector(`[data-row="${row1}"][data-col="${col1}"]`);
+    const cell2 = document.querySelector(`[data-row="${row2}"][data-col="${col2}"]`);
+
+    // Determine swap direction
+    if (col1 < col2) {
+      cell1.classList.add('swap-right');
+      cell2.classList.add('swap-left');
+    } else if (col1 > col2) {
+      cell1.classList.add('swap-left');
+      cell2.classList.add('swap-right');
+    } else if (row1 < row2) {
+      cell1.classList.add('swap-down');
+      cell2.classList.add('swap-up');
+    } else {
+      cell1.classList.add('swap-up');
+      cell2.classList.add('swap-down');
+    }
+
+    const temp = gameBoard[row1][col1];
+    gameBoard[row1][col1] = gameBoard[row2][col2];
+    gameBoard[row2][col2] = temp;
+
+    // Remove animation classes after animation completes
+    setTimeout(() => {
+      cell1.classList.remove('swap-left', 'swap-right', 'swap-up', 'swap-down');
+      cell2.classList.remove('swap-left', 'swap-right', 'swap-up', 'swap-down');
+      updateBoard();
+    }, 300);
+  }
+
+  function updateBoard() {
+    const cells = document.querySelectorAll('.cell');
+    cells.forEach(cell => {
+      const row = parseInt(cell.dataset.row);
+      const col = parseInt(cell.dataset.col);
+      cell.innerHTML = '';
+      cell.appendChild(createSVG(gameBoard[row][col].shape, gameBoard[row][col].color));
+    });
+  }
+
+  function checkMatches() {
+    let matches = [];
+
+    // Check horizontal matches
+    for(let i = 0; i < GRID_SIZE; i++) {
+      let colorRun = 1;
+      let shapeRun = 1;
+      let lastColor = gameBoard[i][0].color;
+      let lastShape = gameBoard[i][0].shape;
+
+      for(let j = 1; j < GRID_SIZE; j++) {
+        if(gameBoard[i][j].color === lastColor) {
+          colorRun++;
+        } else {
+          if(colorRun >= 3) {
+            for(let k = j-colorRun; k < j; k++) {
+              matches.push({row: i, col: k});
+            }
+          }
+          colorRun = 1;
+          lastColor = gameBoard[i][j].color;
+        }
+
+        if(gameBoard[i][j].shape === lastShape) {
+          shapeRun++;
+        } else {
+          if(shapeRun >= 3) {
+            for(let k = j-shapeRun; k < j; k++) {
+              matches.push({row: i, col: k});
+            }
+          }
+          shapeRun = 1;
+          lastShape = gameBoard[i][j].shape;
+        }
+      }
+
+      if(colorRun >= 3) {
+        for(let k = GRID_SIZE-colorRun; k < GRID_SIZE; k++) {
+          matches.push({row: i, col: k});
+        }
+      }
+      if(shapeRun >= 3) {
+        for(let k = GRID_SIZE-shapeRun; k < GRID_SIZE; k++) {
+          matches.push({row: i, col: k});
+        }
+      }
+    }
+
+    // Check vertical matches
+    for(let j = 0; j < GRID_SIZE; j++) {
+      let colorRun = 1;
+      let shapeRun = 1;
+      let lastColor = gameBoard[0][j].color;
+      let lastShape = gameBoard[0][j].shape;
+
+      for(let i = 1; i < GRID_SIZE; i++) {
+        if(gameBoard[i][j].color === lastColor) {
+          colorRun++;
+        } else {
+          if(colorRun >= 3) {
+            for(let k = i-colorRun; k < i; k++) {
+              matches.push({row: k, col: j});
+            }
+          }
+          colorRun = 1;
+          lastColor = gameBoard[i][j].color;
+        }
+
+        if(gameBoard[i][j].shape === lastShape) {
+          shapeRun++;
+        } else {
+          if(shapeRun >= 3) {
+            for(let k = i-shapeRun; k < i; k++) {
+              matches.push({row: k, col: j});
+            }
+          }
+          shapeRun = 1;
+          lastShape = gameBoard[i][j].shape;
+        }
+      }
+
+      if(colorRun >= 3) {
+        for(let k = GRID_SIZE-colorRun; k < GRID_SIZE; k++) {
+          matches.push({row: k, col: j});
+        }
+      }
+      if(shapeRun >= 3) {
+        for(let k = GRID_SIZE-shapeRun; k < GRID_SIZE; k++) {
+          matches.push({row: k, col: j});
+        }
+      }
+    }
+
+    if(matches.length > 0) {
+      // Remove duplicates
+      matches = Array.from(new Set(matches.map(JSON.stringify)), JSON.parse);
+
+      // Check for chain matches if chain mode is active
+      if (chainModeActive) {
+        const chainMatches = findChainMatches(matches);
+        matches = [...matches, ...chainMatches];
+        // Remove duplicates again after adding chain matches
+        matches = Array.from(new Set(matches.map(JSON.stringify)), JSON.parse);
+      }
+
+      // Calculate score
+      matches.forEach(match => {
+        let points = 0;
+        const colorMatch = matches.some(m =>
+                m.row === match.row &&
+                m.col === match.col &&
+                gameBoard[m.row][m.col].color === gameBoard[match.row][match.col].color);
+        const shapeMatch = matches.some(m =>
+                m.row === match.row &&
+                m.col === match.col &&
+                gameBoard[m.row][m.col].shape === gameBoard[match.row][match.col].shape);
+
+        if(colorMatch) points++;
+        if(shapeMatch) points++;
+
+        let finalPoints = points;
+        if(colorMatch && shapeMatch) {
+          finalPoints *= 3; // 3x multiplier for matching both
+        } else if(goldRushMoves > 0) {
+          finalPoints *= 2;
+        }
+        updateScore(score + finalPoints);
+      });
+
+      // Remove matched pieces and add new ones
+      matches.forEach(match => {
+        const shapeIndex = Math.floor(Math.random() * shapes.length);
+        const colorIndex = Math.floor(Math.random() * colors.length);
+        const cell = document.querySelector(`[data-row="${match.row}"][data-col="${match.col}"]`);
+        gameBoard[match.row][match.col] = {
+          shape: shapes[shapeIndex],
+          color: colors[colorIndex]
+        };
+        cell.classList.add('drop-in');
+        setTimeout(() => cell.classList.remove('drop-in'), 500);
+      });
+
+      document.getElementById('score').textContent = `Score: ${score}`;
+
+      // Check for level up
+      if (score >= 500 && currentLevel === 1) {
+        currentLevel++;
+        showLevelUpMessage();
+        // Give 5 random powerups and reset score
+        score = 0;
+        // Give up to 5 random powerups, respecting the 6 powerup limit
+        const numToAdd = Math.min(5, 6 - powerups.length);
+        for(let i = 0; i < numToAdd; i++) {
+          const randomPowerup = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+          powerups.push({...randomPowerup});
+        }
+        updatePowerupDock();
+        setTimeout(() => {
+          initializeBoard(true);
+          setTimeout(() => {
+            GRID_SIZE = 9;
+            initializeBoard();
+          }, 1000);
+        }, 1000);
+        return;
+      }
+
+      updateBoard();
+      if (!frozenState) {
+        setTimeout(checkMatches, 300);
+      }
+
+      // Update powerup states
+      if (moveCounter > 0) {
+        moveCounter--;
+        if (moveCounter === 0) {
+          frozenState = false;
+          document.querySelectorAll('.cell').forEach(cell => {
+            cell.style.filter = '';
+          });
+        }
+      }
+      if (goldRushMoves > 0) {
+        goldRushMoves--;
+        if (goldRushMoves === 0) {
+          document.querySelectorAll('.cell').forEach(cell => {
+            cell.style.filter = '';
+          });
+        }
+      }
+
+      setTimeout(checkMatches, 300);
+    }
+  }
+
+  function replaceBlock(row, col) {
+    const shapeIndex = Math.floor(Math.random() * shapes.length);
+    const colorIndex = Math.floor(Math.random() * colors.length);
+    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+    cell.classList.add('drop-in');
+    gameBoard[row][col] = {
+      shape: shapes[shapeIndex],
+      color: colors[colorIndex]
+    };
+    setTimeout(() => {
+      cell.classList.remove('drop-in');
+    }, 500);
+  }
+
+  function showLevelUpMessage() {
+    const msg = document.createElement('div');
+    msg.className = 'level-up-message';
+    msg.textContent = 'Next Level Reached!';
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 2000);
+  }
+
+  function getPowerupEmoji(name) {
+    const emojis = {
+      'Bomb': '💣',
+      'Line Clear': '⚡',
+      'Color Bomb': '🎨',
+      'Shape Bomb': '⭐',
+      'Points Boost': '💎',
+      'Rainbow': '🌈',
+      'Shuffle': '🔄',
+      'Wild Card': '🃏',
+      'Time Freeze': '❄️',
+      'Gold Rush': '💰',
+      'Chaos Swap': '🎲',
+      'Chain': '⛓️'
+    };
+    return emojis[name] || name;
+  }
+
+  function buyPowerup() {
+    if (powerups.length >= 6) {
+      alert('Power-up dock is full! Use some power-ups first.');
+      return;
+    }
+    if (score >= 100) {
+      updateScore(score - 100);
+
+      const randomPowerup = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+      powerups.push({...randomPowerup});
+      updatePowerupDock();
+
+      // Update button state after purchase
+      document.getElementById('powerupButton').disabled = score < 100;
+    }
+  }
+
+  function updatePowerupDock() {
+    const dock = document.getElementById('powerupDock');
+    dock.innerHTML = '';
+    powerups.forEach((powerup, index) => {
+      const powerupElement = document.createElement('div');
+      powerupElement.className = 'powerup-item';
+      powerupElement.innerHTML = `
+                    <div class="powerup-tooltip">${powerup.description}</div>
+                    ${getPowerupEmoji(powerup.name)}
+                `;
+      powerupElement.addEventListener('click', () => activatePowerup(index));
+      dock.appendChild(powerupElement);
+    });
+  }
+
+  function activatePowerup(index) {
+    const powerup = powerups[index];
+    // List of powerups that activate immediately
+    const instantPowerups = ['Points Boost', 'Rainbow', 'Shuffle', 'Time Freeze', 'Gold Rush', 'Chaos Swap'];
+
+    if (instantPowerups.includes(powerup.name)) {
+      if (powerup.action()) {
+        removePowerup(powerup);
+      }
+    } else {
+      if (activePowerup) {
+        activePowerup = null;
+      } else {
+        activePowerup = powerup;
+      }
+    }
+  }
+
+  function removePowerup(powerup) {
+    const index = powerups.indexOf(powerup);
+    if (index > -1) {
+      powerups.splice(index, 1);
+      updatePowerupDock();
+    }
+  }
+
+  // Create background effects
+  function createBackgroundEffects() {
+    const container = document.createElement('div');
+    container.className = 'background-effect';
+
+    const effects = ['particles', 'waves', 'bubbles', 'stars'];
+    let currentEffect = 0;
+
+    function createEffect(type) {
+      container.innerHTML = '';
+      switch(type) {
+        case 'particles':
+          for(let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 3 + 's';
+            container.appendChild(particle);
+          }
+          break;
+        case 'waves':
+          for(let i = 0; i < 3; i++) {
+            const wave = document.createElement('div');
+            wave.className = 'wave';
+            wave.style.top = 30 + (i * 30) + '%';
+            wave.style.animationDelay = i * 2 + 's';
+            container.appendChild(wave);
+          }
+          break;
+        case 'bubbles':
+          for(let i = 0; i < 15; i++) {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.style.left = Math.random() * 100 + '%';
+            bubble.style.animationDuration = 5 + Math.random() * 10 + 's';
+            container.appendChild(bubble);
+          }
+          break;
+        case 'stars':
+          for(let i = 0; i < 30; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 3 + 's';
+            container.appendChild(star);
+          }
+          break;
+      }
+    }
+
+    function transitionBackground() {
+      const transitionColors = backgroundColors.concat(
+              colors.map(c => {
+                const color = parseInt(c.slice(1), 16);
+                const r = (color >> 16) & 255;
+                const g = (color >> 8) & 255;
+                const b = color & 255;
+                return `rgb(${r/2},${g/2},${b/2})`;
+              })
+      );
+      const currentColor = getComputedStyle(document.body).backgroundColor;
+      const nextColor = colors[Math.floor(Math.random() * colors.length)];
+
+      document.body.style.transition = 'background-color 10s';
+      document.body.style.backgroundColor = nextColor;
+
+      container.style.opacity = '0';
+      setTimeout(() => {
+        currentEffect = (currentEffect + 1) % effects.length;
+        createEffect(effects[currentEffect]);
+        container.style.opacity = '1';
+      }, 5000);
+    }
+
+    document.body.appendChild(container);
+    createEffect(effects[currentEffect]);
+
+    // Start effect rotation
+    setInterval(transitionBackground, EFFECT_DURATION);
+  }
+
+  // Update progress bar
+  function updateProgressBar() {
+    const progress = (score / 500) * 100;
+    document.querySelector('.progress-bar').style.width = Math.min(100, progress) + '%';
+  }
+
+  document.getElementById('readyBtn').addEventListener('click', () => {
+    document.getElementById('startMenu').style.display = 'none';
+    document.getElementById('gameContainer').style.display = 'block';
+    createBackgroundEffects();
+    initializeBoard();
+    // Give 3 random powerups at start, respecting the 6 powerup limit
+    const startingPowerups = Math.min(3, 6 - powerups.length);
+    for(let i = 0; i < startingPowerups; i++) {
+      const randomPowerup = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+      powerups.push({...randomPowerup});
+    }
+    updatePowerupDock();
+  });
+
+  document.getElementById('powerupButton').addEventListener('click', buyPowerup);
+  document.getElementById('powerupInfoBtn').addEventListener('click', () => {
+    const modal = document.getElementById('powerupInfoModal');
+    const list = document.getElementById('powerupsList');
+    list.innerHTML = POWERUP_TYPES.map(powerup => `
+                <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px;">
+                    <strong>${getPowerupEmoji(powerup.name)} ${powerup.name}</strong>
+                    <div style="margin-top: 5px; opacity: 0.8;">${powerup.description}</div>
+                </div>
+            `).join('');
+    modal.style.display = 'block';
+  });
+
+  // Update button state when score changes
+  function findChainMatches(initialMatches) {
+    const chainMatches = [];
+    // Include all 8 directions plus extended diagonals
+    const directions = [
+      [-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0], [1,1],
+      [-2,-2], [-2,2], [2,-2], [2,2], // Extended diagonals
+      [-3,-3], [-3,3], [3,-3], [3,3]  // Further diagonals
+    ];
+
+    initialMatches.forEach(match => {
+      const {row, col} = match;
+      const currentPiece = gameBoard[row][col];
+
+      directions.forEach(([dx, dy]) => {
+        let newRow = row + dx;
+        let newCol = col + dy;
+
+        while (newRow >= 0 && newRow < GRID_SIZE && newCol >= 0 && newCol < GRID_SIZE) {
+          const checkPiece = gameBoard[newRow][newCol];
+          if (checkPiece.color === currentPiece.color || checkPiece.shape === currentPiece.shape) {
+            chainMatches.push({row: newRow, col: newCol});
+          }
+          newRow += dx;
+          newCol += dy;
+        }
+      });
+    });
+
+    return chainMatches;
+  }
+
+  function updateScore(value) {
+    score = value;
+    document.getElementById('score').textContent = `Score: ${score}`;
+    document.getElementById('powerupButton').disabled = score < 100;
+    updateProgressBar();
+  }
+
+  // Initialize score tracking
+  updateScore(0);
+</script></body></html>

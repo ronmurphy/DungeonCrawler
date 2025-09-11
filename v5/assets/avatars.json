@@ -1,0 +1,65 @@
+{
+  "comment": "Avatar URL mappings for DCC character heritages/races",
+  "baseUrl": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/",
+  "avatars": {
+    "bopca": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_bopca_smooth.png",
+    "skyfowl": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_skyfowl_smooth.png",
+    "rat_kin": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_ratkin_smooth.png",
+    "ratkin": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_ratkin_smooth.png",
+    "hellspawn_familiar": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_hellspawn_smooth.png",
+    "hellspawn": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_hellspawn_smooth.png",
+    "primal": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_primal_smooth.png",
+    "were_creature": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_werecreature_smooth.png",
+    "werecreature": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_werecreature_smooth.png",
+    "human": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_human_smooth.png",
+    "elf": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_elf_smooth.png",
+    "dwarf": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_dwarf_smooth.png",
+    "orc": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_orc_smooth.png",
+    "halfling": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_halfling_smooth.png",
+    "dragonborn": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_dragonborn_smooth.png",
+    "tiefling": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_tiefling_smooth.png",
+    "gnome": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_gnome_smooth.png",
+    "goblin": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_goblin_smooth.png",
+    "slime": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_slime_smooth.png",
+    "cyborg": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_cyborg_smooth.png"
+  },
+  "fallbackAvatars": {
+    "comment": "Non-smooth versions as fallbacks (for races that need (1) suffix)",
+    "bopca_regular": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_bopca(1).png",
+    "dragonborn_regular": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_dragonborn(1).png",
+    "dwarf_regular": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_dwarf(1).png",
+    "gnome_regular": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_gnome(1).png",
+    "halfling_regular": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_halfling(1).png",
+    "hellspawn_regular": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_hellspawn(1).png",
+    "human_regular": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_human(1).png",
+    "orc_regular": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_orc(1).png",
+    "primal_regular": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_primal(1).png",
+    "tiefling_regular": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_tiefling(1).png",
+    "werecreature_regular": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_werecreature(1).png",
+    "ratkin_regular": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_ratkin.png",
+    "skyfowl_regular": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_skyfowl.png"
+  },
+  "missingAvatars": {
+    "comment": "Heritages that don't have avatars yet (artist working on these)",
+    "scienceFiction": [
+      "mutant",
+      "android", 
+      "clone"
+    ],
+    "postApocalyptic": [
+      "ghoul",
+      "raider",
+      "vault_dweller",
+      "synth",
+      "beast_kin",
+      "plant_hybrid"
+    ]
+  },
+  "metadata": {
+    "created": "2025-09-01",
+    "totalAvatars": 17,
+    "missingCount": 9,
+    "preferSmooth": true,
+    "version": "1.0"
+  }
+}

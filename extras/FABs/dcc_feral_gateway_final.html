@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/css/line-awesome.min.css">
+
+
+    <title>DCC Feral Gateway FAB</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0f0f23, #1a1a3e);
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Feral Gateway Stack */
+        .feral-gateway-fab {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+        }
+
+        .feral-gateway-main {
+            width: 80px;
+            height: 80px;
+            background: 
+                radial-gradient(circle at 30% 30%, rgba(231, 76, 60, 0.8), transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(52, 152, 219, 0.8), transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(142, 68, 173, 0.9), transparent 70%);
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 
+                0 0 20px rgba(142, 68, 173, 0.5),
+                inset 0 0 20px rgba(0,0,0,0.3);
+            transition: all 0.4s ease;
+            animation: feralPulse 3s ease-in-out infinite;
+            border: 2px solid #ffd700;
+        }
+
+        .feral-gateway-main::before {
+            content: '';
+            position: absolute;
+            inset: 6px;
+            border-radius: 50%;
+            background: radial-gradient(circle, transparent 30%, rgba(15, 15, 35, 0.6) 70%);
+            animation: feralRotate 8s linear infinite;
+        }
+
+        .dungeon-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            z-index: 3;
+            color: #e66100;
+            filter: drop-shadow(0 0 6px rgba(230, 97, 0, 0.8));
+            animation: dungeonGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes dungeonGlow {
+            0%, 100% { 
+                filter: drop-shadow(0 0 6px rgba(230, 97, 0, 0.8));
+                color: #e66100;
+            }
+            50% { 
+                filter: drop-shadow(0 0 12px rgba(230, 97, 0, 1)) drop-shadow(0 0 18px rgba(255, 215, 0, 0.6));
+                color: #ff7518;
+            }
+        }
+
+        @keyframes feralPulse {
+            0%, 100% { 
+                box-shadow: 
+                    0 0 20px rgba(142, 68, 173, 0.5),
+                    inset 0 0 20px rgba(0,0,0,0.3);
+            }
+            50% { 
+                box-shadow: 
+                    0 0 40px rgba(142, 68, 173, 0.8),
+                    0 0 60px rgba(231, 76, 60, 0.4),
+                    inset 0 0 20px rgba(0,0,0,0.3);
+            }
+        }
+
+        @keyframes feralRotate {
+            to { transform: rotate(360deg); }
+        }
+
+        .feral-gateway-main:hover {
+            transform: scale(1.1);
+            animation-duration: 1s;
+        }
+
+        .feral-stack {
+            position: absolute;
+            bottom: 90px;
+            right: -10px;
+            width: 120px;
+            height: 300px;
+            pointer-events: none;
+        }
+
+        .feral-option {
+            position: absolute;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            opacity: 0;
+            transform: scale(0) translateX(50px);
+            pointer-events: none;
+            font-size: 16px;
+            color: white;
+            text-align: center;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .feral-gateway-fab.active .feral-option {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+            pointer-events: all;
+        }
+
+        .feral-option:nth-child(2) {
+            bottom: 0;
+            right: 30px;
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.9), rgba(192, 57, 43, 0.9));
+            transition-delay: 0.1s;
+        }
+
+        .feral-option:nth-child(3) {
+            bottom: 40px;
+            right: 0;
+            background: linear-gradient(135deg, rgba(243, 156, 18, 0.9), rgba(230, 126, 34, 0.9));
+            transition-delay: 0.2s;
+        }
+
+        .feral-option:nth-child(4) {
+            bottom: 80px;
+            right: 30px;
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.9), rgba(39, 174, 96, 0.9));
+            transition-delay: 0.3s;
+        }
+
+        .feral-option:nth-child(5) {
+            bottom: 120px;
+            right: 0;
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.9), rgba(41, 128, 185, 0.9));
+            transition-delay: 0.4s;
+        }
+
+        .feral-option:nth-child(6) {
+            bottom: 160px;
+            right: 30px;
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.9), rgba(142, 68, 173, 0.9));
+            transition-delay: 0.5s;
+        }
+
+        .feral-option:nth-child(7) {
+            bottom: 200px;
+            right: 0;
+            background: linear-gradient(135deg, rgba(241, 196, 15, 0.9), rgba(243, 156, 18, 0.9));
+            transition-delay: 0.6s;
+        }
+
+        /* Demo controls */
+        .demo-controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(26, 32, 44, 0.9);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #4a5568;
+            backdrop-filter: blur(10px);
+            max-width: 300px;
+        }
+
+        .demo-title {
+            color: #ffd700;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .demo-description {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .demo-note {
+            color: #4facfe;
+            font-size: 0.8rem;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-controls">
+        <div class="demo-title">Feral Gateway FAB</div>
+        <div class="demo-description">
+            Inspired by the Gateway of the Feral Gods from Dungeon Crawler Carl. Click the dungeon entrance to open portals to different realms of your app.
+        </div>
+        <div class="demo-note">
+            Perfect for bottom-right positioning with the alternating stack layout.
+        </div>
+    </div>
+
+    <div class="feral-gateway-fab" id="feralGatewayFab">
+        <div class="feral-gateway-main" onclick="toggleFab('feralGatewayFab')">
+            <!--<i class="fa-solid fa-dungeon dungeon-icon"></i>-->
+            <i class="las la-dungeon dungeon-icon"></i>
+        </div>
+        <div class="feral-stack">
+            <div class="feral-option">📦</div>
+            <div class="feral-option">🔮</div>
+            <div class="feral-option">⚔️</div>
+            <div class="feral-option">📝</div>
+            <div class="feral-option">💬</div>
+            <div class="feral-option">🎮</div>
+        </div>
+    </div>
+
+    <script>
+        function toggleFab(fabId) {
+            const targetFab = document.getElementById(fabId);
+            targetFab.classList.toggle('active');
+        }
+
+        // Close FAB when clicking outside
+        document.addEventListener('click', (e) => {
+            const isClickInsideFab = e.target.closest('[id$="Fab"]');
+            if (!isClickInsideFab) {
+                const fab = document.getElementById('feralGatewayFab');
+                fab.classList.remove('active');
+            }
+        });
+
+        // Enhanced portal effects
+        document.addEventListener('DOMContentLoaded', () => {
+            // Feral options divine glow
+            const feralOptions = document.querySelectorAll('.feral-option');
+            feralOptions.forEach((option, index) => {
+                option.addEventListener('mouseenter', () => {
+                    option.style.borderColor = 'rgba(255, 215, 0, 0.8)';
+                    option.style.boxShadow = '0 0 25px rgba(255, 215, 0, 0.5)';
+                });
+                option.addEventListener('mouseleave', () => {
+                    option.style.borderColor = 'rgba(255, 215, 0, 0.3)';
+                    option.style.boxShadow = '';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
