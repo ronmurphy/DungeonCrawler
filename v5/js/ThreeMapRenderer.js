@@ -20,6 +20,28 @@ class ThreeMapRenderer {
         this.tileHeight = 0.2;
         this.currentTiles = [];
         
+        // Player and camera system
+        this.playerPosition = { x: 0, y: 0 };
+        this.cameraHeight = 2.0; // Player eye level (first person)
+        this.isFirstPerson = true;
+        this.cameraControls = {
+            moveSpeed: 0.1,
+            rotateSpeed: 0.002,
+            keys: {
+                forward: false,
+                backward: false,
+                left: false,
+                right: false,
+                turnLeft: false,
+                turnRight: false
+            }
+        };
+        
+        // Touch and mobile controls
+        this.virtualStick = null;
+        this.touchStartPos = null;
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
         // Sprite/Tileset handling
         this.spriteTexture = null;
         this.tilesetConfig = null;
@@ -69,8 +91,9 @@ class ThreeMapRenderer {
         // Create camera with proper aspect ratio
         const aspect = this.container.clientWidth / this.container.clientHeight || 1;
         this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-        this.camera.position.set(0, 8, 8);
-        this.camera.lookAt(0, 0, 0);
+        
+        // Set up first-person camera position
+        this.updateCameraFromPlayerPosition();
         
         // Create WebGL renderer
         this.renderer = new THREE.WebGLRenderer({ 
@@ -87,6 +110,9 @@ class ThreeMapRenderer {
         
         // Set up lighting
         this.setupLighting();
+        
+        // Set up controls
+        this.setupControls();
         
         // Add resize handling
         this.setupResizeHandler();
@@ -153,9 +179,520 @@ class ThreeMapRenderer {
     startRenderLoop() {
         const animate = () => {
             this.animationId = requestAnimationFrame(animate);
+            this.updateCameraMovement();
+            this.updateBillboards();
+            this.updateBillboardScaling();
             this.renderer.render(this.scene, this.camera);
         };
         animate();
+    }
+    
+    // ========================================
+    // CAMERA AND PLAYER POSITION SYSTEM
+    // ========================================
+    
+    // Update camera position based on player position (first-person POV)
+    updateCameraFromPlayerPosition() {
+        if (!this.camera) return;
+        
+        // Convert grid position to world position
+        const worldX = this.playerPosition.x * this.tileSize;
+        const worldZ = this.playerPosition.y * this.tileSize;
+        
+        // Set camera at player position with eye height
+        this.camera.position.set(worldX, this.cameraHeight, worldZ);
+        
+        this.debugLog('📸 Camera updated to player position:', {
+            player: this.playerPosition,
+            world: { x: worldX, z: worldZ },
+            camera: this.camera.position
+        });
+    }
+    
+    // Set player position and update camera
+    setPlayerPosition(x, y) {
+        this.playerPosition = { x, y };
+        this.updateCameraFromPlayerPosition();
+        this.debugLog('👤 Player position set to:', this.playerPosition);
+    }
+    
+    // Get current player position from global system
+    updatePlayerPositionFromGlobal() {
+        try {
+            // Try to get position from global MapSyncAdapter
+            if (window.globalMapSyncAdapter && typeof window.globalMapSyncAdapter.getCurrentPosition === 'function') {
+                const pos = window.globalMapSyncAdapter.getCurrentPosition();
+                if (pos) {
+                    this.setPlayerPosition(pos.x, pos.y);
+                    return true;
+                }
+            }
+            
+            // Fallback to other global position sources if available
+            if (window.currentPlayerPosition) {
+                this.setPlayerPosition(window.currentPlayerPosition.x, window.currentPlayerPosition.y);
+                return true;
+            }
+        } catch (error) {
+            this.debugLog('⚠️ Could not get player position from global system:', error);
+        }
+        
+        return false;
+    }
+    
+    // Setup camera movement controls
+    updateCameraMovement() {
+        if (!this.isFirstPerson) return;
+        
+        const controls = this.cameraControls;
+        let moved = false;
+        
+        // Handle movement keys
+        if (controls.keys.forward) {
+            this.camera.translateZ(-controls.moveSpeed);
+            moved = true;
+        }
+        if (controls.keys.backward) {
+            this.camera.translateZ(controls.moveSpeed);
+            moved = true;
+        }
+        if (controls.keys.left) {
+            this.camera.translateX(-controls.moveSpeed);
+            moved = true;
+        }
+        if (controls.keys.right) {
+            this.camera.translateX(controls.moveSpeed);
+            moved = true;
+        }
+        if (controls.keys.turnLeft) {
+            this.camera.rotateY(controls.rotateSpeed);
+            moved = true;
+        }
+        if (controls.keys.turnRight) {
+            this.camera.rotateY(-controls.rotateSpeed);
+            moved = true;
+        }
+        
+        // Keep camera at proper height
+        if (moved) {
+            this.camera.position.y = this.cameraHeight;
+        }
+    }
+    
+    // Setup all control systems
+    setupControls() {
+        this.setupKeyboardControls();
+        this.setupMouseControls();
+        this.setupTouchControls();
+        
+        if (this.isMobile) {
+            this.createVirtualStick();
+        }
+    }
+    
+    // Setup keyboard controls
+    setupKeyboardControls() {
+        const controls = this.cameraControls;
+        
+        const keyMap = {
+            'KeyW': 'forward',
+            'KeyS': 'backward', 
+            'KeyA': 'left',
+            'KeyD': 'right',
+            'ArrowUp': 'forward',
+            'ArrowDown': 'backward',
+            'ArrowLeft': 'turnLeft',
+            'ArrowRight': 'turnRight',
+            'KeyQ': 'turnLeft',
+            'KeyE': 'turnRight'
+        };
+        
+        window.addEventListener('keydown', (event) => {
+            if (keyMap[event.code] && !event.repeat) {
+                controls.keys[keyMap[event.code]] = true;
+                event.preventDefault();
+            }
+        });
+        
+        window.addEventListener('keyup', (event) => {
+            if (keyMap[event.code]) {
+                controls.keys[keyMap[event.code]] = false;
+                event.preventDefault();
+            }
+        });
+        
+        this.debugLog('⌨️ Keyboard controls setup');
+    }
+    
+    // Setup mouse controls for camera rotation
+    setupMouseControls() {
+        let isMouseDown = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        
+        this.renderer.domElement.addEventListener('mousedown', (event) => {
+            if (event.button === 0) { // Left click
+                isMouseDown = true;
+                lastMouseX = event.clientX;
+                lastMouseY = event.clientY;
+                this.renderer.domElement.style.cursor = 'grabbing';
+                event.preventDefault();
+            } else if (event.button === 2) { // Right click for minimap drag
+                this.handleRightClickDrag(event);
+            }
+        });
+        
+        window.addEventListener('mousemove', (event) => {
+            if (isMouseDown) {
+                const deltaX = event.clientX - lastMouseX;
+                const deltaY = event.clientY - lastMouseY;
+                
+                // Rotate camera based on mouse movement
+                this.camera.rotateY(-deltaX * 0.003);
+                this.camera.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), -deltaY * 0.003);
+                
+                // Clamp vertical rotation to prevent flipping
+                const rotation = this.camera.rotation;
+                rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotation.x));
+                
+                lastMouseX = event.clientX;
+                lastMouseY = event.clientY;
+            }
+        });
+        
+        window.addEventListener('mouseup', (event) => {
+            if (event.button === 0) {
+                isMouseDown = false;
+                this.renderer.domElement.style.cursor = 'grab';
+            }
+        });
+        
+        // Prevent context menu on right click
+        this.renderer.domElement.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+        });
+        
+        this.renderer.domElement.style.cursor = 'grab';
+        this.debugLog('🖱️ Mouse controls setup');
+    }
+    
+    // Handle right-click drag for minimap movement
+    handleRightClickDrag(event) {
+        console.log('🖱️ Right-click detected on 3D renderer - initiating minimap drag mode');
+        
+        let isRightDragging = false;
+        let lastRightX = event.clientX;
+        let lastRightY = event.clientY;
+        
+        // Try to find the minimap canvas to manipulate
+        const minimapCanvas = this.findMinimapCanvas();
+        
+        if (!minimapCanvas) {
+            console.warn('⚠️ No minimap canvas found for right-click drag');
+            return;
+        }
+        
+        console.log('🎯 Found minimap canvas:', minimapCanvas.id || minimapCanvas.className);
+        
+        const handleRightDrag = (moveEvent) => {
+            if (!isRightDragging) return;
+            
+            const deltaX = moveEvent.clientX - lastRightX;
+            const deltaY = moveEvent.clientY - lastRightY;
+            
+            // Apply movement to the minimap canvas
+            this.moveMinimapCanvas(minimapCanvas, deltaX, deltaY);
+            
+            lastRightX = moveEvent.clientX;
+            lastRightY = moveEvent.clientY;
+            moveEvent.preventDefault();
+        };
+        
+        const stopRightDrag = () => {
+            isRightDragging = false;
+            window.removeEventListener('mousemove', handleRightDrag);
+            window.removeEventListener('mouseup', stopRightDrag);
+            console.log('🖱️ Right-click drag ended');
+        };
+        
+        isRightDragging = true;
+        window.addEventListener('mousemove', handleRightDrag);
+        window.addEventListener('mouseup', stopRightDrag);
+        
+        event.preventDefault();
+    }
+    
+    // Find the minimap canvas element
+    findMinimapCanvas() {
+        // Try multiple methods to find the canvas
+        const candidates = [
+            // Direct access through global adapter
+            () => {
+                try {
+                    return window.globalMapSyncAdapter?.mapClientManager?.mapViewer?.canvas;
+                } catch (e) {
+                    return null;
+                }
+            },
+            // Search by common canvas IDs
+            () => document.getElementById('player-map-canvas'),
+            () => document.getElementById('map-viewer-canvas'),
+            () => document.getElementById('minimap-canvas'),
+            // Search by class name
+            () => document.querySelector('.map-viewer-canvas canvas'),
+            () => document.querySelector('.map-canvas'),
+            // Search all canvases and find the likely minimap
+            () => {
+                const canvases = document.querySelectorAll('canvas');
+                for (const canvas of canvases) {
+                    // Skip the 3D renderer canvas
+                    if (canvas === this.renderer.domElement) continue;
+                    
+                    // Look for smaller canvases that might be minimaps
+                    const rect = canvas.getBoundingClientRect();
+                    if (rect.width < window.innerWidth * 0.8 && rect.height < window.innerHeight * 0.8) {
+                        return canvas;
+                    }
+                }
+                return null;
+            }
+        ];
+        
+        for (const candidate of candidates) {
+            const canvas = typeof candidate === 'function' ? candidate() : candidate;
+            if (canvas && canvas.tagName === 'CANVAS') {
+                return canvas;
+            }
+        }
+        
+        return null;
+    }
+    
+    // Move the minimap canvas position
+    moveMinimapCanvas(canvas, deltaX, deltaY) {
+        // Get current transform
+        const computedStyle = getComputedStyle(canvas);
+        const currentTransform = computedStyle.transform;
+        
+        let translateX = 0;
+        let translateY = 0;
+        let scale = 1;
+        
+        // Parse existing transform
+        if (currentTransform && currentTransform !== 'none') {
+            const matrixMatch = currentTransform.match(/matrix\(([^)]+)\)/);
+            if (matrixMatch) {
+                const values = matrixMatch[1].split(',').map(v => parseFloat(v.trim()));
+                translateX = values[4] || 0;
+                translateY = values[5] || 0;
+                scale = values[0] || 1;
+            }
+        }
+        
+        // Apply delta movement
+        translateX += deltaX;
+        translateY += deltaY;
+        
+        // Apply new transform
+        canvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        
+        console.log('🎯 Moved minimap canvas:', { deltaX, deltaY, newX: translateX, newY: translateY });
+        
+        // Also try to update any associated player position if available
+        this.updatePlayerPositionFromCanvasMovement(deltaX, deltaY);
+    }
+    
+    // Update player position based on canvas movement (optional)
+    updatePlayerPositionFromCanvasMovement(deltaX, deltaY) {
+        // This could convert canvas pixel movement to grid movement
+        // and update the global player position system
+        try {
+            if (window.globalMapSyncAdapter && typeof window.globalMapSyncAdapter.moveRelative === 'function') {
+                // Convert pixel delta to grid delta (rough approximation)
+                const gridDeltaX = Math.round(deltaX / 32); // Assuming ~32px per grid cell
+                const gridDeltaY = Math.round(deltaY / 32);
+                
+                if (gridDeltaX !== 0 || gridDeltaY !== 0) {
+                    window.globalMapSyncAdapter.moveRelative(gridDeltaX, gridDeltaY)
+                        .then(result => {
+                            if (result.success) {
+                                console.log('🎯 Updated player position via canvas movement');
+                            }
+                        })
+                        .catch(error => {
+                            // Ignore errors - player movement might not be enabled
+                        });
+                }
+            }
+        } catch (error) {
+            // Ignore errors in player position updating
+        }
+    }
+    
+    // Setup touch controls for mobile devices
+    setupTouchControls() {
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isTouchRotating = false;
+        
+        this.renderer.domElement.addEventListener('touchstart', (event) => {
+            if (event.touches.length === 1) {
+                touchStartX = event.touches[0].clientX;
+                touchStartY = event.touches[0].clientY;
+                isTouchRotating = true;
+                event.preventDefault();
+            }
+        });
+        
+        this.renderer.domElement.addEventListener('touchmove', (event) => {
+            if (isTouchRotating && event.touches.length === 1) {
+                const deltaX = event.touches[0].clientX - touchStartX;
+                const deltaY = event.touches[0].clientY - touchStartY;
+                
+                // Rotate camera based on touch movement
+                this.camera.rotateY(-deltaX * 0.005);
+                this.camera.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), -deltaY * 0.005);
+                
+                // Clamp vertical rotation
+                const rotation = this.camera.rotation;
+                rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotation.x));
+                
+                touchStartX = event.touches[0].clientX;
+                touchStartY = event.touches[0].clientY;
+                event.preventDefault();
+            }
+        });
+        
+        this.renderer.domElement.addEventListener('touchend', (event) => {
+            isTouchRotating = false;
+        });
+        
+        this.debugLog('📱 Touch controls setup');
+    }
+    
+    // Create virtual thumbstick for mobile
+    createVirtualStick() {
+        const stickContainer = document.createElement('div');
+        stickContainer.id = 'virtual-stick-container';
+        stickContainer.style.cssText = `
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            touch-action: none;
+            user-select: none;
+            z-index: 1000;
+        `;
+        
+        const stick = document.createElement('div');
+        stick.id = 'virtual-stick';
+        stick.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s ease;
+        `;
+        
+        stickContainer.appendChild(stick);
+        this.container.appendChild(stickContainer);
+        
+        let isDragging = false;
+        let centerX = 60; // Half of container width
+        let centerY = 60; // Half of container height
+        
+        const updateStickPosition = (clientX, clientY) => {
+            const rect = stickContainer.getBoundingClientRect();
+            const x = clientX - rect.left - centerX;
+            const y = clientY - rect.top - centerY;
+            const distance = Math.sqrt(x * x + y * y);
+            const maxDistance = 40; // Max stick movement
+            
+            let finalX = x;
+            let finalY = y;
+            
+            if (distance > maxDistance) {
+                finalX = (x / distance) * maxDistance;
+                finalY = (y / distance) * maxDistance;
+            }
+            
+            stick.style.transform = `translate(${finalX - 20}px, ${finalY - 20}px)`;
+            
+            // Convert to movement input
+            const normalizedX = finalX / maxDistance;
+            const normalizedY = finalY / maxDistance;
+            
+            // Update movement controls based on stick position
+            const threshold = 0.3;
+            const controls = this.cameraControls;
+            
+            controls.keys.forward = normalizedY < -threshold;
+            controls.keys.backward = normalizedY > threshold;
+            controls.keys.left = normalizedX < -threshold;
+            controls.keys.right = normalizedX > threshold;
+            
+            return { x: normalizedX, y: normalizedY };
+        };
+        
+        const resetStick = () => {
+            stick.style.transform = 'translate(-50%, -50%)';
+            const controls = this.cameraControls;
+            controls.keys.forward = false;
+            controls.keys.backward = false;
+            controls.keys.left = false;
+            controls.keys.right = false;
+        };
+        
+        // Touch events for virtual stick
+        stickContainer.addEventListener('touchstart', (event) => {
+            isDragging = true;
+            updateStickPosition(event.touches[0].clientX, event.touches[0].clientY);
+            event.preventDefault();
+        });
+        
+        stickContainer.addEventListener('touchmove', (event) => {
+            if (isDragging) {
+                updateStickPosition(event.touches[0].clientX, event.touches[0].clientY);
+                event.preventDefault();
+            }
+        });
+        
+        stickContainer.addEventListener('touchend', (event) => {
+            isDragging = false;
+            resetStick();
+            event.preventDefault();
+        });
+        
+        // Mouse events for desktop testing
+        stickContainer.addEventListener('mousedown', (event) => {
+            isDragging = true;
+            updateStickPosition(event.clientX, event.clientY);
+            event.preventDefault();
+        });
+        
+        window.addEventListener('mousemove', (event) => {
+            if (isDragging) {
+                updateStickPosition(event.clientX, event.clientY);
+            }
+        });
+        
+        window.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                resetStick();
+            }
+        });
+        
+        this.virtualStick = stickContainer;
+        this.debugLog('🕹️ Virtual thumbstick created');
     }
     
     // Main method to load new map data from transmission
@@ -400,6 +937,9 @@ class ThreeMapRenderer {
             }
         });
         this.currentTiles = [];
+        
+        // Clear billboards
+        this.clearBillboards();
     }
     
     renderGrid(grid) {
@@ -438,8 +978,89 @@ class ThreeMapRenderer {
         
         console.log('✅ Rendered', this.currentTiles.length, 'tiles');
         
-        // Adjust camera to view the entire grid
-        this.centerCameraOnGrid(cols, rows);
+        // Initialize player position and camera for first-person view
+        this.initializePlayerPosition(cols, rows);
+    }
+    
+    // Initialize player position from global system or center of map
+    initializePlayerPosition(cols, rows) {
+        // Try to get current player position from global system
+        const gotGlobalPosition = this.updatePlayerPositionFromGlobal();
+        
+        if (!gotGlobalPosition) {
+            // Default to center of map if no player position found
+            const centerX = Math.floor(cols / 2);
+            const centerY = Math.floor(rows / 2);
+            this.setPlayerPosition(centerX, centerY);
+            console.log('🎯 Player position defaulted to map center:', this.playerPosition);
+        } else {
+            console.log('🎯 Player position loaded from global system:', this.playerPosition);
+        }
+        
+        // Set up periodic position sync with global system
+        this.setupPositionSync();
+    }
+    
+    // Setup periodic sync with global player position system
+    setupPositionSync() {
+        // Update player position every 500ms from global system
+        setInterval(() => {
+            this.updatePlayerPositionFromGlobal();
+        }, 500);
+        
+        this.debugLog('🔄 Position sync with global system enabled');
+    }
+    
+    // ========================================
+    // BILLBOARD SYSTEM
+    // ========================================
+    
+    // Update all billboards to face the camera
+    updateBillboards() {
+        if (!this.billboards || !this.camera) return;
+        
+        this.billboards.forEach(billboard => {
+            if (billboard.userData.isBillboard) {
+                billboard.lookAt(this.camera.position);
+            }
+        });
+    }
+    
+    // Update billboard scaling based on distance and type
+    updateBillboardScaling() {
+        if (!this.billboards || !this.camera) return;
+        
+        this.billboards.forEach(billboard => {
+            const userData = billboard.userData;
+            if (userData.isBillboard && userData.baseSize) {
+                // Calculate distance from camera to billboard
+                const distance = billboard.getWorldPosition(new THREE.Vector3()).distanceTo(this.camera.position);
+                
+                // Calculate scale based on tile type and distance
+                let scale = 1.0;
+                const tileName = userData.tileName;
+                
+                if (tileName === 'mountain' || tileName === 'town' || tileName === 'city' || tileName === 'castle') {
+                    // These get bigger as you approach
+                    scale = Math.max(0.5, Math.min(2.0, 2.0 - (distance * 0.2)));
+                } else if (tileName === 'grass') {
+                    // Grass stays small and consistent
+                    scale = 0.8 + Math.random() * 0.4; // Random slight variation
+                } else {
+                    // Default scaling
+                    scale = Math.max(0.7, Math.min(1.3, 1.3 - (distance * 0.1)));
+                }
+                
+                billboard.scale.set(scale, scale, scale);
+            }
+        });
+    }
+    
+    // Clear billboards when clearing tiles
+    clearBillboards() {
+        if (this.billboards) {
+            this.billboards.length = 0;
+        }
     }
     
     createDemoTiles() {
@@ -478,13 +1099,21 @@ class ThreeMapRenderer {
     }
     
     createTileMesh(tileData, col, row) {
-        const geometry = new THREE.BoxGeometry(this.tileSize, this.tileHeight, this.tileSize);
-        let material;
-        
         // Get tile name/type from data
         const tileName = typeof tileData === 'string' ? tileData : (tileData.name || 'default');
         
-        // Look for sprite data in tileset config
+        // Create a flat plane on the ground for the tile base
+        const groundGeometry = new THREE.PlaneGeometry(this.tileSize, this.tileSize);
+        const groundMaterial = new THREE.MeshLambertMaterial({ 
+            color: this.getTileColor(tileName),
+            transparent: true,
+            opacity: 0.8
+        });
+        const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+        groundMesh.rotation.x = -Math.PI / 2; // Lay flat on ground
+        groundMesh.position.y = 0.01; // Slightly above ground to prevent z-fighting
+        
+        // Look for sprite data in tileset config for billboard
         let spriteData = null;
         if (this.spriteTexture && this.tilesetConfig && this.tilesetConfig.sprites) {
             if (Array.isArray(this.tilesetConfig.sprites)) {
@@ -496,22 +1125,165 @@ class ThreeMapRenderer {
             }
         }
         
+        // Create billboard sprite above the ground tile
+        let billboardMesh = null;
         if (spriteData) {
-            // Use sprite texture from tileset
-            console.log('🎨 Creating sprite material for:', tileName, 'at position:', spriteData.position);
-            material = this.createSpriteMaterial(spriteData);
+            if (tileName === 'grass') {
+                // Create multiple small grass sprites scattered across the tile
+                billboardMesh = this.createGrassField(spriteData, tileName);
+            } else {
+                billboardMesh = this.createBillboardSprite(spriteData, tileName);
+            }
         } else {
-            // Use solid color fallback
-            const color = this.getTileColor(tileName);
-            console.log('🎨 Using color fallback for:', tileName, 'color:', color.toString(16));
-            material = new THREE.MeshLambertMaterial({ color });
+            // Create a simple colored billboard for tiles without sprites
+            if (tileName === 'grass') {
+                billboardMesh = this.createGrassField(null, tileName);
+            } else {
+                billboardMesh = this.createColorBillboard(tileName);
+            }
         }
         
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
+        // Create a group to hold both ground and billboard
+        const tileGroup = new THREE.Group();
+        tileGroup.add(groundMesh);
+        if (billboardMesh) {
+            tileGroup.add(billboardMesh);
+        }
         
-        return mesh;
+        // Store tile metadata
+        tileGroup.userData = {
+            tileName: tileName,
+            gridPosition: { x: col, y: row },
+            hasSprite: !!spriteData
+        };
+        
+        return tileGroup;
+    }
+    
+    // Create a billboard sprite that always faces the camera
+    createBillboardSprite(spriteData, tileName) {
+        // Calculate billboard size based on tile type
+        const size = this.getBillboardSize(tileName);
+        
+        const geometry = new THREE.PlaneGeometry(size.width, size.height);
+        const material = this.createSpriteMaterial(spriteData);
+        
+        const billboard = new THREE.Mesh(geometry, material);
+        billboard.position.y = size.height / 2; // Position at bottom edge on ground
+        
+        // Store reference for billboard behavior
+        billboard.userData = {
+            isBillboard: true,
+            tileName: tileName,
+            baseSize: size
+        };
+        
+        // Add to billboards array for camera-facing updates
+        if (!this.billboards) {
+            this.billboards = [];
+        }
+        this.billboards.push(billboard);
+        
+        return billboard;
+    }
+    
+    // Create a simple colored billboard for tiles without sprites
+    createColorBillboard(tileName) {
+        const size = this.getBillboardSize(tileName);
+        
+        // Only create billboards for certain tile types
+        if (tileName === 'grass' || tileName === 'floor') {
+            return null; // These stay as ground tiles only
+        }
+        
+        const geometry = new THREE.PlaneGeometry(size.width, size.height);
+        const material = new THREE.MeshLambertMaterial({ 
+            color: this.getTileColor(tileName),
+            transparent: true,
+            opacity: 0.7
+        });
+        
+        const billboard = new THREE.Mesh(geometry, material);
+        billboard.position.y = size.height / 2;
+        
+        billboard.userData = {
+            isBillboard: true,
+            tileName: tileName,
+            baseSize: size
+        };
+        
+        if (!this.billboards) {
+            this.billboards = [];
+        }
+        this.billboards.push(billboard);
+        
+        return billboard;
+    }
+    
+    // Get billboard size based on tile type
+    getBillboardSize(tileName) {
+        const sizeMap = {
+            'mountain': { width: 1.2, height: 1.5 },
+            'tree': { width: 0.8, height: 1.2 },
+            'wall': { width: 1.0, height: 1.0 },
+            'door': { width: 1.0, height: 1.2 },
+            'town': { width: 1.5, height: 1.8 },
+            'city': { width: 2.0, height: 2.5 },
+            'castle': { width: 2.5, height: 3.0 },
+            'grass': { width: 0.3, height: 0.3 }, // Small grass sprites
+            'default': { width: 0.8, height: 1.0 }
+        };
+        
+        return sizeMap[tileName] || sizeMap['default'];
+    }
+    
+    // Create multiple grass sprites scattered across a tile
+    createGrassField(spriteData, tileName) {
+        const grassGroup = new THREE.Group();
+        const grassCount = 3 + Math.floor(Math.random() * 4); // 3-6 grass sprites per tile
+        const size = this.getBillboardSize(tileName);
+        
+        for (let i = 0; i < grassCount; i++) {
+            // Random position within the tile bounds
+            const randomX = (Math.random() - 0.5) * this.tileSize * 0.8;
+            const randomZ = (Math.random() - 0.5) * this.tileSize * 0.8;
+            
+            // Random size variation
+            const sizeVariation = 0.7 + Math.random() * 0.6; // 0.7x to 1.3x size
+            const grassWidth = size.width * sizeVariation;
+            const grassHeight = size.height * sizeVariation;
+            
+            const geometry = new THREE.PlaneGeometry(grassWidth, grassHeight);
+            let material;
+            
+            if (spriteData) {
+                material = this.createSpriteMaterial(spriteData);
+            } else {
+                material = new THREE.MeshLambertMaterial({ 
+                    color: this.getTileColor(tileName),
+                    transparent: true,
+                    opacity: 0.8
+                });
+            }
+            
+            const grassBillboard = new THREE.Mesh(geometry, material);
+            grassBillboard.position.set(randomX, grassHeight / 2, randomZ);
+            
+            grassBillboard.userData = {
+                isBillboard: true,
+                tileName: tileName,
+                baseSize: { width: grassWidth, height: grassHeight }
+            };
+            
+            if (!this.billboards) {
+                this.billboards = [];
+            }
+            this.billboards.push(grassBillboard);
+            
+            grassGroup.add(grassBillboard);
+        }
+        
+        return grassGroup;
     }
     
     createSpriteMaterial(spriteData) {
