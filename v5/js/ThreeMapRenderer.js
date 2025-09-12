@@ -12,6 +12,7 @@ class ThreeMapRenderer {
         // Three.js core objects
         this.scene = null;
         this.camera = null;
+        this.player = null;  // Player object that contains camera
         this.renderer = null;
         this.animationId = null;
         
@@ -22,10 +23,15 @@ class ThreeMapRenderer {
         
         // Player and camera system
         this.playerPosition = { x: 0, y: 0 };
-        this.cameraHeight = 2.0; // Player eye level (first person)
+        this.cameraHeight = 1.8; // Reduced from 2.0 for better scale (like dungeon game)
         this.isFirstPerson = true;
+        
+        // Time tracking for FPS-independent movement
+        this.prevTime = performance.now();
+        this.velocity = { x: 0, z: 0 };
+        
         this.cameraControls = {
-            moveSpeed: 0.1,
+            moveSpeed: 8.0, // Base movement speed (similar to dungeon game)
             rotateSpeed: 0.002,
             keys: {
                 forward: false,
@@ -88,12 +94,19 @@ class ThreeMapRenderer {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x222222);
         
-        // Create camera with proper aspect ratio
+        // Create player object (container for camera)
+        this.player = new THREE.Object3D();
+        this.player.position.set(0, this.cameraHeight, 0);
+        this.scene.add(this.player);
+        
+        // Create camera as child of player
         const aspect = this.container.clientWidth / this.container.clientHeight || 1;
         this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+        this.camera.position.set(0, 0, 0); // Relative to player
+        this.player.add(this.camera);
         
-        // Set up first-person camera position
-        this.updateCameraFromPlayerPosition();
+        // Set initial player position
+        this.updatePlayerFromPosition();
         
         // Create WebGL renderer
         this.renderer = new THREE.WebGLRenderer({ 
@@ -179,7 +192,14 @@ class ThreeMapRenderer {
     startRenderLoop() {
         const animate = () => {
             this.animationId = requestAnimationFrame(animate);
-            this.updateCameraMovement();
+            
+            // Calculate delta time for FPS-independent movement
+            const time = performance.now();
+            const delta = (time - this.prevTime) / 1000;
+            this.prevTime = time;
+            
+            // Update systems with delta time
+            this.updateCameraMovement(delta);
             this.updateBillboards();
             this.updateBillboardScaling();
             this.renderer.render(this.scene, this.camera);
@@ -188,32 +208,32 @@ class ThreeMapRenderer {
     }
     
     // ========================================
-    // CAMERA AND PLAYER POSITION SYSTEM
+    // CAMERA AND PLAYER POSITION SYSTEM  
     // ========================================
     
-    // Update camera position based on player position (first-person POV)
-    updateCameraFromPlayerPosition() {
-        if (!this.camera) return;
+    // Update player position based on grid coordinates (first-person POV)
+    updatePlayerFromPosition() {
+        if (!this.player) return;
         
         // Convert grid position to world position
         const worldX = this.playerPosition.x * this.tileSize;
         const worldZ = this.playerPosition.y * this.tileSize;
         
-        // Set camera at player position with eye height
-        this.camera.position.set(worldX, this.cameraHeight, worldZ);
+        // Set player position (camera follows as child)
+        this.player.position.set(worldX, this.cameraHeight, worldZ);
         
-        this.debugLog('📸 Camera updated to player position:', {
+        this.debugLog('� Player updated to position:', {
             player: this.playerPosition,
             world: { x: worldX, z: worldZ },
-            camera: this.camera.position
+            playerObj: this.player.position
         });
     }
     
-    // Set player position and update camera
+    // Set player position and update world position
     setPlayerPosition(x, y) {
         this.playerPosition = { x, y };
-        this.updateCameraFromPlayerPosition();
-        this.debugLog('👤 Player position set to:', this.playerPosition);
+        this.updatePlayerFromPosition();
+        this.debugLog('� Player position set to:', this.playerPosition);
     }
     
     // Get current player position from global system
@@ -240,43 +260,56 @@ class ThreeMapRenderer {
         return false;
     }
     
-    // Setup camera movement controls
-    updateCameraMovement() {
-        if (!this.isFirstPerson) return;
+    // Update player movement with delta time (FPS independent)
+    updateCameraMovement(delta) {
+        if (!this.isFirstPerson || !this.player) return;
         
         const controls = this.cameraControls;
-        let moved = false;
         
-        // Handle movement keys
-        if (controls.keys.forward) {
-            this.camera.translateZ(-controls.moveSpeed);
-            moved = true;
+        // Apply velocity damping (like dungeon game)
+        this.velocity.x -= this.velocity.x * 10.0 * delta;
+        this.velocity.z -= this.velocity.z * 10.0 * delta;
+        
+        // Calculate movement direction
+        let direction = { x: 0, z: 0 };
+        
+        if (controls.keys.forward) direction.z -= 1;
+        if (controls.keys.backward) direction.z += 1;
+        if (controls.keys.left) direction.x -= 1;
+        if (controls.keys.right) direction.x += 1;
+        
+        // Normalize diagonal movement
+        const length = Math.sqrt(direction.x * direction.x + direction.z * direction.z);
+        if (length > 0) {
+            direction.x /= length;
+            direction.z /= length;
         }
-        if (controls.keys.backward) {
-            this.camera.translateZ(controls.moveSpeed);
-            moved = true;
-        }
-        if (controls.keys.left) {
-            this.camera.translateX(-controls.moveSpeed);
-            moved = true;
-        }
-        if (controls.keys.right) {
-            this.camera.translateX(controls.moveSpeed);
-            moved = true;
-        }
+        
+        // Apply movement to velocity
+        const speed = controls.moveSpeed;
+        if (direction.z !== 0) this.velocity.z += direction.z * speed * delta;
+        if (direction.x !== 0) this.velocity.x += direction.x * speed * delta;
+        
+        // Store old position for collision detection
+        const oldPosition = this.player.position.clone();
+        
+        // Apply movement (relative to player rotation)
+        this.player.translateX(this.velocity.x * delta);
+        this.player.translateZ(this.velocity.z * delta);
+        
+        // Handle rotation
         if (controls.keys.turnLeft) {
-            this.camera.rotateY(controls.rotateSpeed);
-            moved = true;
+            this.player.rotation.y += controls.rotateSpeed * 50 * delta; // Scale for smooth rotation
         }
         if (controls.keys.turnRight) {
-            this.camera.rotateY(-controls.rotateSpeed);
-            moved = true;
+            this.player.rotation.y -= controls.rotateSpeed * 50 * delta;
         }
         
-        // Keep camera at proper height
-        if (moved) {
-            this.camera.position.y = this.cameraHeight;
-        }
+        // Keep player at proper height (in case of any drift)
+        this.player.position.y = this.cameraHeight;
+        
+        // TODO: Add collision detection here if needed
+        // For now, basic bounds checking could be added
     }
     
     // Setup all control systems
@@ -347,13 +380,12 @@ class ThreeMapRenderer {
                 const deltaX = event.clientX - lastMouseX;
                 const deltaY = event.clientY - lastMouseY;
                 
-                // Rotate camera based on mouse movement
-                this.camera.rotateY(-deltaX * 0.003);
-                this.camera.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), -deltaY * 0.003);
+                // Rotate player (Y-axis) and camera (X-axis) based on mouse movement
+                this.player.rotation.y -= deltaX * 0.003;
+                this.camera.rotation.x -= deltaY * 0.003;
                 
                 // Clamp vertical rotation to prevent flipping
-                const rotation = this.camera.rotation;
-                rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotation.x));
+                this.camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.camera.rotation.x));
                 
                 lastMouseX = event.clientX;
                 lastMouseY = event.clientY;
@@ -1320,7 +1352,12 @@ class ThreeMapRenderer {
             size: [uSize, vSize]
         });
         
-        return new THREE.MeshLambertMaterial({ map: texture });
+        return new THREE.MeshLambertMaterial({ 
+            map: texture,
+            transparent: true,
+            alphaTest: 0.1, // Discard pixels with alpha < 0.1
+            side: THREE.DoubleSide // Ensure sprite is visible from both sides
+        });
     }
     
     getTileColor(tileName) {
@@ -1345,12 +1382,19 @@ class ThreeMapRenderer {
     }
     
     centerCameraOnGrid(cols, rows) {
-        // Position camera to view the entire grid nicely
-        const maxDimension = Math.max(cols, rows);
-        const distance = maxDimension * this.tileSize * 1.5;
-        
-        this.camera.position.set(distance * 0.7, distance, distance * 0.7);
-        this.camera.lookAt(0, 0, 0);
+        // In first-person mode, position player at center of grid
+        if (this.isFirstPerson && this.player) {
+            const centerX = (cols - 1) * 0.5;
+            const centerY = (rows - 1) * 0.5;
+            this.setPlayerPosition(centerX, centerY);
+            this.debugLog('🎯 Centered player on grid:', { centerX, centerY });
+        } else {
+            // Fallback for overhead view (though we're focused on first-person)
+            const maxDimension = Math.max(cols, rows);
+            const distance = maxDimension * this.tileSize * 1.5;
+            this.camera.position.set(distance * 0.7, distance, distance * 0.7);
+            this.camera.lookAt(0, 0, 0);
+        }
     }
     
     // Public method to update with new map data
