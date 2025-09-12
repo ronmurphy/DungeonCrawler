@@ -7,6 +7,32 @@ class ThreeMapRenderer {
     constructor(containerId, mapData = null) {
         this.containerId = containerId;
         this.container = document.getElementById(containerId);
+        
+        // DETAILED DEBUG: Log container state at constructor time
+        console.log('🔍 THREEMAPRENDERER_CONSTRUCTOR_START:', {
+            containerId: containerId,
+            containerFound: !!this.container,
+            containerDimensions: this.container ? {
+                clientWidth: this.container.clientWidth,
+                clientHeight: this.container.clientHeight,
+                offsetWidth: this.container.offsetWidth,
+                offsetHeight: this.container.offsetHeight,
+                scrollWidth: this.container.scrollWidth,
+                scrollHeight: this.container.scrollHeight
+            } : null,
+            containerStyle: this.container ? {
+                position: this.container.style.position,
+                width: this.container.style.width,
+                height: this.container.style.height,
+                display: this.container.style.display
+            } : null,
+            containerParent: this.container ? {
+                nodeName: this.container.parentNode?.nodeName,
+                id: this.container.parentNode?.id,
+                className: this.container.parentNode?.className
+            } : null
+        });
+        
         this.mapData = null;
         
         // Three.js core objects
@@ -113,13 +139,95 @@ class ThreeMapRenderer {
             antialias: true,
             alpha: false 
         });
-        this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+        
+        // Get container dimensions - use fallback if not available yet
+        const containerWidth = this.container.clientWidth || this.container.offsetWidth || 800;
+        const containerHeight = this.container.clientHeight || this.container.offsetHeight || 600;
+        
+        console.log('🖼️ Container dimensions at init:', {
+            clientWidth: this.container.clientWidth,
+            clientHeight: this.container.clientHeight,
+            offsetWidth: this.container.offsetWidth,
+            offsetHeight: this.container.offsetHeight,
+            using: { width: containerWidth, height: containerHeight }
+        });
+        
+        this.renderer.setSize(containerWidth, containerHeight);
         this.renderer.setClearColor(0x222222);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         
-        // Add renderer canvas to container
+        // Add renderer canvas to container - use exact container dimensions
+        this.renderer.domElement.style.display = 'block';
+        this.renderer.domElement.style.position = 'absolute';
+        this.renderer.domElement.style.top = '0px';
+        this.renderer.domElement.style.left = '0px';
+        this.renderer.domElement.style.margin = '0';
+        this.renderer.domElement.style.padding = '0';
+        this.renderer.domElement.style.border = 'none';
+        this.renderer.domElement.style.width = containerWidth + 'px';
+        this.renderer.domElement.style.height = containerHeight + 'px';
+        this.renderer.domElement.style.zIndex = '10'; // Ensure it's above other elements
+        
+        // FORCE container to have proper overflow handling
+        this.container.style.overflow = 'hidden';
+        this.container.style.position = 'relative';
+        
         this.container.appendChild(this.renderer.domElement);
+        
+        // FORCE IMMEDIATE RESIZE: Get current container dimensions and apply immediately
+        const immediateWidth = this.container.clientWidth || this.container.offsetWidth || 800;
+        const immediateHeight = this.container.clientHeight || this.container.offsetHeight || 600;
+        
+        console.log('🔧 IMMEDIATE_RESIZE_ATTEMPT:', {
+            immediateWidth,
+            immediateHeight,
+            containerClient: { width: this.container.clientWidth, height: this.container.clientHeight },
+            containerOffset: { width: this.container.offsetWidth, height: this.container.offsetHeight }
+        });
+        
+        // Force resize right now
+        this.renderer.setSize(immediateWidth, immediateHeight);
+        this.renderer.domElement.style.width = immediateWidth + 'px';
+        this.renderer.domElement.style.height = immediateHeight + 'px';
+        this.camera.aspect = immediateWidth / immediateHeight;
+        this.camera.updateProjectionMatrix();
+        
+        // DEBUG: Check canvas position after resize
+        const canvasRect = this.renderer.domElement.getBoundingClientRect();
+        const containerRect = this.container.getBoundingClientRect();
+        
+        console.log('📐 POSITION_DEBUG:', {
+            canvasRect: {
+                top: canvasRect.top,
+                left: canvasRect.left,
+                width: canvasRect.width,
+                height: canvasRect.height,
+                right: canvasRect.right,
+                bottom: canvasRect.bottom
+            },
+            containerRect: {
+                top: containerRect.top,
+                left: containerRect.left,
+                width: containerRect.width,
+                height: containerRect.height,
+                right: containerRect.right,
+                bottom: containerRect.bottom
+            },
+            canvasStyle: {
+                position: this.renderer.domElement.style.position,
+                top: this.renderer.domElement.style.top,
+                left: this.renderer.domElement.style.left,
+                width: this.renderer.domElement.style.width,
+                height: this.renderer.domElement.style.height,
+                transform: this.renderer.domElement.style.transform
+            },
+            containerStyle: {
+                position: this.container.style.position,
+                width: this.container.style.width,
+                height: this.container.style.height
+            }
+        });
         
         // Set up lighting
         this.setupLighting();
@@ -129,6 +237,44 @@ class ThreeMapRenderer {
         
         // Add resize handling
         this.setupResizeHandler();
+        
+        // Trigger initial resize to ensure proper sizing
+        setTimeout(() => {
+            const width = this.container.clientWidth || this.container.offsetWidth || 800;
+            const height = this.container.clientHeight || this.container.offsetHeight || 600;
+            console.log('🔄 Delayed resize check:', { width, height });
+            this.handleResize(width, height);
+        }, 100);
+        
+        // Additional resize check after a longer delay for slow layouts
+        setTimeout(() => {
+            const width = this.container.clientWidth || this.container.offsetWidth;
+            const height = this.container.clientHeight || this.container.offsetHeight;
+            if (width > 0 && height > 0) {
+                console.log('🔄 Secondary resize check:', { width, height });
+                this.handleResize(width, height);
+            }
+        }, 500);
+
+        // SEARCHABLE LOG: ThreeMapRenderer initialization complete
+        console.log('🎮 THREEMAPRENDERER_INIT_COMPLETE:', {
+            containerId: this.containerId,
+            containerDimensions: {
+                clientWidth: this.container.clientWidth,
+                clientHeight: this.container.clientHeight,
+                offsetWidth: this.container.offsetWidth,
+                offsetHeight: this.container.offsetHeight
+            },
+            rendererSize: {
+                width: this.renderer.domElement.width,
+                height: this.renderer.domElement.height
+            },
+            canvasStyle: {
+                width: this.renderer.domElement.style.width,
+                height: this.renderer.domElement.style.height
+            },
+            timestamp: new Date().toISOString()
+        });
         
         // Start render loop
         this.startRenderLoop();
@@ -184,9 +330,29 @@ class ThreeMapRenderer {
     handleResize(width, height) {
         if (!this.renderer || !this.camera) return;
         
+        // Ensure we have valid dimensions
+        if (width <= 0 || height <= 0) {
+            console.warn('⚠️ Invalid resize dimensions:', { width, height });
+            return;
+        }
+        
+        console.log('🔧 Resizing renderer:', { 
+            width, 
+            height,
+            containerClient: { width: this.container.clientWidth, height: this.container.clientHeight },
+            containerOffset: { width: this.container.offsetWidth, height: this.container.offsetHeight }
+        });
+        
         this.renderer.setSize(width, height);
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
+        
+        // Ensure canvas matches container exactly
+        this.renderer.domElement.style.position = 'absolute';
+        this.renderer.domElement.style.top = '0px';
+        this.renderer.domElement.style.left = '0px';
+        this.renderer.domElement.style.width = width + 'px';
+        this.renderer.domElement.style.height = height + 'px';
     }
     
     startRenderLoop() {
@@ -370,9 +536,11 @@ class ThreeMapRenderer {
                 lastMouseY = event.clientY;
                 this.renderer.domElement.style.cursor = 'grabbing';
                 event.preventDefault();
-            } else if (event.button === 2) { // Right click for minimap drag
-                this.handleRightClickDrag(event);
-            }
+            } 
+            // Right-click disabled for planned "right-click to run" feature
+            // } else if (event.button === 2) { // Right click for minimap drag
+            //     this.handleRightClickDrag(event);
+            // }
         });
         
         window.addEventListener('mousemove', (event) => {
@@ -1159,20 +1327,30 @@ class ThreeMapRenderer {
         
         // Create billboard sprite above the ground tile
         let billboardMesh = null;
-        if (spriteData) {
+        
+        // Determine if this tile should be flat (water, road) or billboard
+        const flatTileTypes = ['water', 'road', 'stone', 'dirt', 'floor'];
+        const shouldBeFlat = flatTileTypes.includes(tileName.toLowerCase());
+        
+        if (spriteData && !shouldBeFlat) {
+            // Create billboard sprites for trees, mountains, buildings, etc.
             if (tileName === 'grass') {
                 // Create multiple small grass sprites scattered across the tile
                 billboardMesh = this.createGrassField(spriteData, tileName);
             } else {
                 billboardMesh = this.createBillboardSprite(spriteData, tileName);
             }
+        } else if (spriteData && shouldBeFlat) {
+            // Create flat textured plane for water, roads, etc.
+            billboardMesh = this.createFlatTexturedTile(spriteData, tileName);
         } else {
-            // Create a simple colored billboard for tiles without sprites
+            // Create simple colored elements for tiles without sprites
             if (tileName === 'grass') {
                 billboardMesh = this.createGrassField(null, tileName);
-            } else {
+            } else if (!shouldBeFlat) {
                 billboardMesh = this.createColorBillboard(tileName);
             }
+            // Flat tiles without sprites just use the colored ground plane
         }
         
         // Create a group to hold both ground and billboard
@@ -1269,6 +1447,37 @@ class ThreeMapRenderer {
         return sizeMap[tileName] || sizeMap['default'];
     }
     
+    // Create flat textured tile for ground-level rendering (water, roads, etc.)
+    createFlatTexturedTile(spriteData, tileName) {
+        // Create geometry for a horizontal plane
+        const geometry = new THREE.PlaneGeometry(1, 1);
+        geometry.rotateX(-Math.PI / 2); // Rotate to be horizontal (facing up)
+        
+        let material;
+        
+        if (spriteData) {
+            // Use the same sprite material creation as billboards
+            material = this.createSpriteMaterial(spriteData);
+        } else {
+            // Fallback to solid color if no texture
+            material = new THREE.MeshLambertMaterial({
+                color: this.getTileColor(tileName),
+                transparent: true,
+                opacity: 0.8
+            });
+        }
+        
+        const flatTile = new THREE.Mesh(geometry, material);
+        flatTile.position.y = 0.01; // Back to minimal height to avoid z-fighting
+        
+        flatTile.userData = {
+            isFlatTile: true,
+            tileName: tileName
+        };
+        
+        return flatTile;
+    }
+
     // Create multiple grass sprites scattered across a tile
     createGrassField(spriteData, tileName) {
         const grassGroup = new THREE.Group();

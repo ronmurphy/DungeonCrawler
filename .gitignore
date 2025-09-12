@@ -188,3 +188,12 @@ v5/APKs/
 StoryTeller/APKs/
 extras/V4-network/Cordova/
 *.apk
+
+# ========================
+# Reference Projects (2025-09-12)
+# ========================
+# Reference project - development reference only, not tracked
+reference-project/
+reference/
+*-reference/
+*-ref/

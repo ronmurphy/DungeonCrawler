@@ -625,7 +625,6 @@ class PlayerMapViewer {
                     container.style.left = '0';
                     container.style.width = '100%';
                     container.style.height = '100%';
-                    container.style.pointerEvents = 'none'; // Let minimap handle interactions
                     container.style.zIndex = '1'; // Above canvas but below UI
                     
                     // Add to the same parent as the canvas
@@ -639,6 +638,33 @@ class PlayerMapViewer {
                         console.log('⚠️ Added threejs-container to body (fallback)');
                     }
                 }
+
+                // SEARCHABLE LOG: Container creation/verification complete
+                console.log('📦 THREEJS_CONTAINER_READY:', {
+                    containerId: container.id,
+                    containerDimensions: {
+                        clientWidth: container.clientWidth,
+                        clientHeight: container.clientHeight,
+                        offsetWidth: container.offsetWidth,
+                        offsetHeight: container.offsetHeight,
+                        scrollWidth: container.scrollWidth,
+                        scrollHeight: container.scrollHeight
+                    },
+                    containerStyle: {
+                        position: container.style.position,
+                        width: container.style.width,
+                        height: container.style.height,
+                        top: container.style.top,
+                        left: container.style.left,
+                        zIndex: container.style.zIndex
+                    },
+                    parentInfo: {
+                        parentNodeName: container.parentNode?.nodeName,
+                        parentId: container.parentNode?.id,
+                        parentClass: container.parentNode?.className
+                    },
+                    timestamp: new Date().toISOString()
+                });
                 
                 // Create the ThreeMapRenderer
                 if (window.ThreeMapRenderer) {
