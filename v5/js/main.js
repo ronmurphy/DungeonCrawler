@@ -20,7 +20,8 @@ window.toggleMapDebug = function() {
 // Test network tileset transmission - type testNetworkTileset() in console
 window.testNetworkTileset = function() {
     console.log('🧪 Testing network tileset transmission...');
-    window.showDebug = true;
+    // DISABLED: Debug mode causes heartbeat message spam
+    // window.showDebug = true;
     
     // Test if MapDataFormatter is available
     if (!window.MapDataFormatter) {
@@ -58,11 +59,13 @@ window.testNetworkTileset = function() {
 
 // Auto-enable debug mode when map panels are opened
 function enableDebugForMaps() {
-    if (!window.showDebug) {
-        window.showDebug = true;
-        console.log('🗺️ Auto-enabled debug mode for map operations');
-        console.log('Type toggleMapDebug() to disable debug mode');
-    }
+    // DISABLED: Debug mode causes heartbeat message spam
+    // if (!window.showDebug) {
+    //     window.showDebug = true;
+    //     console.log('🗺️ Auto-enabled debug mode for map operations');
+    //     console.log('Type toggleMapDebug() to disable debug mode');
+    // }
+    console.log('🗺️ Map debug mode available via toggleMapDebug() console command');
 }
 
 // ========================================

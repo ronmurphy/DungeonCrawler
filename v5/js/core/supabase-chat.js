@@ -1618,7 +1618,11 @@ async function handleIncomingMessage(message) {
     }
     
     // Add specific debugging for all messages to help diagnose AVATAR_URL issue
-    if (message.message_text && !message.message_text.startsWith('HEARTBEAT')) {
+    // Filter out heartbeat messages from debug logging
+    if (message.message_text && 
+        !message.message_text.startsWith('HEARTBEAT') && 
+        message.message_type !== 'heartbeat' && 
+        message.player_name !== 'Heartbeat') {
         console.log('📨 Incoming message structure:');
         console.log('   - message_type:', message.message_type);
         console.log('   - message_text:', message.message_text);

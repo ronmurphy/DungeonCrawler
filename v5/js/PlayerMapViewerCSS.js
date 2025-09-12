@@ -1,8 +1,8 @@
 /**
- * PlayerMapViewer - Proven pan/zoom map viewer for player-test.html
+ * PlayerMapViewerCSS - Proven pan/zoom map viewer for player-test.html
  * Uses the same reliable pan/zoom code from maps-manager.js
  */
-class PlayerMapViewer {
+class PlayerMapViewerCSS {
     constructor(containerId, canvasId) {
         this.containerId = containerId;
         this.canvasId = canvasId;

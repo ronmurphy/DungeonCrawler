@@ -215,7 +215,22 @@
                     top: 10px;
                     right: 10px;
                     z-index: 1001;
+                    display: flex;
+                    gap: 5px;
                 ">
+                    <button onclick="showMapDataDebug()" style="
+                        background: rgba(0, 123, 255, 0.8);
+                        border: 1px solid var(--border-color);
+                        color: white;
+                        border-radius: 4px;
+                        width: 80px;
+                        height: 32px;
+                        cursor: pointer;
+                        font-size: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    " title="Show Map Data">Debug</button>
                     <button onclick="hideMapOverlay()" style="
                         background: rgba(255, 255, 255, 0.2);
                         border: 1px solid var(--border-color);
@@ -230,12 +245,149 @@
                         justify-content: center;
                     " title="Close Map">×</button>
                 </div>
-                <canvas id="map-canvas" style="
+                <!-- Main 3D Map Display -->
+                <div id="threejs-container" style="
                     width: 100%;
                     height: 100%;
                     border: none;
                     border-radius: 10px;
-                "></canvas>
+                    background: #111;
+                    position: relative;
+                "></div>
+                
+                <!-- Zoom Button (positioned outside minimap) -->
+                <button id="minimap-zoom-btn" onclick="toggleMinimapZoom()" style="
+                    position: absolute;
+                    top: 15px;
+                    left: 210px;
+                    width: 32px;
+                    height: 32px;
+                    background: rgba(0, 0, 0, 0.8);
+                    border: 2px solid #333;
+                    border-radius: 50%;
+                    color: white;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 16px;
+                    z-index: 1003;
+                    transition: all 0.3s ease;
+                " title="Toggle minimap size">🔍</button>
+                
+                <!-- 2D Minimap (Top Left corner within the 3D container) -->
+                <div id="minimap-container" style="
+                    position: absolute;
+                    top: 15px;
+                    left: 15px;
+                    width: 180px;
+                    height: 180px;
+                    background: rgba(0, 0, 0, 0.8);
+                    border: 2px solid #333;
+                    border-radius: 10px;
+                    z-index: 1002;
+                    display: block;
+                    transition: all 0.3s ease;
+                ">
+                    <div style="
+                        color: white;
+                        text-align: center;
+                        padding: 5px;
+                        font-size: 12px;
+                        border-bottom: 1px solid #333;
+                    ">2D Minimap</div>
+                    <canvas id="map-canvas" style="
+                        width: calc(100% - 10px);
+                        height: calc(100% - 35px);
+                        margin: 5px;
+                        border-radius: 5px;
+                        object-fit: contain;
+                    "></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Data Debug Modal -->
+        <div id="map-data-debug-modal" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        ">
+            <div style="
+                width: 80vw;
+                height: 80vh;
+                max-width: 800px;
+                max-height: 600px;
+                background: var(--surface-color);
+                border-radius: 12px;
+                border: 2px solid var(--border-color);
+                position: relative;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                display: flex;
+                flex-direction: column;
+            ">
+                <div style="
+                    padding: 15px;
+                    border-bottom: 1px solid var(--border-color);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    background: var(--bg-secondary);
+                    border-radius: 10px 10px 0 0;
+                ">
+                    <h3 style="margin: 0; color: var(--text-primary);">🔍 Map Data Structure</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="debug-console-toggle" onclick="toggleDebugConsole()" style="
+                            background: #ff6b35;
+                            color: white;
+                            border: none;
+                            padding: 8px 16px;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            font-size: 14px;
+                        ">🐛 Debug: ON</button>
+                        <button onclick="copyMapDataToClipboard()" style="
+                            background: var(--accent-color);
+                            color: white;
+                            border: none;
+                            padding: 8px 16px;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            font-size: 14px;
+                        ">📋 Copy</button>
+                        <button onclick="hideMapDataDebug()" style="
+                            background: #666;
+                            color: white;
+                            border: none;
+                            padding: 8px 12px;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            font-size: 14px;
+                        ">✕ Close</button>
+                    </div>
+                </div>
+                <div style="
+                    flex: 1;
+                    padding: 15px;
+                    overflow: auto;
+                    font-family: 'Courier New', monospace;
+                    font-size: 12px;
+                    line-height: 1.4;
+                    background: #1a1a1a;
+                    color: #00ff00;
+                ">
+                    <div id="map-data-content">
+                        Loading map data...
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -2436,6 +2588,10 @@
     <script src="js/core/supabaseUrlEncoder.js"></script>
     <script src="js/core/supabase-config.js"></script>
     
+    <!-- 3D Map Rendering -->
+    <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+    <script src="js/ThreeMapRenderer.js"></script>
+    
     <!-- Essential modules for chat system -->
     <script src="js/modules/dccMechanics.js"></script>
     <script src="js/modules/rollCalculator.js"></script>
@@ -3030,6 +3186,11 @@
         // Touch and Mouse event handlers for long press
         function setupFABTouchEvents() {
             const chatFab = document.getElementById('chat-fab');
+            if (!chatFab) {
+                console.warn('⚠️ chat-fab element not found, skipping touch event setup');
+                return;
+            }
+            
             let touchStartTime = 0;
             let mouseStartTime = 0;
             
@@ -3256,6 +3417,9 @@
 
         // Track if maps viewer is currently open
         window.mapsViewerOpen = false;
+        
+        // Global 3D map renderer instance
+        window.threeMapRenderer = null;
 
         function openMapsView(autoDisplay = false) {
             // Prevent multiple instances
@@ -3332,6 +3496,41 @@
                                 window.mapSyncAdapter.mapClientManager.mapViewer.renderCurrentMap();
                             }
                         }
+                        
+                        // Also resize the minimap canvas
+                        resizeMinimapCanvas();
+                        
+                        // Initialize 3D renderer if not already created
+                        if (!window.threeMapRenderer) {
+                            console.log('🎮 Initializing ThreeMapRenderer...');
+                            try {
+                                // Import and create ThreeMapRenderer
+                                const container = document.getElementById('threejs-container');
+                                if (container) {
+                                    // ThreeMapRenderer is available globally from the module
+                                    if (window.ThreeMapRenderer) {
+                                        window.threeMapRenderer = new window.ThreeMapRenderer('threejs-container');
+                                        console.log('✅ ThreeMapRenderer initialized successfully');
+                                        
+                                        // Load current map data if available
+                                        if (window.latestMapData) {
+                                            console.log('🗺️ Loading existing map data into 3D renderer');
+                                            window.threeMapRenderer.loadMapData(window.latestMapData);
+                                        }
+                                    } else {
+                                        console.error('❌ ThreeMapRenderer class not available');
+                                    }
+                                } else {
+                                    console.error('❌ threejs-container not found');
+                                }
+                            } catch (error) {
+                                console.error('❌ Failed to initialize ThreeMapRenderer:', error);
+                            }
+                        } else if (window.latestMapData) {
+                            // Update existing renderer with current data
+                            console.log('🔄 Updating existing 3D renderer with current map data');
+                            window.threeMapRenderer.updateMapData(window.latestMapData);
+                        }
                     }
                 }, 100); // Small delay to ensure overlay is visible
             }
@@ -3374,6 +3573,279 @@
             console.log('Map canvas element:', document.getElementById('map-canvas'));
         };
 
+        // Map Data Debug Functions
+        window.showMapDataDebug = function() {
+            const modal = document.getElementById('map-data-debug-modal');
+            const content = document.getElementById('map-data-content');
+            
+            if (!modal || !content) return;
+            
+            // Try multiple sources for map data
+            let mapData = null;
+            let dataSource = 'none';
+            
+            // Check various potential data sources
+            if (window.latestMapData) {
+                mapData = window.latestMapData;
+                dataSource = 'window.latestMapData';
+            } else if (window.threeMapRenderer?.mapData) {
+                mapData = window.threeMapRenderer.mapData;
+                dataSource = 'window.threeMapRenderer.mapData';
+            } else if (window.mapSyncAdapter?.mapClientManager?.mapViewer?.currentMapData) {
+                mapData = window.mapSyncAdapter.mapClientManager.mapViewer.currentMapData;
+                dataSource = 'mapSyncAdapter.mapClientManager.mapViewer.currentMapData';
+            } else if (window.mapSyncAdapter?.currentMapData) {
+                mapData = window.mapSyncAdapter.currentMapData;
+                dataSource = 'mapSyncAdapter.currentMapData';
+            }
+            
+            if (!mapData) {
+                // Show detailed debug info about what's available
+                let debugInfo = '<div style="color: #ff6666;">❌ No map data found in any source</div><br>';
+                debugInfo += '<div style="color: #ffff00;">🔍 Checked Sources:</div>';
+                debugInfo += '<div style="margin-left: 20px; color: #cccccc;">';
+                debugInfo += `• window.latestMapData: ${window.latestMapData ? '✅ Available' : '❌ Not set'}<br>`;
+                debugInfo += `• window.threeMapRenderer: ${window.threeMapRenderer ? '✅ Available' : '❌ Not set'}<br>`;
+                debugInfo += `• window.threeMapRenderer.mapData: ${window.threeMapRenderer?.mapData ? '✅ Available' : '❌ Not set'}<br>`;
+                debugInfo += `• window.mapSyncAdapter: ${window.mapSyncAdapter ? '✅ Available' : '❌ Not set'}<br>`;
+                debugInfo += `• mapSyncAdapter.mapClientManager: ${window.mapSyncAdapter?.mapClientManager ? '✅ Available' : '❌ Not set'}<br>`;
+                debugInfo += `• mapClientManager.mapViewer: ${window.mapSyncAdapter?.mapClientManager?.mapViewer ? '✅ Available' : '❌ Not set'}<br>`;
+                debugInfo += `• mapViewer.currentMapData: ${window.mapSyncAdapter?.mapClientManager?.mapViewer?.currentMapData ? '✅ Available' : '❌ Not set'}<br>`;
+                debugInfo += '</div>';
+                content.innerHTML = debugInfo;
+            } else {
+                // Format the map data nicely
+                content.innerHTML = '<div style="color: #00ff00;">📍 Data Source: ' + dataSource + '</div><br>';
+                const formattedData = formatMapDataForDebug(mapData);
+                content.innerHTML += formattedData;
+            }
+            
+            modal.style.display = 'flex';
+        };
+        
+        window.hideMapDataDebug = function() {
+            const modal = document.getElementById('map-data-debug-modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        };
+        
+        window.copyMapDataToClipboard = function() {
+            // Try multiple sources for map data (same as debug function)
+            let mapData = null;
+            
+            if (window.latestMapData) {
+                mapData = window.latestMapData;
+            } else if (window.threeMapRenderer?.mapData) {
+                mapData = window.threeMapRenderer.mapData;
+            } else if (window.mapSyncAdapter?.mapClientManager?.mapViewer?.currentMapData) {
+                mapData = window.mapSyncAdapter.mapClientManager.mapViewer.currentMapData;
+            } else if (window.mapSyncAdapter?.currentMapData) {
+                mapData = window.mapSyncAdapter.currentMapData;
+            }
+            
+            if (!mapData) {
+                alert('No map data to copy');
+                return;
+            }
+            
+            const jsonString = JSON.stringify(mapData, null, 2);
+            
+            navigator.clipboard.writeText(jsonString).then(() => {
+                alert('✅ Map data copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('❌ Failed to copy to clipboard');
+            });
+        };
+        
+        // Debug Console Toggle Function
+        window.toggleDebugConsole = function() {
+            // Get current debug state from localStorage or default to true (since we're currently getting spam)
+            const currentDebugState = localStorage.getItem('v5-debug-console') !== 'false';
+            const newDebugState = !currentDebugState;
+            
+            // Save to localStorage
+            localStorage.setItem('v5-debug-console', newDebugState.toString());
+            
+            // Update global debug flag
+            window.debugConsoleEnabled = newDebugState;
+            
+            // Update button text and style
+            const button = document.getElementById('debug-console-toggle');
+            if (button) {
+                button.innerHTML = newDebugState ? '🐛 Debug: ON' : '🔇 Debug: OFF';
+                button.style.background = newDebugState ? '#ff6b35' : '#666';
+            }
+            
+            // Show feedback
+            console.log(`🔧 Debug console ${newDebugState ? 'ENABLED' : 'DISABLED'}`);
+        };
+        
+        // Initialize debug state on page load
+        window.debugConsoleEnabled = localStorage.getItem('v5-debug-console') !== 'false';
+        
+        // Update button state when modal opens
+        document.addEventListener('DOMContentLoaded', function() {
+            const button = document.getElementById('debug-console-toggle');
+            if (button) {
+                const debugEnabled = window.debugConsoleEnabled;
+                button.innerHTML = debugEnabled ? '🐛 Debug: ON' : '🔇 Debug: OFF';
+                button.style.background = debugEnabled ? '#ff6b35' : '#666';
+            }
+        });
+        
+        function formatMapDataForDebug(mapData) {
+            let html = '<div style="color: #00ffff;">📊 Map Data Structure:</div><br>';
+            
+            // Basic info
+            html += `<div style="color: #ffff00;">🗺️ Basic Info:</div>`;
+            html += `<div style="margin-left: 20px;">`;
+            html += `Name: <span style="color: #ffffff;">${mapData.name || 'Unknown'}</span><br>`;
+            html += `Width: <span style="color: #ffffff;">${mapData.width || 'Unknown'}</span><br>`;
+            html += `Height: <span style="color: #ffffff;">${mapData.height || 'Unknown'}</span><br>`;
+            html += `Background: <span style="color: #ffffff;">${mapData.bgColor || 'Not set'}</span><br>`;
+            html += `</div><br>`;
+            
+            // Tileset info
+            html += `<div style="color: #ffff00;">🎨 Tileset Config:</div>`;
+            html += `<div style="margin-left: 20px;">`;
+            if (mapData.tilesetConfig) {
+                html += `Sprite Sheet: <span style="color: #ffffff;">${mapData.tilesetConfig.spriteSheetPath || 'None'}</span><br>`;
+                html += `Sprites Available: <span style="color: #ffffff;">${Object.keys(mapData.tilesetConfig.sprites || {}).length}</span><br>`;
+                if (mapData.tilesetConfig.sprites) {
+                    html += `Sprite Names: <span style="color: #cccccc;">${Object.keys(mapData.tilesetConfig.sprites).join(', ')}</span><br>`;
+                }
+            } else {
+                html += `<span style="color: #ff6666;">❌ No tileset config</span><br>`;
+            }
+            html += `</div><br>`;
+            
+            // Grid data
+            html += `<div style="color: #ffff00;">📋 Grid Data:</div>`;
+            html += `<div style="margin-left: 20px;">`;
+            if (mapData.grid && Array.isArray(mapData.grid)) {
+                html += `Grid Type: <span style="color: #ffffff;">2D Array</span><br>`;
+                html += `Rows: <span style="color: #ffffff;">${mapData.grid.length}</span><br>`;
+                html += `Cols: <span style="color: #ffffff;">${mapData.grid[0]?.length || 0}</span><br>`;
+                html += `Sample (0,0): <span style="color: #cccccc;">${JSON.stringify(mapData.grid[0]?.[0])}</span><br>`;
+            } else if (mapData.spriteNames && Array.isArray(mapData.spriteNames)) {
+                html += `Grid Type: <span style="color: #ffffff;">Flat Array (spriteNames)</span><br>`;
+                html += `Total Tiles: <span style="color: #ffffff;">${mapData.spriteNames.length}</span><br>`;
+                html += `Sample Tiles: <span style="color: #cccccc;">${mapData.spriteNames.slice(0, 5).join(', ')}...</span><br>`;
+            } else {
+                html += `<span style="color: #ff6666;">❌ No grid data found</span><br>`;
+            }
+            html += `</div><br>`;
+            
+            // Background colors
+            if (mapData.backgroundColors) {
+                html += `<div style="color: #ffff00;">🎨 Background Colors:</div>`;
+                html += `<div style="margin-left: 20px;">`;
+                const colors = Object.entries(mapData.backgroundColors);
+                colors.forEach(([name, color]) => {
+                    html += `${name}: <span style="color: ${color};">${color}</span><br>`;
+                });
+                html += `</div><br>`;
+            }
+            
+            // Raw JSON (complete)
+            html += `<div style="color: #ffff00;">📄 Raw JSON (complete):</div>`;
+            html += `<div style="margin-left: 20px; color: #cccccc; word-break: break-all; font-size: 11px; max-height: 400px; overflow-y: auto; background: #111; padding: 10px; border-radius: 4px;">`;
+            const jsonStr = JSON.stringify(mapData, null, 2);
+            html += jsonStr.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;');
+            html += `</div>`;
+            
+            return html;
+        }
+
+        // Minimap zoom functionality
+        let minimapZoomed = false;
+        
+        window.toggleMinimapZoom = function() {
+            const minimap = document.getElementById('minimap-container');
+            const zoomBtn = document.getElementById('minimap-zoom-btn');
+            
+            if (!minimap || !zoomBtn) return;
+            
+            minimapZoomed = !minimapZoomed;
+            
+            if (minimapZoomed) {
+                // Shrink by 50%
+                minimap.style.width = '90px';
+                minimap.style.height = '90px';
+                zoomBtn.style.left = '120px';
+                zoomBtn.textContent = '🔍';
+                zoomBtn.title = 'Expand minimap';
+                console.log('🔍 Minimap shrunk');
+            } else {
+                // Expand to original size
+                minimap.style.width = '180px';
+                minimap.style.height = '180px';
+                zoomBtn.style.left = '210px';
+                zoomBtn.textContent = '🔍';
+                zoomBtn.title = 'Shrink minimap';
+                console.log('🔍 Minimap expanded');
+            }
+            
+            // Force canvas resize after zoom change
+            setTimeout(() => {
+                resizeMinimapCanvas();
+            }, 350); // Wait for transition to complete
+        };
+        
+        // Resize minimap canvas to fit properly
+        window.resizeMinimapCanvas = function() {
+            const canvas = document.getElementById('map-canvas');
+            const container = document.getElementById('minimap-container');
+            
+            if (!canvas || !container) return;
+            
+            const containerRect = container.getBoundingClientRect();
+            const headerHeight = 30; // Height of the "2D Minimap" header
+            const padding = 10; // Total padding (5px on each side)
+            
+            const availableWidth = containerRect.width - padding;
+            const availableHeight = containerRect.height - headerHeight - padding;
+            
+            // Store our intended size to prevent overrides
+            canvas.setAttribute('data-minimap-width', availableWidth);
+            canvas.setAttribute('data-minimap-height', availableHeight);
+            
+            // Set canvas display size to fill the entire available area
+            canvas.style.width = availableWidth + 'px';
+            canvas.style.height = availableHeight + 'px';
+            
+            // Set canvas actual size for proper rendering (much larger for crisp rendering)
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = availableWidth * dpr;
+            canvas.height = availableHeight * dpr;
+            
+            // Scale context for crisp rendering
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.scale(dpr, dpr);
+                // Clear the canvas with a background
+                ctx.fillStyle = '#222';
+                ctx.fillRect(0, 0, availableWidth, availableHeight);
+            }
+            
+            console.log('🎨 Minimap canvas resized to:', availableWidth, 'x', availableHeight, 'actual:', canvas.width, 'x', canvas.height);
+            
+            // Force re-render of current map if available
+            if (window.mapSyncAdapter && window.mapSyncAdapter.mapClientManager && window.mapSyncAdapter.mapClientManager.mapViewer) {
+                setTimeout(() => {
+                    const mapViewer = window.mapSyncAdapter.mapClientManager.mapViewer;
+                    if (mapViewer.currentMapData) {
+                        console.log('🔄 Re-rendering map after resize');
+                        // DON'T call setupCanvas as it resets our canvas size
+                        // mapViewer.setupCanvas(); // Commented out to preserve our minimap sizing
+                        mapViewer.renderCurrentMap();
+                    }
+                }, 100);
+            }
+        };
+
         // Force check for existing maps and display them
         window.checkAndShowMap = function() {
             console.log('🔄 Manually checking for existing maps...');
@@ -3405,6 +3877,13 @@
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 hideMapOverlay();
+            }
+        });
+        
+        // Window resize handler for minimap
+        window.addEventListener('resize', function() {
+            if (typeof resizeMinimapCanvas === 'function') {
+                setTimeout(resizeMinimapCanvas, 250); // Debounce resize
             }
         });
         
@@ -5650,7 +6129,18 @@
                                 // Set up event handlers for map reception
                                 mapSyncAdapter.setEventHandlers(
                                     (mapData, record) => {
-                                        console.log('📥 Map received, auto-displaying...');
+                                        console.log('📥 Map received, auto-displaying and updating 3D renderer...');
+                                        
+                                        // Store latest map data globally
+                                        window.latestMapData = mapData;
+                                        
+                                        // Update 3D renderer if available
+                                        if (window.threeMapRenderer) {
+                                            console.log('🎮 Updating ThreeMapRenderer with new data');
+                                            window.threeMapRenderer.updateMapData(mapData);
+                                        }
+                                        
+                                        // Auto-display maps overlay
                                         window.autoDisplayMaps();
                                     },
                                     null, // onMapShared (not needed for player)
@@ -6131,6 +6621,14 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         console.warn('⚠️ initializeCommandInterceptor function not found');
     }
+    
+    // Initialize minimap canvas sizing
+    setTimeout(() => {
+        if (typeof resizeMinimapCanvas === 'function') {
+            resizeMinimapCanvas();
+            console.log('✅ Minimap canvas initialized');
+        }
+    }, 500); // Small delay to ensure all elements are rendered
 });
 
 // Function to update self chip avatar manually (called when character changes)

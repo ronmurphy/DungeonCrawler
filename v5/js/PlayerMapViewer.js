@@ -390,6 +390,9 @@ class PlayerMapViewer {
             this.ctx.restore(); // Restore transform
             console.log('PlayerMapViewer: Finished rendering sprites with network config');
             
+            // After rendering is complete, initialize and update 3D renderer
+            this.initializeAndUpdate3DRenderer(mapData);
+            
         } catch (error) {
             console.error('PlayerMapViewer: Error rendering sprites:', error);
             this.renderFallbackGrid(width, height, spriteNames);
@@ -429,6 +432,9 @@ class PlayerMapViewer {
             
             this.ctx.restore();
             console.log('PlayerMapViewer: Finished rendering tiles with network config');
+            
+            // After rendering is complete, initialize and update 3D renderer
+            this.initializeAndUpdate3DRenderer(mapData);
             
         } catch (error) {
             console.error('PlayerMapViewer: Error rendering tiles:', error);
@@ -597,5 +603,65 @@ class PlayerMapViewer {
         this.viewerPanX = state.panX || 0;
         this.viewerPanY = state.panY || 0;
         this.renderCurrentMap();
+    }
+    
+    // Initialize and update 3D renderer with map data after rendering is complete
+    initializeAndUpdate3DRenderer(mapData) {
+        console.log('🎮 Map rendering complete, initializing/updating 3D renderer...');
+        
+        try {
+            // Initialize ThreeMapRenderer if not already created
+            if (!window.threeMapRenderer) {
+                console.log('🔧 Creating ThreeMapRenderer...');
+                
+                // Make sure the threejs container exists
+                let container = document.getElementById('threejs-container');
+                if (!container) {
+                    // Create the container if it doesn't exist
+                    container = document.createElement('div');
+                    container.id = 'threejs-container';
+                    container.style.position = 'absolute';
+                    container.style.top = '0';
+                    container.style.left = '0';
+                    container.style.width = '100%';
+                    container.style.height = '100%';
+                    container.style.pointerEvents = 'none'; // Let minimap handle interactions
+                    container.style.zIndex = '1'; // Above canvas but below UI
+                    
+                    // Add to the same parent as the canvas
+                    const mapContainer = this.container.parentNode;
+                    if (mapContainer) {
+                        mapContainer.appendChild(container);
+                        console.log('✅ Created threejs-container and added to map container');
+                    } else {
+                        // Fallback - add to body
+                        document.body.appendChild(container);
+                        console.log('⚠️ Added threejs-container to body (fallback)');
+                    }
+                }
+                
+                // Create the ThreeMapRenderer
+                if (window.ThreeMapRenderer) {
+                    window.threeMapRenderer = new window.ThreeMapRenderer('threejs-container');
+                    console.log('✅ ThreeMapRenderer created successfully');
+                } else {
+                    console.error('❌ ThreeMapRenderer class not available');
+                    return;
+                }
+            }
+            
+            // Update the 3D renderer with the current map data
+            if (window.threeMapRenderer && mapData) {
+                console.log('🔄 Passing map data to ThreeMapRenderer...');
+                window.threeMapRenderer.loadMapData(mapData);
+                
+                // Store globally for access by debug modal
+                window.latestMapData = mapData;
+                console.log('✅ Map data passed to 3D renderer and stored globally');
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to initialize/update 3D renderer:', error);
+        }
     }
 }

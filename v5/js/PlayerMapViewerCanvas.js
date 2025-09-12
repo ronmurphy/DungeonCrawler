@@ -31,7 +31,7 @@ class PlayerMapViewerCanvas {
         
         // Map data and rendering
         this.currentMapData = null;
-        this.tileSize = 64;
+        this.tileSize = 64; // Default size, will be calculated dynamically for minimap
         this.spriteSheets = new Map(); // Cache loaded sprite sheets
         this.tilesetConfigs = new Map(); // Cache tileset configurations
         
@@ -63,6 +63,30 @@ class PlayerMapViewerCanvas {
         this.canvas.style.left = '0';
         
         console.log(`Canvas setup: ${rect.width}x${rect.height} (DPR: ${dpr})`);
+    }
+    
+    // Calculate optimal tile size for minimap display
+    calculateMinimapTileSize(mapWidth, mapHeight) {
+        const rect = this.container.getBoundingClientRect();
+        const availableWidth = rect.width - 20; // Some padding
+        const availableHeight = rect.height - 20; // Some padding
+        
+        // Calculate tile size to fit the map in the available space
+        const tileWidth = Math.floor(availableWidth / mapWidth);
+        const tileHeight = Math.floor(availableHeight / mapHeight);
+        
+        // Use the smaller dimension to ensure the map fits
+        const optimalTileSize = Math.min(tileWidth, tileHeight);
+        
+        // Set reasonable bounds (minimum 4px, maximum 32px for minimap)
+        const minTileSize = 4;
+        const maxTileSize = 32;
+        
+        const finalTileSize = Math.max(minTileSize, Math.min(maxTileSize, optimalTileSize));
+        
+        console.log(`🔧 Minimap tile size calculated: ${finalTileSize}px (for ${mapWidth}x${mapHeight} map in ${availableWidth}x${availableHeight} space)`);
+        
+        return finalTileSize;
     }
     
     // Initialize canvas-based pan/zoom event handlers
@@ -369,6 +393,9 @@ class PlayerMapViewerCanvas {
         const { width, height, spriteNames, tileset, backgroundColors, tilesetConfig } = mapData;
         console.log(`Canvas: Rendering ${width}x${height} sprites with tileset: ${tileset}`);
         
+        // Calculate optimal tile size for minimap display
+        this.tileSize = this.calculateMinimapTileSize(width, height);
+        
         if (window.showDebug) {
             console.log('🔍 DEBUG - renderSpritesCanvas called with tilesetConfig:', !!tilesetConfig);
             console.log('🔍 DEBUG - Map data includes networkTransmission info:', !!mapData.networkTransmission);
@@ -405,6 +432,9 @@ class PlayerMapViewerCanvas {
             this.ctx.restore(); // Restore transform
             console.log('Canvas: Finished rendering sprites with network config');
             
+            // After canvas rendering is complete, initialize and update 3D renderer
+            this.initializeAndUpdate3DRenderer(mapData);
+            
         } catch (error) {
             console.error('Canvas: Error rendering sprites:', error);
             this.renderFallbackGrid(width, height, spriteNames);
@@ -415,6 +445,9 @@ class PlayerMapViewerCanvas {
     async renderTilesCanvas(mapData) {
         const { width, height, tiles, tileset, tilesetConfig } = mapData;
         console.log(`Canvas: Rendering ${width}x${height} tiles with tileset: ${tileset}`);
+        
+        // Calculate optimal tile size for minimap display
+        this.tileSize = this.calculateMinimapTileSize(width, height);
         
         const normalizedTilesetName = (tileset || 'default');
         
@@ -444,6 +477,9 @@ class PlayerMapViewerCanvas {
             
             this.ctx.restore();
             console.log('Canvas: Finished rendering tiles with network config');
+            
+            // After canvas rendering is complete, initialize and update 3D renderer
+            this.initializeAndUpdate3DRenderer(mapData);
             
         } catch (error) {
             console.error('Canvas: Error rendering tiles:', error);
@@ -612,5 +648,59 @@ class PlayerMapViewerCanvas {
         this.viewerPanX = state.panX || 0;
         this.viewerPanY = state.panY || 0;
         this.renderCurrentMap();
+    }
+    
+    // Initialize and update 3D renderer with map data after canvas rendering is complete
+    initializeAndUpdate3DRenderer(mapData) {
+        console.log('🎮 Canvas rendering complete, initializing/updating 3D renderer...');
+        
+        try {
+            // Initialize ThreeMapRenderer if not already created
+            if (!window.threeMapRenderer) {
+                console.log('🔧 Creating ThreeMapRenderer...');
+                
+                // Make sure the threejs container exists
+                let container = document.getElementById('threejs-container');
+                if (!container) {
+                    // Create the container if it doesn't exist
+                    container = document.createElement('div');
+                    container.id = 'threejs-container';
+                    container.style.position = 'absolute';
+                    container.style.top = '0';
+                    container.style.left = '0';
+                    container.style.width = '100%';
+                    container.style.height = '100%';
+                    container.style.pointerEvents = 'none'; // Let minimap handle interactions
+                    container.style.zIndex = '1'; // Above canvas but below UI
+                    
+                    // Add to the same parent as the canvas
+                    const mapContainer = this.container.parentNode;
+                    if (mapContainer) {
+                        mapContainer.appendChild(container);
+                    }
+                }
+                
+                // Create the ThreeMapRenderer
+                if (window.ThreeMapRenderer) {
+                    window.threeMapRenderer = new window.ThreeMapRenderer('threejs-container');
+                    console.log('✅ ThreeMapRenderer created successfully');
+                } else {
+                    console.error('❌ ThreeMapRenderer class not available');
+                    return;
+                }
+            }
+            
+            // Update the 3D renderer with the current map data
+            if (window.threeMapRenderer && mapData) {
+                console.log('🔄 Passing map data to ThreeMapRenderer...');
+                window.threeMapRenderer.loadMapData(mapData);
+                
+                // Store globally for access by debug modal
+                window.latestMapData = mapData;
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to initialize/update 3D renderer:', error);
+        }
     }
 }
