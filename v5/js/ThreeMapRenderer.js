@@ -43,7 +43,7 @@ class ThreeMapRenderer {
         this.animationId = null;
         
         // Map rendering properties
-        this.tileSize = 1.0;
+        this.tileSize = 8.0; // Increased from 1.0 - Each tile represents a significant area for mobile exploration
         this.tileHeight = 0.2;
         this.currentTiles = [];
         
@@ -55,6 +55,11 @@ class ThreeMapRenderer {
         // Time tracking for FPS-independent movement
         this.prevTime = performance.now();
         this.velocity = { x: 0, z: 0 };
+        
+        // Mobile performance detection and optimization
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        this.grassDensityMultiplier = this.isMobile ? 0.25 : 1.0; // Reduce grass density on mobile
+        this.renderDistance = this.isMobile ? 50 : 100; // Shorter render distance on mobile
         
         this.cameraControls = {
             moveSpeed: 8.0, // Base movement speed (similar to dungeon game)
@@ -112,6 +117,17 @@ class ThreeMapRenderer {
         }
         
         console.log('🎮 Initializing ThreeMapRenderer in container:', this.containerId);
+        
+        // Log mobile optimizations
+        if (this.isMobile) {
+            console.log('📱 Mobile device detected - applying performance optimizations:');
+            console.log(`  • Grass density: ${Math.round(this.grassDensityMultiplier * 100)}% of desktop`);
+            console.log(`  • Render distance: ${this.renderDistance} units`);
+            console.log(`  • Tile size: ${this.tileSize} units (optimized for exploration)`);
+        } else {
+            console.log('💻 Desktop device - using full quality settings');
+            console.log(`  • Tile size: ${this.tileSize} units (exploration scale)`);
+        }
         
         // Clear container
         this.container.innerHTML = '';
@@ -1481,7 +1497,9 @@ class ThreeMapRenderer {
     // Create multiple grass sprites scattered across a tile
     createGrassField(spriteData, tileName) {
         const grassGroup = new THREE.Group();
-        const grassCount = 3 + Math.floor(Math.random() * 4); // 3-6 grass sprites per tile
+        // Apply mobile density reduction - fewer grass sprites on mobile devices
+        const baseGrassCount = 3 + Math.floor(Math.random() * 4); // 3-6 grass sprites per tile
+        const grassCount = Math.ceil(baseGrassCount * this.grassDensityMultiplier);
         const size = this.getBillboardSize(tileName);
         
         for (let i = 0; i < grassCount; i++) {
