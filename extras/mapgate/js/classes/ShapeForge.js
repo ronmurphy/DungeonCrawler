@@ -4201,9 +4201,18 @@ case 'multiDistribute':
       // Set vertices
       geometry.setAttribute('position', new THREE.Float32BufferAttribute(objData.geometryData.vertices, 3));
       
-      // Set indices if available
+      // Handle both indices and faces formats  
       if (objData.geometryData.indices) {
         geometry.setIndex(objData.geometryData.indices);
+      } else if (objData.geometryData.faces) {
+        // Convert faces format to indices format
+        const indices = [];
+        for (let i = 0; i < objData.geometryData.faces.length; i += 3) {
+          indices.push(objData.geometryData.faces[i]);
+          indices.push(objData.geometryData.faces[i + 1]);
+          indices.push(objData.geometryData.faces[i + 2]);
+        }
+        geometry.setIndex(indices);
       }
       
       // Set normals if available, otherwise compute them
@@ -4692,8 +4701,18 @@ if (obj.physics) {
         geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
       }
 
+      // Handle both indices and faces formats
       if (objData.geometryData.indices && objData.geometryData.indices.length > 0) {
         geometry.setIndex(objData.geometryData.indices);
+      } else if (objData.geometryData.faces && objData.geometryData.faces.length > 0) {
+        // Convert faces format to indices format
+        const indices = [];
+        for (let i = 0; i < objData.geometryData.faces.length; i += 3) {
+          indices.push(objData.geometryData.faces[i]);
+          indices.push(objData.geometryData.faces[i + 1]);
+          indices.push(objData.geometryData.faces[i + 2]);
+        }
+        geometry.setIndex(indices);
       }
     } else {
       switch (objData.type) {
@@ -9433,14 +9452,14 @@ ShapeForge.prototype.addImportExportButtons = function () {
   if (!buttonContainer) return;
 
   // Add import JSON button
-  const importBtn = document.createElement('sl-button');
-  importBtn.id = 'import-json';
-  importBtn.size = 'small';
-  importBtn.textContent = 'Import JSON';
-  importBtn.addEventListener('click', this.importJson.bind(this));
+  // const importBtn = document.createElement('sl-button');
+  // importBtn.id = 'import-json';
+  // importBtn.size = 'small';
+  // importBtn.textContent = 'Import JSON';
+  // importBtn.addEventListener('click', this.importJson.bind(this));
 
   // Add to container
-  buttonContainer.appendChild(importBtn);
+  // buttonContainer.appendChild(importBtn);
 
   console.log('Import/Export buttons added');
 };

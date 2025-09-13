@@ -3865,8 +3865,18 @@ if (obj.physics) {
         geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
       }
 
+      // Handle both indices and faces formats
       if (objData.geometryData.indices && objData.geometryData.indices.length > 0) {
         geometry.setIndex(objData.geometryData.indices);
+      } else if (objData.geometryData.faces && objData.geometryData.faces.length > 0) {
+        // Convert faces format to indices format
+        const indices = [];
+        for (let i = 0; i < objData.geometryData.faces.length; i += 3) {
+          indices.push(objData.geometryData.faces[i]);
+          indices.push(objData.geometryData.faces[i + 1]);
+          indices.push(objData.geometryData.faces[i + 2]);
+        }
+        geometry.setIndex(indices);
       }
     } else {
       switch (objData.type) {

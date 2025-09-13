@@ -456,7 +456,8 @@ body.new-ui sl-drawer::part(close-button):hover {
 
 /* Override Shoelace dialog styles */
 body.new-ui sl-dialog::part(panel) {
-  background-color: var(--medium-bg);
+  /* background-color: var(--medium-bg); */
+  background-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: var(--text-color);
 }
 
