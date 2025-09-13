@@ -655,9 +655,7 @@ async function loadSampleObjectsList() {
         'Dungeon Entrance.shapeforge.json',
         'Exit.shapeforge.json',
         'FireMarker.shapeforge.json',
-        'Not-Statue.shapeforge.json',
-        'grass.shapeforge.json',
-        'mountain.shapeforge.json'
+        'Not-Statue.shapeforge.json'
     ];
     
     console.log(`📂 Loading ${sampleFiles.length} sample files...`);
@@ -996,129 +994,6 @@ function saveObject() {
     link.click();
     
     console.log(`💾 Saved object: ${currentObject.name}`);
-}
-
-// Show sample objects browser
-function showSampleObjects() {
-    console.log("🎯 Opening sample objects browser...");
-    
-    // Create modal dialog
-    const dialog = document.createElement('sl-dialog');
-    dialog.label = 'Browse Sample Objects';
-    dialog.style.cssText = '--width: 80vw; --height: 70vh;';
-    
-    dialog.innerHTML = `
-        <div style="height: 60vh; overflow-y: auto; padding: 16px;">
-            <div id="sample-objects-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
-                <div style="text-align: center; color: #666;">Loading sample objects...</div>
-            </div>
-        </div>
-        <sl-button slot="footer" variant="neutral" onclick="this.closest('sl-dialog').hide()">Cancel</sl-button>
-    `;
-    
-    document.body.appendChild(dialog);
-    dialog.show();
-    
-    // Load sample objects
-    loadSampleObjectsList(dialog);
-}
-
-// Load sample objects from the assets directory
-async function loadSampleObjectsList(dialog) {
-    try {
-        const sampleFiles = [
-            'Chest.shapeforge.json',
-            'Dungeon Entrance.shapeforge.json', 
-            'Exit.shapeforge.json',
-            'FireMarker.shapeforge.json',
-            'Fireball_d20.shapeforge.json',
-            'grass.shapeforge.json',
-            'magic_d20.shapeforge.json',
-            'mountain.shapeforge.json',
-            'Not-Statue.shapeforge.json',
-            'Pillar.shapeforge.json',
-            'Statue.shapeforge.json',
-            'TexturedPillar2.shapeforge.json',
-            'TexturedStatue.shapeforge.json',
-            'TexturedStatue2.shapeforge.json',
-            'woodBlock.shapeforge.json'
-        ];
-        
-        const grid = dialog.querySelector('#sample-objects-grid');
-        grid.innerHTML = '';
-        
-        for (const filename of sampleFiles) {
-            try {
-                const response = await fetch(`assets/sampleObjects/ShapeForge/${filename}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    const card = document.createElement('div');
-                    card.style.cssText = `
-                        border: 1px solid #ddd; 
-                        border-radius: 8px; 
-                        padding: 12px; 
-                        text-align: center; 
-                        cursor: pointer;
-                        transition: transform 0.2s, box-shadow 0.2s;
-                    `;
-                    
-                    card.innerHTML = `
-                        <img src="${data.thumbnail || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZjBmMGYwIi8+CjxwYXRoIGQ9Ik0yMCAyMEg0NFY0NEgyMFYyMFoiIHN0cm9rZT0iIzk5OSIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIi8+Cjwvc3ZnPgo='}" 
-                              style="width: 64px; height: 64px; margin-bottom: 8px; object-fit: cover; border-radius: 4px;">
-                        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${data.name}</div>
-                        <div style="font-size: 12px; color: #666;">${filename}</div>
-                    `;
-                    
-                    card.addEventListener('mouseenter', () => {
-                        card.style.transform = 'translateY(-2px)';
-                        card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                    });
-                    
-                    card.addEventListener('mouseleave', () => {
-                        card.style.transform = 'translateY(0)';
-                        card.style.boxShadow = 'none';
-                    });
-                    
-                    card.addEventListener('click', () => {
-                        loadSampleObject(filename, data);
-                        dialog.hide();
-                    });
-                    
-                    grid.appendChild(card);
-                }
-            } catch (error) {
-                console.warn(`Failed to load ${filename}:`, error);
-            }
-        }
-        
-        if (grid.children.length === 0) {
-            grid.innerHTML = '<div style="text-align: center; color: #999;">No sample objects found</div>';
-        }
-        
-    } catch (error) {
-        console.error('Failed to load sample objects:', error);
-    }
-}
-
-// Load a specific sample object
-function loadSampleObject(filename, data) {
-    console.log(`🎯 Loading sample object: ${filename}`);
-    currentObject = data;
-    
-    // Initialize ShapeForge if needed and load the object
-    if (!shapeForge) {
-        initializeShapeForgeWorkspace();
-        setTimeout(() => {
-            if (shapeForge && shapeForge.loadProjectFromJson) {
-                shapeForge.loadProjectFromJson(data);
-            }
-        }, 500);
-    } else {
-        if (shapeForge.loadProjectFromJson) {
-            shapeForge.loadProjectFromJson(data);
-        }
-    }
 }
 
 // Make functions globally available

@@ -1352,10 +1352,10 @@ class ThreeMapRenderer {
             // Create billboard sprites for trees, mountains, buildings, etc.
             if (tileName === 'grass') {
                 // Create multiple small grass sprites scattered across the tile
-                billboardMesh = this.createGrassField(spriteData, tileName);
+                billboardMesh = this.loadShapeForgeFile(spriteData, tileName);
             } else if (tileName === 'mountain') {
                 // Use ShapeForge mountains instead of billboard sprites
-                billboardMesh = this.createGrassField(spriteData, tileName);
+                billboardMesh = this.loadShapeForgeFile(spriteData, tileName);
             } else {
                 billboardMesh = this.createBillboardSprite(spriteData, tileName);
             }
@@ -1365,10 +1365,10 @@ class ThreeMapRenderer {
         } else {
             // Create simple colored elements for tiles without sprites
             if (tileName === 'grass') {
-                billboardMesh = this.createGrassField(null, tileName);
+                billboardMesh = this.loadShapeForgeFile(null, tileName);
             } else if (tileName === 'mountain') {
                 // Use ShapeForge mountains even without sprite data
-                billboardMesh = this.createGrassField(null, tileName);
+                billboardMesh = this.loadShapeForgeFile(null, tileName);
             } else if (!shouldBeFlat) {
                 billboardMesh = this.createColorBillboard(tileName);
             }
@@ -1500,9 +1500,10 @@ class ThreeMapRenderer {
         return flatTile;
     }
 
-    // Create multiple grass sprites scattered across a tile
-    createGrassField(spriteData, tileName) {
-        console.log('🔍 createGrassField called with tileName:', tileName);
+    // Originally named createGrassField, made by Claude
+    // Load ShapeForge models or create billboard sprites based on tile type
+    loadShapeForgeFile(spriteData, tileName) {
+        console.log('🔍 loadShapeForgeFile called with tileName:', tileName);
         
         // Check if we should use ShapeForge models for grass
         if (tileName === 'grass') {
