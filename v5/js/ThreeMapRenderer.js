@@ -1496,6 +1496,11 @@ class ThreeMapRenderer {
 
     // Create multiple grass sprites scattered across a tile
     createGrassField(spriteData, tileName) {
+        // Check if we should use ShapeForge models for grass
+        if (tileName === 'grass') {
+            return this.loadSfGrass();
+        }
+        
         const grassGroup = new THREE.Group();
         // Apply mobile density reduction - fewer grass sprites on mobile devices
         const baseGrassCount = 3 + Math.floor(Math.random() * 4); // 3-6 grass sprites per tile
@@ -1649,6 +1654,145 @@ class ThreeMapRenderer {
         }
         
         console.log('🧹 ThreeMapRenderer cleaned up');
+    }
+    
+    // ========================================
+    // SHAPEFORGE INTEGRATION
+    // ========================================
+    
+    // Load ShapeForge grass model instead of billboard sprites
+    loadSfGrass() {
+        const grassGroup = new THREE.Group();
+        
+        // Load the grass.shapeforge.json file
+        fetch('assets/shapeforge/grass.shapeforge.json')
+            .then(response => response.json())
+            .then(shapeforgeData => {
+                
+                // Create 2-4 grass patches per tile for variety
+                const patchCount = 2 + Math.floor(Math.random() * 3);
+                
+                for (let i = 0; i < patchCount; i++) {
+                    const grassMesh = this.createShapeForgeModel(shapeforgeData);
+                    if (grassMesh) {
+                        // Random position within tile bounds
+                        const randomX = (Math.random() - 0.5) * this.tileSize * 0.7;
+                        const randomZ = (Math.random() - 0.5) * this.tileSize * 0.7;
+                        
+                        // Random scale variation (0.8x to 1.2x)
+                        const scale = 0.8 + Math.random() * 0.4;
+                        
+                        // Random rotation for variety
+                        const rotation = Math.random() * Math.PI * 2;
+                        
+                        grassMesh.position.set(randomX, 0, randomZ);
+                        grassMesh.scale.setScalar(scale);
+                        grassMesh.rotation.y = rotation;
+                        
+                        grassGroup.add(grassMesh);
+                    }
+                }
+            })
+            .catch(error => {
+                console.warn('⚠️ Failed to load ShapeForge grass, falling back to billboard:', error);
+                // Fallback to original billboard method
+                return this.createGrassFieldFallback();
+            });
+        
+        return grassGroup;
+    }
+    
+    // Create a Three.js mesh from ShapeForge model data
+    createShapeForgeModel(shapeforgeData) {
+        if (!shapeforgeData.objects || shapeforgeData.objects.length === 0) {
+            console.warn('⚠️ No objects found in ShapeForge data');
+            return null;
+        }
+        
+        const modelGroup = new THREE.Group();
+        
+        shapeforgeData.objects.forEach(obj => {
+            if (obj.geometryData) {
+                const geometry = new THREE.BufferGeometry();
+                
+                // Convert vertices to Three.js format
+                const vertices = new Float32Array(obj.geometryData.vertices);
+                geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+                
+                // Convert faces to indices
+                if (obj.geometryData.faces) {
+                    const indices = new Uint16Array(obj.geometryData.faces);
+                    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+                }
+                
+                // Add normals if available
+                if (obj.geometryData.normals) {
+                    const normals = new Float32Array(obj.geometryData.normals);
+                    geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+                } else {
+                    geometry.computeVertexNormals();
+                }
+                
+                // Add UVs if available
+                if (obj.geometryData.uvs) {
+                    const uvs = new Float32Array(obj.geometryData.uvs);
+                    geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+                }
+                
+                // Create material from ShapeForge data
+                const material = new THREE.MeshLambertMaterial({
+                    color: obj.material.color || 0x4a7c59,
+                    transparent: obj.material.transparent || false,
+                    opacity: obj.material.opacity || 1.0,
+                    side: THREE.DoubleSide // Show both sides for grass blades
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                // Apply position, rotation, scale from ShapeForge data
+                if (obj.position) {
+                    mesh.position.set(obj.position.x, obj.position.y, obj.position.z);
+                }
+                if (obj.rotation) {
+                    mesh.rotation.set(obj.rotation.x, obj.rotation.y, obj.rotation.z);
+                }
+                if (obj.scale) {
+                    mesh.scale.set(obj.scale.x, obj.scale.y, obj.scale.z);
+                }
+                
+                modelGroup.add(mesh);
+            }
+        });
+        
+        return modelGroup;
+    }
+    
+    // Fallback method for grass if ShapeForge loading fails
+    createGrassFieldFallback() {
+        const grassGroup = new THREE.Group();
+        
+        // Simple fallback with fewer grass sprites
+        const grassCount = 2 + Math.floor(Math.random() * 2);
+        const size = this.getBillboardSize('grass');
+        
+        for (let i = 0; i < grassCount; i++) {
+            const randomX = (Math.random() - 0.5) * this.tileSize * 0.8;
+            const randomZ = (Math.random() - 0.5) * this.tileSize * 0.8;
+            
+            const geometry = new THREE.PlaneGeometry(size.width, size.height);
+            const material = new THREE.MeshLambertMaterial({ 
+                color: this.getTileColor('grass'),
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const grassBillboard = new THREE.Mesh(geometry, material);
+            grassBillboard.position.set(randomX, size.height / 2, randomZ);
+            
+            grassGroup.add(grassBillboard);
+        }
+        
+        return grassGroup;
     }
 }
 
