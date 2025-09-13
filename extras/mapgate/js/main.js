@@ -655,7 +655,9 @@ async function loadSampleObjectsList() {
         'Dungeon Entrance.shapeforge.json',
         'Exit.shapeforge.json',
         'FireMarker.shapeforge.json',
-        'Not-Statue.shapeforge.json'
+        'Not-Statue.shapeforge.json',
+        'grass.shapeforge.json',
+        'mountain.shapeforge.json'
     ];
     
     console.log(`📂 Loading ${sampleFiles.length} sample files...`);
@@ -1032,6 +1034,7 @@ async function loadSampleObjectsList(dialog) {
             'Fireball_d20.shapeforge.json',
             'grass.shapeforge.json',
             'magic_d20.shapeforge.json',
+            'mountain.shapeforge.json',
             'Not-Statue.shapeforge.json',
             'Pillar.shapeforge.json',
             'Statue.shapeforge.json',

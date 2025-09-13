@@ -1353,6 +1353,9 @@ class ThreeMapRenderer {
             if (tileName === 'grass') {
                 // Create multiple small grass sprites scattered across the tile
                 billboardMesh = this.createGrassField(spriteData, tileName);
+            } else if (tileName === 'mountain') {
+                // Use ShapeForge mountains instead of billboard sprites
+                billboardMesh = this.createGrassField(spriteData, tileName);
             } else {
                 billboardMesh = this.createBillboardSprite(spriteData, tileName);
             }
@@ -1362,6 +1365,9 @@ class ThreeMapRenderer {
         } else {
             // Create simple colored elements for tiles without sprites
             if (tileName === 'grass') {
+                billboardMesh = this.createGrassField(null, tileName);
+            } else if (tileName === 'mountain') {
+                // Use ShapeForge mountains even without sprite data
                 billboardMesh = this.createGrassField(null, tileName);
             } else if (!shouldBeFlat) {
                 billboardMesh = this.createColorBillboard(tileName);
@@ -1496,9 +1502,17 @@ class ThreeMapRenderer {
 
     // Create multiple grass sprites scattered across a tile
     createGrassField(spriteData, tileName) {
+        console.log('🔍 createGrassField called with tileName:', tileName);
+        
         // Check if we should use ShapeForge models for grass
         if (tileName === 'grass') {
             return this.loadSfGrass();
+        }
+        
+        // Check if we should use ShapeForge models for mountains
+        if (tileName === 'mountain') {
+            console.log('🏔️ Mountain Should Be Here - shapeforge');
+            return this.loadSfMountain();
         }
         
         const grassGroup = new THREE.Group();
@@ -1702,6 +1716,44 @@ class ThreeMapRenderer {
         return grassGroup;
     }
     
+    // Load ShapeForge mountain model instead of billboard sprites  
+    loadSfMountain() {
+        console.log('🏔️ Loading ShapeForge mountain model...');
+        const mountainGroup = new THREE.Group();
+        
+        // Load the mountain.shapeforge.json file
+        fetch('assets/shapeforge/mountain.shapeforge.json')
+            .then(response => {
+                console.log('🏔️ Mountain fetch response:', response.status, response.ok);
+                return response.json();
+            })
+            .then(shapeforgeData => {
+                console.log('🏔️ Mountain ShapeForge data loaded:', shapeforgeData);
+                
+                // Create single massive mountain per tile (they're big enough!)
+                const mountainMesh = this.createShapeForgeModel(shapeforgeData);
+                
+                if (mountainMesh) {
+                    console.log('✅ Mountain mesh created successfully - adding to scene');
+                    // Mountains are already properly sized and positioned
+                    // No random positioning needed - they're meant to dominate the tile
+                    mountainGroup.add(mountainMesh);
+                } else {
+                    console.warn('⚠️ Failed to create mountain mesh from ShapeForge data');
+                }
+            })
+            .catch(error => {
+                console.warn('⚠️ Failed to load ShapeForge mountain, falling back to billboard:', error);
+                // Fallback to original billboard method - but we need to add it to the group
+                const fallbackMountain = this.createMountainFieldFallback();
+                if (fallbackMountain) {
+                    mountainGroup.add(fallbackMountain);
+                }
+            });
+        
+        return mountainGroup;
+    }
+    
     // Create a Three.js mesh from ShapeForge model data
     createShapeForgeModel(shapeforgeData) {
         if (!shapeforgeData.objects || shapeforgeData.objects.length === 0) {
@@ -1793,6 +1845,28 @@ class ThreeMapRenderer {
         }
         
         return grassGroup;
+    }
+    
+    // Fallback method for mountains if ShapeForge loading fails
+    createMountainFieldFallback() {
+        const mountainGroup = new THREE.Group();
+        
+        // Simple fallback with single large mountain billboard
+        const size = this.getBillboardSize('mountain');
+        
+        const geometry = new THREE.PlaneGeometry(size.width, size.height);
+        const material = new THREE.MeshLambertMaterial({ 
+            color: 0x8B7355,  // Mountain brown color
+            transparent: true,
+            opacity: 0.9
+        });
+        
+        const mountainBillboard = new THREE.Mesh(geometry, material);
+        mountainBillboard.position.set(0, size.height / 2, 0);
+        
+        mountainGroup.add(mountainBillboard);
+        
+        return mountainGroup;
     }
 }
 
