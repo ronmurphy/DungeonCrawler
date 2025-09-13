@@ -3506,11 +3506,51 @@ case 'multiDistribute':
     // Create file name dialog
     const dialog = document.createElement('sl-dialog');
     dialog.label = 'Save Project';
+    dialog.style.cssText = '--width: 600px;'; // Make dialog wider for preview
 
     dialog.innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <sl-input id="export-filename" label="File Name" value="${projectName}.shapeforge.json"></sl-input>
-        <p>This will save your project as a .shapeforge.json file that can be loaded back into ShapeForge.</p>
+        
+        <div style="border: 1px solid #e1e5e9; border-radius: 8px; padding: 16px; background: #f8f9fa;">
+          <sl-checkbox id="mobile-optimize">Optimize for Mobile (.shapeforge.mobile)</sl-checkbox>
+          <p style="margin: 8px 0 0 0; font-size: 0.9em; color: #666;">
+            Reduces geometry complexity and texture sizes for better performance on mobile devices
+          </p>
+        </div>
+
+        <!-- Mobile Preview Section (hidden by default) -->
+        <div id="mobile-preview-section" style="display: none; border: 1px solid #e1e5e9; border-radius: 8px; padding: 16px; background: #f8f9fa;">
+          <div class="preview-header" style="margin-bottom: 16px;">
+            <h4 style="margin: 0 0 8px 0; color: #333;">Mobile Optimization Preview</h4>
+            <sl-progress-bar id="optimization-progress" value="0" style="margin-bottom: 8px;"></sl-progress-bar>
+            <div id="progress-text" style="font-size: 0.9em; color: #666;">Ready to optimize...</div>
+          </div>
+          
+          <div class="preview-comparison" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="preview-column">
+              <h5 style="margin: 0 0 8px 0; color: #333;">Original</h5>
+              <div class="preview-stats" style="font-size: 0.85em; color: #666;">
+                <div>Vertices: <span id="original-vertices">0</span></div>
+                <div>File Size: <span id="original-size">0KB</span></div>
+              </div>
+            </div>
+            
+            <div class="preview-column">
+              <h5 style="margin: 0 0 8px 0; color: #333;">Mobile Optimized</h5>
+              <canvas id="mobile-preview-canvas" width="200" height="150" style="border: 1px solid #ddd; border-radius: 4px; background: #fff; display: block; margin-bottom: 8px;"></canvas>
+              <div class="preview-stats" style="font-size: 0.85em; color: #666;">
+                <div>Vertices: <span id="optimized-vertices">-</span></div>
+                <div>File Size: <span id="optimized-size">-</span></div>
+                <div style="color: #28a745; font-weight: bold;">Reduction: <span id="size-reduction">-</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p style="margin: 0; font-size: 0.9em; color: #666;">
+          This will save your project as a .shapeforge.json file that can be loaded back into ShapeForge.
+        </p>
       </div>
       <div slot="footer">
         <sl-button id="save-btn" variant="primary">Save</sl-button>
@@ -3520,34 +3560,56 @@ case 'multiDistribute':
 
     document.body.appendChild(dialog);
 
-    dialog.querySelector('#save-btn').addEventListener('click', () => {
+    // Setup mobile optimization UI
+    this.setupMobileOptimizationUI(dialog);
+
+    dialog.querySelector('#save-btn').addEventListener('click', async () => {
       const filename = dialog.querySelector('#export-filename').value.trim();
       if (!filename) return;
 
-      // Create JSON representation of the project
+      const isMobileOptimized = dialog.querySelector('#mobile-optimize').checked;
       const projectData = this.createProjectData();
 
-      // Create a blob and download it
-      const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
+      try {
+        if (isMobileOptimized) {
+          // Export mobile optimized version
+          await this.exportMobileOptimized(filename, projectData);
+        } else {
+          // Regular save
+          const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
 
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.click();
 
-      URL.revokeObjectURL(url);
-      dialog.hide();
+          URL.revokeObjectURL(url);
 
-      // Show success message
-      const toast = document.createElement('sl-alert');
-      toast.variant = 'success';
-      toast.duration = 3000;
-      toast.closable = true;
-      toast.innerHTML = `Project saved as ${filename}`;
+          // Show success message
+          const toast = document.createElement('sl-alert');
+          toast.variant = 'success';
+          toast.duration = 3000;
+          toast.closable = true;
+          toast.innerHTML = `Project saved as ${filename}`;
 
-      document.body.appendChild(toast);
-      toast.toast();
+          document.body.appendChild(toast);
+          toast.toast();
+        }
+
+        dialog.hide();
+      } catch (error) {
+        console.error('Save failed:', error);
+        
+        const toast = document.createElement('sl-alert');
+        toast.variant = 'danger';
+        toast.duration = 5000;
+        toast.closable = true;
+        toast.innerHTML = `Save failed: ${error.message}`;
+
+        document.body.appendChild(toast);
+        toast.toast();
+      }
     });
 
     dialog.querySelector('.close-dialog').addEventListener('click', () => {
@@ -3615,12 +3677,40 @@ case 'multiDistribute':
    * Count total vertices in all objects
    */
   countVertices(objects) {
-    return objects.reduce((total, obj) => {
+    let total = 0;
+    console.log('🔍 Counting vertices in', objects.length, 'objects');
+    
+    objects.forEach((obj, index) => {
+      let objVertices = 0;
+      
       if (obj.geometryData && obj.geometryData.vertices) {
-        return total + (obj.geometryData.vertices.length / 3);
+        objVertices = obj.geometryData.vertices.length / 3;
+      } else if (obj.geometry && obj.geometry.vertices) {
+        // Alternative structure
+        objVertices = obj.geometry.vertices.length / 3;
+      } else {
+        // Estimate based on common geometries
+        if (obj.type === 'cube' || obj.type === 'box') {
+          objVertices = 8; // cube has 8 vertices
+        } else if (obj.type === 'sphere') {
+          objVertices = 42; // typical sphere subdivision
+        } else if (obj.type === 'cylinder') {
+          objVertices = 24; // typical cylinder
+        } else if (obj.type === 'cone') {
+          objVertices = 18; // typical cone
+        } else if (obj.type === 'torus') {
+          objVertices = 64; // typical torus
+        } else {
+          objVertices = 12; // default estimate
+        }
       }
-      return total;
-    }, 0);
+      
+      console.log(`  Object ${index} (${obj.name || obj.type || 'unknown'}): ${objVertices} vertices`);
+      total += objVertices;
+    });
+    
+    console.log('📊 Total vertices:', total);
+    return total;
   }
 
   /**
@@ -3887,6 +3977,334 @@ case 'multiDistribute':
     toast.toast();
     
     return stats;
+  }
+
+  /**
+   * Setup mobile optimization UI in the save dialog
+   */
+  setupMobileOptimizationUI(dialog) {
+    const checkbox = dialog.querySelector('#mobile-optimize');
+    const previewSection = dialog.querySelector('#mobile-preview-section');
+    const filenameInput = dialog.querySelector('#export-filename');
+    
+    // Track original filename
+    let originalFilename = filenameInput.value;
+    
+    checkbox.addEventListener('sl-change', async (e) => {
+      if (e.target.checked) {
+        // Show preview section
+        previewSection.style.display = 'block';
+        
+        // Update filename to .mobile
+        const currentFilename = filenameInput.value;
+        if (!currentFilename.includes('.mobile')) {
+          filenameInput.value = currentFilename.replace('.shapeforge.json', '.shapeforge.mobile');
+        }
+        
+        // Initialize preview
+        await this.initializeMobilePreview(dialog);
+        
+      } else {
+        // Hide preview section
+        previewSection.style.display = 'none';
+        
+        // Restore original filename
+        filenameInput.value = originalFilename;
+        
+        // Cleanup preview
+        this.cleanupMobilePreview();
+      }
+    });
+  }
+
+  /**
+   * Initialize mobile preview with optimization
+   */
+  async initializeMobilePreview(dialog) {
+    const progressBar = dialog.querySelector('#optimization-progress');
+    const progressText = dialog.querySelector('#progress-text');
+    const originalVerticesSpan = dialog.querySelector('#original-vertices');
+    const originalSizeSpan = dialog.querySelector('#original-size');
+    const optimizedVerticesSpan = dialog.querySelector('#optimized-vertices');
+    const optimizedSizeSpan = dialog.querySelector('#optimized-size');
+    const reductionSpan = dialog.querySelector('#size-reduction');
+    
+    try {
+      // Get current project data
+      const projectData = this.createProjectData();
+      
+      // Show original stats
+      const originalVertices = this.countVertices(projectData.objects);
+      const originalSize = JSON.stringify(projectData).length;
+      
+      originalVerticesSpan.textContent = originalVertices.toLocaleString();
+      originalSizeSpan.textContent = `${(originalSize / 1024).toFixed(1)}KB`;
+      
+      // Initialize preview canvas
+      this.initializePreviewCanvas(dialog);
+      
+      // Start optimization with progress updates
+      progressText.textContent = 'Starting optimization...';
+      progressBar.value = 0;
+      
+      // Simulate progressive optimization
+      const steps = [
+        { name: "Analyzing geometry...", weight: 10 },
+        { name: "Optimizing vertices...", weight: 30 },
+        { name: "Reducing polygons...", weight: 25 },
+        { name: "Compressing textures...", weight: 25 },
+        { name: "Rendering preview...", weight: 10 }
+      ];
+      
+      let totalProgress = 0;
+      
+      // Run optimization
+      const { optimized, stats } = await this.createMobileOptimizedProject(projectData);
+      
+      // Update progress through steps
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        progressText.textContent = step.name;
+        totalProgress += step.weight;
+        progressBar.value = totalProgress;
+        
+        // Yield to allow UI updates
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      
+      // Update preview canvas with optimized data
+      await this.updatePreviewCanvas(optimized);
+      
+      // Update stats
+      optimizedVerticesSpan.textContent = stats.optimizedVertices.toLocaleString();
+      optimizedSizeSpan.textContent = `${(stats.optimizedSize / 1024).toFixed(1)}KB`;
+      
+      const vertexReduction = ((1 - stats.optimizedVertices / stats.originalVertices) * 100).toFixed(1);
+      const sizeReduction = ((1 - stats.optimizedSize / stats.originalSize) * 100).toFixed(1);
+      reductionSpan.textContent = `${Math.max(vertexReduction, sizeReduction)}%`;
+      
+      progressText.textContent = 'Optimization complete!';
+      progressBar.value = 100;
+      
+      // Store optimized data for potential use
+      this.currentOptimizedData = optimized;
+      
+    } catch (error) {
+      console.error('Preview optimization failed:', error);
+      progressText.textContent = `Optimization failed: ${error.message}`;
+      progressBar.value = 0;
+    }
+  }
+
+  /**
+   * Initialize preview canvas for mobile optimization
+   */
+  initializePreviewCanvas(dialog) {
+    const canvas = dialog.querySelector('#mobile-preview-canvas');
+    
+    if (!canvas) {
+      console.error('❌ Mobile preview canvas not found!');
+      return;
+    }
+    
+    console.log('🎨 Initializing mobile preview canvas...');
+    
+    // Create Three.js scene for preview
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, canvas.width / canvas.height, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ 
+      canvas: canvas, 
+      antialias: false,
+      alpha: true 
+    });
+    
+    renderer.setSize(canvas.width, canvas.height);
+    renderer.setClearColor(0xf0f0f0, 1); // Light gray background
+    
+    // Add lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(ambientLight, directionalLight);
+    
+    // Store preview renderer
+    this.mobilePreviewRenderer = { scene, camera, renderer, canvas };
+    
+    console.log('✅ Mobile preview canvas initialized');
+  }
+
+  /**
+   * Update preview canvas with optimized model
+   */
+  async updatePreviewCanvas(optimizedData) {
+    if (!this.mobilePreviewRenderer) {
+      console.error('❌ Mobile preview renderer not available');
+      return;
+    }
+    
+    console.log('🔄 Updating mobile preview canvas...');
+    
+    const { scene, camera, renderer } = this.mobilePreviewRenderer;
+    
+    // Clear previous objects (keep lights)
+    const objectsToRemove = [];
+    scene.traverse(child => {
+      if (child.type === 'Mesh') {
+        objectsToRemove.push(child);
+      }
+    });
+    objectsToRemove.forEach(obj => scene.remove(obj));
+    
+    console.log(`📦 Creating preview for ${optimizedData.objects.length} objects...`);
+    
+    // Add optimized objects to preview scene
+    let objectsCreated = 0;
+    for (const objData of optimizedData.objects) {
+      console.log(`🔧 Processing object: ${objData.name || objData.type || 'unknown'}`);
+      
+      try {
+        const previewObject = await this.createPreviewObject(objData);
+        if (previewObject) {
+          scene.add(previewObject);
+          objectsCreated++;
+          console.log(`✅ Added preview object: ${objData.name || objData.type}`);
+        } else {
+          console.warn(`⚠️ Failed to create preview object: ${objData.name || objData.type}`);
+        }
+      } catch (error) {
+        console.error('❌ Error creating preview object:', error, objData);
+      }
+    }
+    
+    console.log(`📊 Created ${objectsCreated} preview objects`);
+    
+    // Auto-frame the objects
+    this.framePreviewObjects(scene, camera);
+    
+    // Render
+    renderer.render(scene, camera);
+    console.log('🎨 Mobile preview rendered');
+  }
+
+  /**
+   * Create a Three.js object from optimized data for preview
+   */
+  async createPreviewObject(objData) {
+    let geometry;
+    
+    // Try to create geometry from geometryData first
+    if (objData.geometryData && objData.geometryData.vertices) {
+      console.log(`📐 Creating geometry from vertex data (${objData.geometryData.vertices.length / 3} vertices)`);
+      
+      geometry = new THREE.BufferGeometry();
+      
+      // Set vertices
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(objData.geometryData.vertices, 3));
+      
+      // Set indices if available
+      if (objData.geometryData.indices) {
+        geometry.setIndex(objData.geometryData.indices);
+      }
+      
+      // Set normals if available, otherwise compute them
+      if (objData.geometryData.normals) {
+        geometry.setAttribute('normal', new THREE.Float32BufferAttribute(objData.geometryData.normals, 3));
+      } else {
+        geometry.computeVertexNormals();
+      }
+    } else {
+      // Fallback: create basic geometry based on type
+      console.log(`📐 Creating fallback geometry for type: ${objData.type || 'unknown'}`);
+      
+      switch (objData.type) {
+        case 'cube':
+        case 'box':
+          geometry = new THREE.BoxGeometry(1, 1, 1);
+          break;
+        case 'sphere':
+          geometry = new THREE.SphereGeometry(0.5, 16, 12);
+          break;
+        case 'cylinder':
+          geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 12);
+          break;
+        case 'cone':
+          geometry = new THREE.ConeGeometry(0.5, 1, 12);
+          break;
+        case 'torus':
+          geometry = new THREE.TorusGeometry(0.5, 0.2, 8, 16);
+          break;
+        default:
+          // Default to a simple box
+          geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+      }
+    }
+    
+    if (!geometry) {
+      console.error('❌ Failed to create geometry');
+      return null;
+    }
+    
+    // Create material
+    const material = new THREE.MeshStandardMaterial({
+      color: objData.material?.color || 0x888888,
+      metalness: objData.material?.metalness || 0,
+      roughness: objData.material?.roughness || 0.5
+    });
+    
+    // Create mesh
+    const mesh = new THREE.Mesh(geometry, material);
+    
+    // Apply transforms
+    if (objData.position) {
+      mesh.position.set(objData.position.x || 0, objData.position.y || 0, objData.position.z || 0);
+    }
+    if (objData.rotation) {
+      mesh.rotation.set(objData.rotation.x || 0, objData.rotation.y || 0, objData.rotation.z || 0);
+    }
+    if (objData.scale) {
+      mesh.scale.set(objData.scale.x || 1, objData.scale.y || 1, objData.scale.z || 1);
+    }
+    
+    console.log(`✅ Created preview mesh for ${objData.name || objData.type}`);
+    return mesh;
+  }
+
+  /**
+   * Auto-frame objects in preview camera
+   */
+  framePreviewObjects(scene, camera) {
+    const box = new THREE.Box3();
+    
+    scene.traverse(child => {
+      if (child.type === 'Mesh') {
+        box.expandByObject(child);
+      }
+    });
+    
+    if (box.isEmpty()) {
+      camera.position.set(0, 0, 5);
+      camera.lookAt(0, 0, 0);
+      return;
+    }
+    
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    
+    const distance = maxDim * 2;
+    camera.position.set(center.x + distance, center.y + distance * 0.5, center.z + distance);
+    camera.lookAt(center);
+  }
+
+  /**
+   * Cleanup preview canvas resources
+   */
+  cleanupMobilePreview() {
+    if (this.mobilePreviewRenderer) {
+      this.mobilePreviewRenderer.renderer.dispose();
+      this.mobilePreviewRenderer = null;
+    }
+    this.currentOptimizedData = null;
   }
 
   showModelBrowser() {
@@ -7331,18 +7749,20 @@ ShapeForge.prototype.applyShaderEffect = function (effectType) {
         break;
       default:
         // Fallback to glow effect for any unknown types
-        console.log(`Using fallback glow effect for unknown type: ${effectType}`);
+        const effectTypeStr = typeof effectType === 'string' ? effectType : JSON.stringify(effectType);
+        console.log(`Using fallback glow effect for unknown type: ${effectTypeStr}`);
         effectData = this.createPropGlowEffect(object.mesh, effectOptions);
     }
 
     // Store effect data with object
     if (effectData) {
+      const effectTypeStr = typeof effectType === 'string' ? effectType : JSON.stringify(effectType);
       object.effect = {
         type: effectType,
         data: effectData
       };
 
-      console.log(`Applied ${effectType} effect to ${object.name}`);
+      console.log(`Applied ${effectTypeStr} effect to ${object.name}`);
     }
   } catch (error) {
     console.error(`Error applying ${effectType} effect:`, error);
