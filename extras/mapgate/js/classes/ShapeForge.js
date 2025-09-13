@@ -44,6 +44,9 @@ class ShapeForge {
     this.previewContainer = null;
     this.isPreviewActive = false;
 
+    // Workspace configuration
+    this.workspaceSize = { x: 10, y: 10, z: 10 }; // Default workspace size
+
     // UI references
     this.uiContainer = null; // Changed from drawer to uiContainer
     this.propertyPanels = {};
@@ -230,18 +233,20 @@ class ShapeForge {
             <sl-tooltip content="New File">
               <sl-icon-button id="new-project" name="file-plus" size="small"></sl-icon-button>
             </sl-tooltip>
-            <sl-tooltip content="Open File">
+            <!-- Commented out ResourceManager-based Open File - using embedded resources now -->
+            <!-- <sl-tooltip content="Open File">
               <sl-icon-button id="loadModelBtn" name="folder-open" size="small"></sl-icon-button>
-            </sl-tooltip>
+            </sl-tooltip> -->
             <sl-tooltip content="Export File">
               <sl-icon-button id="save-project" name="download" size="small"></sl-icon-button>
             </sl-tooltip>
             <sl-tooltip content="Add to Project">
               <sl-icon-button id="import-additional" name="plus-circle" size="small"></sl-icon-button>
             </sl-tooltip>
-            <sl-tooltip content="Save to Resources">
+            <!-- Commented out ResourceManager-based Save to Resources - using embedded resources now -->
+            <!-- <sl-tooltip content="Save to Resources">
               <sl-icon-button id="save-to-resources" name="save" size="small"></sl-icon-button>
-            </sl-tooltip>
+            </sl-tooltip> -->
             <sl-tooltip content="Clear All">
               <sl-icon-button id="clear-all" name="trash" size="small" variant="danger"></sl-icon-button>
             </sl-tooltip>
@@ -444,27 +449,8 @@ class ShapeForge {
             </div>
           </div>
         </div>
-        
-        <!-- Objects List -->
-        <div class="panel-section" style="margin-top: 15px;">
-          <h3 style="font-size: 12px; margin-bottom: 8px;">Scene Objects</h3>
-          <div id="objects-list-container" style="max-height: 150px; overflow-y: auto; border: 1px solid #444; border-radius: 4px; padding: 6px;">
-            <!-- List of objects in the scene -->
-          </div>
-        </div>
-        
-        <!-- Camera Controls -->
-        <div class="panel-section" style="margin-top: 15px;">
-          <h3 style="font-size: 12px; margin-bottom: 8px;">Camera & View</h3>
-          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; font-size: 11px;">
-            <sl-button id="reset-camera" size="small" style="font-size: 10px; padding: 2px 6px;">Reset</sl-button>
-            <sl-button id="fit-camera" size="small" style="font-size: 10px; padding: 2px 6px;">Fit All</sl-button>
-            <sl-button id="front-view" size="small" style="font-size: 10px; padding: 2px 6px;">Front</sl-button>
-            <sl-button id="top-view" size="small" style="font-size: 10px; padding: 2px 6px;">Top</sl-button>
-            <sl-button id="side-view" size="small" style="font-size: 10px; padding: 2px 6px;">Side</sl-button>
-            <sl-button id="perspective-view" size="small" style="font-size: 10px; padding: 2px 6px;">3D</sl-button>
-          </div>
-        </div>
+      
+
       </div>
     </div>
   `;
@@ -574,8 +560,10 @@ class ShapeForge {
     this.uiContainer.querySelector('#save-project')?.addEventListener('click', this.saveProject.bind(this));
     // this.uiContainer.querySelector('#load-project')?.addEventListener('click', this.loadProject.bind(this));
     this.uiContainer.querySelector('#export-code')?.addEventListener('click', this.showExportDialog.bind(this));
-    this.uiContainer.querySelector('#save-to-resources')?.addEventListener('click', this.saveToResources.bind(this));
-    this.uiContainer.querySelector('#loadModelBtn')?.addEventListener('click', this.showModelBrowser.bind(this));
+    // Commented out ResourceManager-based Save to Resources - using embedded resources now
+    // this.uiContainer.querySelector('#save-to-resources')?.addEventListener('click', this.saveToResources.bind(this));
+    // Commented out ResourceManager-based Open File - using embedded resources now
+    // this.uiContainer.querySelector('#loadModelBtn')?.addEventListener('click', this.showModelBrowser.bind(this));
 
     const rotationQuickButtons = [
       { id: 'rot-x-90', axis: 'x', degrees: 90 },
@@ -666,8 +654,7 @@ class ShapeForge {
     this.uiContainer.querySelector('#import-additional')?.addEventListener('click', this.importAdditional.bind(this));
     this.uiContainer.querySelector('#clear-all')?.addEventListener('click', this.clearAll.bind(this));
 
-    // Preview controls
-    this.uiContainer.querySelector('#preview-reset-camera')?.addEventListener('click', this.resetCamera.bind(this));
+    // Preview controls (wireframe/solid only - reset camera handled in objects list panel)
     this.uiContainer.querySelector('#preview-wireframe')?.addEventListener('click', () => this.setPreviewMode('wireframe'));
     this.uiContainer.querySelector('#preview-solid')?.addEventListener('click', () => this.setPreviewMode('solid'));
 
@@ -861,8 +848,22 @@ class ShapeForge {
       this.setupBasicCameraControls();
     }
 
-    // Add grid helper
-    const gridHelper = new THREE.GridHelper(10, 10);
+    // Add grid helper with configurable size
+    if (!this.workspaceSize) {
+      this.workspaceSize = { x: 10, y: 10, z: 10 }; // Default size
+    }
+    
+    // Remove existing grid if it exists
+    const existingGrid = this.previewScene.getObjectByName('workspaceGrid');
+    if (existingGrid) {
+      this.previewScene.remove(existingGrid);
+    }
+    
+    const gridHelper = new THREE.GridHelper(
+      Math.max(this.workspaceSize.x, this.workspaceSize.z), // Use larger of X or Z for grid size
+      Math.max(this.workspaceSize.x, this.workspaceSize.z)  // Grid divisions
+    );
+    gridHelper.name = 'workspaceGrid'; // Name for easy identification
     this.previewScene.add(gridHelper);
 
     // Add lights
@@ -1532,15 +1533,25 @@ class ShapeForge {
     // Clear existing properties
     // propertiesContainer.innerHTML = '';
 
-    while (propertiesContainer.firstChild) {
-      // If it's a Shoelace element, remove it properly
-      if (propertiesContainer.firstChild.tagName &&
-        propertiesContainer.firstChild.tagName.startsWith('SL-')) {
-        propertiesContainer.firstChild.remove();
-      } else {
-        propertiesContainer.removeChild(propertiesContainer.firstChild);
+    // Properly disconnect Shoelace components before removal
+    const allElements = Array.from(propertiesContainer.querySelectorAll('*'));
+    const shoelaceComponents = allElements.filter(el => 
+      el.tagName && (el.tagName.startsWith('SL-') || el.className.includes('sl-'))
+    );
+    
+    shoelaceComponents.forEach(component => {
+      try {
+        // Try to properly disconnect any ResizeObserver or other observers
+        if (component.disconnectedCallback && typeof component.disconnectedCallback === 'function') {
+          component.disconnectedCallback();
+        }
+      } catch (e) {
+        // Ignore errors during disconnect
       }
-    }
+    });
+
+    // Clear the container
+    propertiesContainer.innerHTML = '';
 
     // Create name input
     const nameInput = document.createElement('sl-input');
@@ -3243,14 +3254,215 @@ case 'multiDistribute':
   //-------------------------------------------------------
 
   /**
+   * Update the workspace grid without recreating the entire scene
+   */
+  updateWorkspaceGrid() {
+    if (!this.previewScene) return;
+    
+    // Remove existing grid if it exists
+    const existingGrid = this.previewScene.getObjectByName('workspaceGrid');
+    if (existingGrid) {
+      this.previewScene.remove(existingGrid);
+    }
+    
+    // Add new grid with current workspace size
+    const gridHelper = new THREE.GridHelper(
+      Math.max(this.workspaceSize.x, this.workspaceSize.z), // Use larger of X or Z for grid size
+      Math.max(this.workspaceSize.x, this.workspaceSize.z)  // Grid divisions
+    );
+    gridHelper.name = 'workspaceGrid'; // Name for easy identification
+    this.previewScene.add(gridHelper);
+    
+    console.log(`Updated workspace grid to ${this.workspaceSize.x}x${this.workspaceSize.y}x${this.workspaceSize.z}`);
+  }
+
+  /**
+   * Analyze project objects and calculate adaptive workspace size
+   * @param {Array} objects - Array of object data
+   * @returns {Object} Suggested workspace size {x, y, z}
+   */
+  calculateAdaptiveWorkspaceSize(objects) {
+    if (!objects || objects.length === 0) {
+      return { x: 10, y: 10, z: 10 }; // Default for empty projects
+    }
+
+    let minX = 0, maxX = 0, minY = 0, maxY = 0, minZ = 0, maxZ = 0;
+    let hasContent = false;
+
+    objects.forEach(objData => {
+      if (!objData.position) return;
+
+      const pos = objData.position;
+      const scale = objData.scale || { x: 1, y: 1, z: 1 };
+      
+      let objMinX, objMaxX, objMinY, objMaxY, objMinZ, objMaxZ;
+
+      // If object has geometry data (merged objects), use actual vertex bounds
+      if (objData.geometryData && objData.geometryData.vertices) {
+        const vertices = objData.geometryData.vertices;
+        objMinX = objMinY = objMinZ = Infinity;
+        objMaxX = objMaxY = objMaxZ = -Infinity;
+
+        // Parse vertices (every 3 values = x, y, z)
+        for (let i = 0; i < vertices.length; i += 3) {
+          const x = vertices[i];
+          const y = vertices[i + 1];
+          const z = vertices[i + 2];
+
+          objMinX = Math.min(objMinX, x);
+          objMaxX = Math.max(objMaxX, x);
+          objMinY = Math.min(objMinY, y);
+          objMaxY = Math.max(objMaxY, y);
+          objMinZ = Math.min(objMinZ, z);
+          objMaxZ = Math.max(objMaxZ, z);
+        }
+
+        // Apply object transformation
+        objMinX = objMinX * scale.x + pos.x;
+        objMaxX = objMaxX * scale.x + pos.x;
+        objMinY = objMinY * scale.y + pos.y;
+        objMaxY = objMaxY * scale.y + pos.y;
+        objMinZ = objMinZ * scale.z + pos.z;
+        objMaxZ = objMaxZ * scale.z + pos.z;
+      } else {
+        // Fallback: estimate bounds from position and scale
+        const halfSizeX = scale.x * 0.5;
+        const halfSizeY = scale.y * 0.5;
+        const halfSizeZ = scale.z * 0.5;
+
+        objMinX = pos.x - halfSizeX;
+        objMaxX = pos.x + halfSizeX;
+        objMinY = pos.y - halfSizeY;
+        objMaxY = pos.y + halfSizeY;
+        objMinZ = pos.z - halfSizeZ;
+        objMaxZ = pos.z + halfSizeZ;
+      }
+
+      if (!hasContent) {
+        minX = objMinX; maxX = objMaxX;
+        minY = objMinY; maxY = objMaxY;
+        minZ = objMinZ; maxZ = objMaxZ;
+        hasContent = true;
+      } else {
+        minX = Math.min(minX, objMinX);
+        maxX = Math.max(maxX, objMaxX);
+        minY = Math.min(minY, objMinY);
+        maxY = Math.max(maxY, objMaxY);
+        minZ = Math.min(minZ, objMinZ);
+        maxZ = Math.max(maxZ, objMaxZ);
+      }
+    });
+
+    if (!hasContent) {
+      return { x: 10, y: 10, z: 10 };
+    }
+
+    // Calculate required workspace dimensions based on actual content bounds
+    const requiredX = Math.ceil(maxX - minX);
+    const requiredY = Math.ceil(maxY - minY);
+    const requiredZ = Math.ceil(maxZ - minZ);
+
+    // Add padding and ensure minimum/maximum bounds
+    const paddedX = Math.ceil(requiredX * 1.2); // 20% padding
+    const paddedY = Math.ceil(requiredY * 1.2);
+    const paddedZ = Math.ceil(requiredZ * 1.2);
+
+    const adaptiveSize = {
+      x: Math.min(50, Math.max(5, paddedX)), // Minimum 5, maximum 50
+      y: Math.min(50, Math.max(5, paddedY)),
+      z: Math.min(50, Math.max(5, paddedZ))
+    };
+
+    console.log(`Adaptive workspace calculated:`, {
+      bounds: { minX, maxX, minY, maxY, minZ, maxZ },
+      required: { requiredX, requiredY, requiredZ },
+      padded: { paddedX, paddedY, paddedZ },
+      adaptive: adaptiveSize
+    });
+
+    return adaptiveSize;
+  }
+
+  /**
+   * Show workspace size configuration modal
+   */
+  showWorkspaceSizeModal() {
+    return new Promise((resolve) => {
+      // Create modal dialog
+      const modal = document.createElement('sl-dialog');
+      modal.label = 'Configure Workspace Size';
+      modal.style.cssText = '--width: 400px;';
+      
+      modal.innerHTML = `
+        <div style="padding: 16px;">
+          <p style="margin-bottom: 16px; color: #666;">
+            Set the dimensions for your 3D workspace grid (1x1x1 to 50x50x50 units)
+          </p>
+          
+          <div style="display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center;">
+            <label for="workspace-x">Width (X):</label>
+            <sl-input id="workspace-x" type="number" value="${this.workspaceSize?.x || 10}" min="1" max="50" style="width: 100px;"></sl-input>
+            
+            <label for="workspace-y">Height (Y):</label>
+            <sl-input id="workspace-y" type="number" value="${this.workspaceSize?.y || 10}" min="1" max="50" style="width: 100px;"></sl-input>
+            
+            <label for="workspace-z">Depth (Z):</label>
+            <sl-input id="workspace-z" type="number" value="${this.workspaceSize?.z || 10}" min="1" max="50" style="width: 100px;"></sl-input>
+          </div>
+          
+          <div style="margin-top: 16px; padding: 12px; background: #f8f9fa; border-radius: 4px; font-size: 0.9em; color: #666;">
+            <strong>Note:</strong> Larger workspaces may impact performance. Consider your device capabilities when choosing sizes above 30x30x30.
+          </div>
+        </div>
+        
+        <div slot="footer">
+          <sl-button variant="default" id="workspace-cancel">Cancel</sl-button>
+          <sl-button variant="primary" id="workspace-confirm">Apply</sl-button>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // Handle confirm
+      modal.querySelector('#workspace-confirm').addEventListener('click', () => {
+        const x = parseInt(modal.querySelector('#workspace-x').value) || 10;
+        const y = parseInt(modal.querySelector('#workspace-y').value) || 10;
+        const z = parseInt(modal.querySelector('#workspace-z').value) || 10;
+        
+        // Validate ranges
+        const validX = Math.min(50, Math.max(1, x));
+        const validY = Math.min(50, Math.max(1, y));
+        const validZ = Math.min(50, Math.max(1, z));
+        
+        this.workspaceSize = { x: validX, y: validY, z: validZ };
+        modal.remove();
+        resolve(true);
+      });
+      
+      // Handle cancel
+      modal.querySelector('#workspace-cancel').addEventListener('click', () => {
+        modal.remove();
+        resolve(false);
+      });
+      
+      // Show modal
+      modal.show();
+    });
+  }
+
+  /**
    * Create a new project
    */
-  newProject() {
+  async newProject() {
     // Confirm with user if there are existing objects
     if (this.objects.length > 0) {
       const confirm = window.confirm('Create a new project? All unsaved changes will be lost.');
       if (!confirm) return;
     }
+
+    // Show workspace size configuration modal
+    const proceed = await this.showWorkspaceSizeModal();
+    if (!proceed) return;
 
     this.cleanupAllShaderEffects();
 
@@ -3272,12 +3484,15 @@ case 'multiDistribute':
       projectNameInput.value = 'Untitled Project';
     }
 
+    // Update the workspace grid with new size (don't recreate entire scene)
+    this.updateWorkspaceGrid();
+
     // Update UI
     this.updatePropertyPanels(null);
     this.updateHistoryButtons();
     this.updateObjectsList();
 
-    console.log('Created new project');
+    console.log(`Created new project with workspace size: ${this.workspaceSize.x}x${this.workspaceSize.y}x${this.workspaceSize.z}`);
   }
 
   /**
@@ -3344,6 +3559,334 @@ case 'multiDistribute':
     });
 
     dialog.show();
+  }
+
+  /**
+   * Mobile Optimization Methods for .shapeforge.mobile format
+   * Maintains v1.3 compatibility while reducing resource usage
+   */
+
+  /**
+   * Main mobile optimization method - creates optimized version of project data
+   */
+  async createMobileOptimizedProject(projectData) {
+    console.log('🔧 Starting mobile optimization...');
+    
+    // Deep clone to avoid modifying original
+    const optimized = JSON.parse(JSON.stringify(projectData));
+    
+    // Track optimization stats
+    const stats = {
+      originalVertices: 0,
+      optimizedVertices: 0,
+      originalSize: JSON.stringify(projectData).length,
+      optimizedSize: 0,
+      texturesOptimized: 0,
+      materialsSimplified: 0
+    };
+
+    // Count original vertices
+    stats.originalVertices = this.countVertices(optimized.objects);
+
+    // Optimize geometry data
+    for (let obj of optimized.objects) {
+      if (obj.geometryData) {
+        await this.optimizeObjectGeometry(obj);
+      }
+      if (obj.material) {
+        this.optimizeMaterial(obj.material);
+        stats.materialsSimplified++;
+      }
+      if (obj.textureData) {
+        await this.optimizeTextureData(obj);
+        stats.texturesOptimized++;
+      }
+    }
+
+    // Count optimized vertices
+    stats.optimizedVertices = this.countVertices(optimized.objects);
+    stats.optimizedSize = JSON.stringify(optimized).length;
+
+    console.log('✅ Mobile optimization complete:', stats);
+    return { optimized, stats };
+  }
+
+  /**
+   * Count total vertices in all objects
+   */
+  countVertices(objects) {
+    return objects.reduce((total, obj) => {
+      if (obj.geometryData && obj.geometryData.vertices) {
+        return total + (obj.geometryData.vertices.length / 3);
+      }
+      return total;
+    }, 0);
+  }
+
+  /**
+   * Optimize geometry data for mobile performance
+   */
+  async optimizeObjectGeometry(obj) {
+    if (!obj.geometryData || !obj.geometryData.vertices) return;
+
+    const geometry = obj.geometryData;
+    
+    // 1. Reduce vertex precision (round to 2 decimal places)
+    if (geometry.vertices) {
+      geometry.vertices = geometry.vertices.map(v => 
+        Math.round(v * 100) / 100
+      );
+    }
+
+    // 2. Merge nearby vertices (within tolerance)
+    if (geometry.vertices && geometry.indices) {
+      this.mergeNearbyVertices(geometry, 0.01); // 1cm tolerance
+    }
+
+    // 3. Reduce polygon count by simplifying faces
+    if (geometry.indices && geometry.indices.length > 300) {
+      this.simplifyGeometry(geometry, 0.7); // Keep 70% of faces
+    }
+
+    // 4. Round normal vectors if present
+    if (geometry.normals) {
+      geometry.normals = geometry.normals.map(n => 
+        Math.round(n * 100) / 100
+      );
+    }
+
+    // 5. Round UV coordinates if present
+    if (geometry.uvs) {
+      geometry.uvs = geometry.uvs.map(uv => 
+        Math.round(uv * 1000) / 1000
+      );
+    }
+  }
+
+  /**
+   * Merge vertices that are very close together
+   */
+  mergeNearbyVertices(geometry, tolerance) {
+    const vertices = geometry.vertices;
+    const indices = geometry.indices;
+    const vertexMap = new Map();
+    const newVertices = [];
+    const indexMap = new Map();
+
+    // Build vertex map with tolerance
+    for (let i = 0; i < vertices.length; i += 3) {
+      const x = Math.round(vertices[i] / tolerance) * tolerance;
+      const y = Math.round(vertices[i + 1] / tolerance) * tolerance;
+      const z = Math.round(vertices[i + 2] / tolerance) * tolerance;
+      const key = `${x}_${y}_${z}`;
+
+      if (!vertexMap.has(key)) {
+        const newIndex = newVertices.length / 3;
+        vertexMap.set(key, newIndex);
+        newVertices.push(x, y, z);
+      }
+
+      indexMap.set(i / 3, vertexMap.get(key));
+    }
+
+    // Update indices to point to merged vertices
+    for (let i = 0; i < indices.length; i++) {
+      indices[i] = indexMap.get(indices[i]);
+    }
+
+    // Update geometry
+    geometry.vertices = newVertices;
+    
+    console.log(`📊 Merged vertices: ${vertices.length / 3} → ${newVertices.length / 3}`);
+  }
+
+  /**
+   * Simplify geometry by reducing face count
+   */
+  simplifyGeometry(geometry, keepRatio) {
+    if (!geometry.indices || geometry.indices.length < 9) return;
+
+    const faces = [];
+    for (let i = 0; i < geometry.indices.length; i += 3) {
+      faces.push([
+        geometry.indices[i],
+        geometry.indices[i + 1], 
+        geometry.indices[i + 2]
+      ]);
+    }
+
+    // Simple face reduction - remove every nth face based on keepRatio
+    const targetFaces = Math.floor(faces.length * keepRatio);
+    const step = faces.length / targetFaces;
+    const newFaces = [];
+
+    for (let i = 0; i < faces.length; i += step) {
+      newFaces.push(faces[Math.floor(i)]);
+    }
+
+    // Rebuild indices array
+    geometry.indices = newFaces.flat();
+    
+    console.log(`📊 Simplified faces: ${faces.length} → ${newFaces.length}`);
+  }
+
+  /**
+   * Optimize material properties for mobile
+   */
+  optimizeMaterial(material) {
+    // Round material values to reduce precision
+    if (material.color !== undefined) {
+      // Keep color as-is (it's usually an integer)
+    }
+    
+    if (material.opacity !== undefined) {
+      material.opacity = Math.round(material.opacity * 100) / 100;
+    }
+    
+    if (material.metalness !== undefined) {
+      material.metalness = Math.round(material.metalness * 100) / 100;
+    }
+    
+    if (material.roughness !== undefined) {
+      material.roughness = Math.round(material.roughness * 100) / 100;
+    }
+
+    // Remove very small values that don't visually matter
+    if (material.metalness !== undefined && material.metalness < 0.01) {
+      material.metalness = 0;
+    }
+    
+    if (material.roughness !== undefined && material.roughness > 0.99) {
+      material.roughness = 1;
+    }
+  }
+
+  /**
+   * Optimize texture data for mobile
+   */
+  async optimizeTextureData(obj) {
+    if (!obj.textureData) return;
+
+    // Optimize base64 encoded textures
+    if (obj.textureData.map && obj.textureData.map.startsWith('data:image/')) {
+      console.log('📊 Optimizing texture for mobile...');
+      try {
+        obj.textureData.map = await this.resizeBase64Image(obj.textureData.map, 512, 0.8);
+        obj.textureData.mobileOptimized = true;
+      } catch (error) {
+        console.warn('Failed to optimize texture:', error);
+      }
+    }
+
+    // Optimize other texture types if present
+    if (obj.textureData.normalMap && obj.textureData.normalMap.startsWith('data:image/')) {
+      try {
+        obj.textureData.normalMap = await this.resizeBase64Image(obj.textureData.normalMap, 256, 0.9);
+      } catch (error) {
+        console.warn('Failed to optimize normal map:', error);
+      }
+    }
+
+    if (obj.textureData.roughnessMap && obj.textureData.roughnessMap.startsWith('data:image/')) {
+      try {
+        obj.textureData.roughnessMap = await this.resizeBase64Image(obj.textureData.roughnessMap, 256, 0.9);
+      } catch (error) {
+        console.warn('Failed to optimize roughness map:', error);
+      }
+    }
+  }
+
+  /**
+   * Resize base64 image data using canvas
+   */
+  async resizeBase64Image(base64Data, maxSize, quality = 0.8) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      
+      img.onload = () => {
+        // Create canvas for resizing
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Calculate new dimensions maintaining aspect ratio
+        let { width, height } = img;
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+        
+        // Set canvas size
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw resized image
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Get optimized base64 data
+        const optimizedData = canvas.toDataURL('image/jpeg', quality);
+        
+        console.log(`📊 Texture resized: ${img.width}x${img.height} → ${width}x${height}`);
+        console.log(`📊 Size reduction: ${base64Data.length} → ${optimizedData.length} bytes`);
+        
+        resolve(optimizedData);
+      };
+      
+      img.onerror = () => {
+        reject(new Error('Failed to load image for resizing'));
+      };
+      
+      img.src = base64Data;
+    });
+  }
+
+  /**
+   * Export mobile optimized version of the project
+   */
+  async exportMobileOptimized(filename, projectData) {
+    console.log('📱 Starting mobile export...');
+    
+    const { optimized, stats } = await this.createMobileOptimizedProject(projectData);
+    
+    // Ensure filename has .mobile extension
+    const mobileFilename = filename.replace(/\.shapeforge\.json$/, '.shapeforge.mobile');
+    
+    // Create and download the optimized file
+    const blob = new Blob([JSON.stringify(optimized, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = mobileFilename;
+    a.click();
+    
+    URL.revokeObjectURL(url);
+    
+    // Show success message with stats
+    const toast = document.createElement('sl-alert');
+    toast.variant = 'success';
+    toast.duration = 5000;
+    toast.closable = true;
+    toast.innerHTML = `
+      <strong>Mobile version saved as ${mobileFilename}</strong><br>
+      <small>
+        Vertices: ${stats.originalVertices.toLocaleString()} → ${stats.optimizedVertices.toLocaleString()} 
+        (${((1 - stats.optimizedVertices / stats.originalVertices) * 100).toFixed(1)}% reduction)<br>
+        File size: ${(stats.originalSize / 1024).toFixed(1)}KB → ${(stats.optimizedSize / 1024).toFixed(1)}KB
+        (${((1 - stats.optimizedSize / stats.originalSize) * 100).toFixed(1)}% reduction)
+      </small>
+    `;
+    
+    document.body.appendChild(toast);
+    toast.toast();
+    
+    return stats;
   }
 
   showModelBrowser() {
@@ -3564,9 +4107,10 @@ if (obj.physics) {
     // Create project data
     const projectData = {
       name: projectName,
-      version: '1.2', // Bump version for merged geometry support
+      version: '1.3', // Bump version for workspace size support
       created: new Date().toISOString(),
       thumbnail: thumbnail,
+      workspaceSize: this.workspaceSize || { x: 10, y: 10, z: 10 }, // Add workspace size
       objects: objectsData
     };
 
@@ -8325,14 +8869,37 @@ ShapeForge.prototype.loadProjectFromJson = function (jsonData) {
   console.log("Loading project using loadProjectFromJson method w/ texture support");
 
   this.cleanupAllShaderEffects();
-  // Clear current project
-  this.newProject();
+  // Clear current project (but skip workspace size modal for loading)
+  if (this.objects.length > 0) {
+    this.objects.forEach(obj => {
+      if (obj.mesh && obj.mesh.parent) {
+        obj.mesh.parent.remove(obj.mesh);
+      }
+    });
+    this.objects = [];
+    this.selectedObject = null;
+    this.history = [];
+    this.historyIndex = -1;
+  }
 
   // Set project name
   const projectNameInput = this.uiContainer.querySelector('#project-name');
   if (projectNameInput && jsonData.name) {
     projectNameInput.value = jsonData.name;
   }
+
+  // Load workspace size (backward compatible)
+  if (jsonData.workspaceSize) {
+    this.workspaceSize = { ...jsonData.workspaceSize };
+    console.log(`Loading workspace size: ${this.workspaceSize.x}x${this.workspaceSize.y}x${this.workspaceSize.z}`);
+  } else {
+    // For v1.2 and older projects, calculate adaptive workspace size
+    this.workspaceSize = this.calculateAdaptiveWorkspaceSize(jsonData.objects);
+    console.log(`Auto-calculated adaptive workspace size for v1.2 project: ${this.workspaceSize.x}x${this.workspaceSize.y}x${this.workspaceSize.z}`);
+  }
+
+  // Update the workspace grid with loaded size (don't recreate entire scene)
+  this.updateWorkspaceGrid();
 
   // Keep track of created objects that need textures
   const objectsNeedingTextures = [];

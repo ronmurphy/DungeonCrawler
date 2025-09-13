@@ -1,16 +1,3 @@
-/**
- * ShapeForge Browser Module
- * 
- * Unified ShapeForge file browser and loader for all DungeonCrawler projects
- * Eliminates code duplication across maped3d, mapgate, V5, etc.
- * 
- * Usage:
- *   const browser = new ShapeForgeBrowser({
- *     basePath: 'assets/sampleObjects/ShapeForge/',
- *     onSelect: (data, filename) => { /* handle selection */  //}
-//  *   });
-//  *   browser.show();
-//  **/
 class ShapeForgeBrowser {
     constructor(options = {}) {
         this.basePath = options.basePath || 'assets/sampleObjects/ShapeForge/';
@@ -26,7 +13,7 @@ class ShapeForgeBrowser {
         this.cacheTimestamp = 0;
         this.cacheExpiry = 30000; // 30 seconds
         
-        console.log('🎯 ShapeForgeBrowser initialized:', {
+        console.log('🎯 ShapeForgeBrowser (MapGate) initialized:', {
             basePath: this.basePath,
             modal: this.modal,
             title: this.title
@@ -381,4 +368,4 @@ if (typeof module !== 'undefined' && module.exports) {
     window.ShapeForgeBrowser = ShapeForgeBrowser;
 }
 
-console.log('📦 ShapeForgeBrowser module loaded');
+console.log('📦 ShapeForgeBrowser (MapGate local copy) loaded');

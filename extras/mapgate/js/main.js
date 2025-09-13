@@ -606,345 +606,322 @@ function exit3DViewer() {
     }
 }
 
-// Show sample objects browser
+// Show sample objects browser using shared module
 function showSampleObjects() {
-    console.log("📦 Showing sample objects...");
+    console.log("📦 Showing sample objects browser...");
     
-    // Clean up any existing sample browser dialogs
-    const existingDialogs = document.querySelectorAll('sl-dialog[label="Sample Objects"]');
-    existingDialogs.forEach(dialog => dialog.remove());
+    // Try to use ShapeForgeBrowser if available, otherwise fall back to custom implementation
+    if (typeof ShapeForgeBrowser !== 'undefined') {
+        console.log("🎯 Using ShapeForgeBrowser module");
+        const browser = new ShapeForgeBrowser({
+            basePath: 'assets/sampleObjects/ShapeForge/',
+            title: 'Browse Sample Objects',
+            onSelect: (data, filename) => {
+                console.log(`🎯 User selected: ${filename}`);
+                loadShapeForgeObject(data, filename);
+            },
+            onLoad: (data, filename) => {
+                console.log(`📄 Loaded: ${filename} - ${data.name || 'Untitled'}`);
+            }
+        });
+        browser.show();
+        return;
+    }
     
-    // Create a dialog to show sample objects
+    // Fallback to custom implementation
+    console.log("🔧 Using fallback custom implementation");
+    
+    // Create modal dialog
     const dialog = document.createElement('sl-dialog');
-    dialog.label = 'Sample Objects';
-    dialog.style.setProperty('--width', '900px');
-    dialog.style.setProperty('--height', '70vh');
+    dialog.label = 'Browse Sample Objects';
+    dialog.style.cssText = '--width: 85vw; --height: 75vh;';
     
     dialog.innerHTML = `
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; max-height: 55vh; overflow-y: auto; padding: 8px;">
-            <!-- Sample objects will be loaded here -->
-            <div id="sampleObjectsList">Loading sample objects...</div>
+        <div style="height: 65vh; overflow: hidden;">
+            <div id="shapeforge-grid" style="height: 100%; overflow-y: auto; padding: 16px;">
+                <div style="text-align: center; padding: 20px; color: #666;">Discovering sample objects...</div>
+            </div>
         </div>
-        
-        <div slot="footer">
-            <sl-button variant="neutral" onclick="this.closest('sl-dialog').hide()">Close</sl-button>
-        </div>
+        <sl-button slot="footer" variant="neutral" onclick="this.closest('sl-dialog').hide()">
+            <span slot="prefix" class="material-icons">close</span>
+            Close
+        </sl-button>
     `;
     
     document.body.appendChild(dialog);
     dialog.show();
     
-    // Load sample objects
-    loadSampleObjectsList();
+    // Load sample objects dynamically
+    loadSampleObjectsGrid(dialog.querySelector('#shapeforge-grid'));
+    
+    // Cleanup on close
+    dialog.addEventListener('sl-hide', () => {
+        setTimeout(() => {
+            if (dialog.parentNode) {
+                dialog.parentNode.removeChild(dialog);
+            }
+        }, 100);
+    });
 }
 
-async function loadSampleObjectsList() {
-    const container = document.getElementById('sampleObjectsList');
+// Load sample objects into grid
+async function loadSampleObjectsGrid(container) {
+    console.log("📂 Dynamically discovering ShapeForge files...");
     
-    // Sample object files (based on what you have)
-    const sampleFiles = [
-        'Chest.shapeforge.json',
-        'Pillar.shapeforge.json', 
-        'Statue.shapeforge.json',
-        'TexturedPillar2.shapeforge.json',
-        'TexturedStatue.shapeforge.json',
-        'TexturedStatue2.shapeforge.json',
-        'woodBlock.shapeforge.json',
-        'Fireball_d20.shapeforge.json',
-        'magic_d20.shapeforge.json',
-        'Dungeon Entrance.shapeforge.json',
-        'Exit.shapeforge.json',
-        'FireMarker.shapeforge.json',
-        'Not-Statue.shapeforge.json'
-    ];
+    let sampleFiles = [];
     
-    console.log(`📂 Loading ${sampleFiles.length} sample files...`);
-    container.innerHTML = '<div style="text-align: center; padding: 20px;">Loading sample objects...</div>';
+    try {
+        // Method 1: Try directory listing (works with Live Server)
+        const dirResponse = await fetch('assets/sampleObjects/ShapeForge/');
+        if (dirResponse.ok) {
+            const dirText = await dirResponse.text();
+            const fileMatches = dirText.match(/href="([^"]*\.shapeforge\.json)"/g);
+            if (fileMatches) {
+                // Extract just the filenames, not full paths
+                sampleFiles = fileMatches
+                    .map(match => match.match(/href="([^"]*)"/)[1])
+                    .filter(filename => !filename.includes('/')) // Only get actual filenames, not paths
+                    .map(filename => filename.replace(/^.*\//, '')); // Remove any path prefixes
+                console.log(`📂 Found ${sampleFiles.length} files via directory listing:`, sampleFiles);
+            }
+        }
+    } catch (error) {
+        console.log("📂 Directory listing not available, using fallback method");
+    }
     
+    // Method 2: Fallback - test known files from your directory
+    if (sampleFiles.length === 0) {
+        const knownFiles = [
+            'Chest.shapeforge.json',
+            'Dungeon Entrance.shapeforge.json',
+            'Exit.shapeforge.json',
+            'FireMarker.shapeforge.json',
+            'Fireball_d20.shapeforge.json',
+            'Grass Patch.shapeforge.json',
+            'Not-Statue.shapeforge.json',
+            'Pillar.shapeforge.json',
+            'Statue.shapeforge.json',
+            'TexturedPillar2.shapeforge.json',
+            'TexturedStatue.shapeforge.json',
+            'TexturedStatue2.shapeforge.json',
+            'grass.shapeforge.json',
+            'magic_d20.shapeforge.json',
+            'mountain.shapeforge.json',
+            'woodBlock.shapeforge.json'
+        ];
+        
+        console.log("🧪 Testing file existence...");
+        const existenceTests = knownFiles.map(async filename => {
+            try {
+                const testResponse = await fetch(`assets/sampleObjects/ShapeForge/${filename}`, { method: 'HEAD' });
+                return testResponse.ok ? filename : null;
+            } catch (error) {
+                return null;
+            }
+        });
+        
+        const results = await Promise.all(existenceTests);
+        sampleFiles = results.filter(filename => filename !== null);
+        console.log(`📂 Discovered ${sampleFiles.length} files via existence testing`);
+    }
+    
+    if (sampleFiles.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">No ShapeForge files found</div>';
+        return;
+    }
+    
+    // Create grid container
+    const grid = document.createElement('div');
+    grid.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 16px;
+        padding: 0;
+    `;
+    
+    container.innerHTML = '';
+    container.appendChild(grid);
+    
+    // Load and display files
     let loadedCount = 0;
-    
     for (const filename of sampleFiles) {
         try {
-            console.log(`📄 Trying to load: ${filename}`);
             const response = await fetch(`assets/sampleObjects/ShapeForge/${filename}`);
-            if (!response.ok) {
-                console.warn(`❌ Failed to load ${filename}: ${response.status}`);
-                continue;
-            }
+            if (!response.ok) continue;
             
-            const objectData = await response.json();
-            console.log(`✅ Loaded ${filename}:`, objectData.name);
-            
-            // Determine display name - use filename if project name is "Untitled Project"
-            let displayName = objectData.name;
-            if (displayName === 'Untitled Project') {
-                // Remove .shapeforge.json extension and use filename
-                displayName = filename.replace('.shapeforge.json', '');
-            }
-            
-            // Create object card with improved design
-            const card = document.createElement('div');
-            card.style.cssText = `
-                border: 1px solid #e1e5e9;
-                border-radius: 12px;
-                padding: 8px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-                overflow: hidden;
-                position: relative;
-            `;
-            
-            // Add effect indicator if object has effects
-            const hasEffects = objectData.objects && objectData.objects.some(obj => obj.effect);
-            const effectsBadge = hasEffects ? 
-                `<div style="position: absolute; top: 4px; right: 4px; background: #ff6b35; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: bold;">FX</div>` : '';
-            
-            card.innerHTML = `
-                ${effectsBadge}
-                <div style="text-align: center;">
-                    ${objectData.thumbnail ? 
-                        `<img src="${objectData.thumbnail}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 8px; margin-bottom: 6px;" />` :
-                        `<div style="width: 100%; height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; color: white;">
-                            <span class="material-icons" style="font-size: 36px;">3d_rotation</span>
-                        </div>`
-                    }
-                    <div style="font-weight: 600; margin-bottom: 2px; font-size: 13px; color: #2c3e50; line-height: 1.2;">${displayName}</div>
-                    <div style="font-size: 11px; color: #7f8c8d; opacity: 0.8;">Click to view</div>
-                </div>
-            `;
-            
-            card.addEventListener('click', () => {
-                loadSampleObject(filename, objectData);
-                card.closest('sl-dialog').hide();
-            });
-            
-            card.addEventListener('mouseover', () => {
-                card.style.transform = 'translateY(-4px) scale(1.02)';
-                card.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-                card.style.borderColor = '#667eea';
-            });
-            
-            card.addEventListener('mouseout', () => {
-                card.style.transform = 'translateY(0) scale(1)';
-                card.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-                card.style.borderColor = '#e1e5e9';
-            });
-            
-            if (loadedCount === 0) {
-                container.innerHTML = ''; // Clear loading message
-            }
-            
-            container.appendChild(card);
+            const data = await response.json();
+            const card = createSampleObjectCard(filename, data);
+            grid.appendChild(card);
             loadedCount++;
-            
         } catch (error) {
-            console.warn(`❌ Could not load sample object: ${filename}`, error);
+            console.warn(`⚠️ Skipping ${filename}:`, error);
         }
     }
     
-    if (loadedCount === 0) {
-        container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No sample objects found</div>';
-    } else {
-        console.log(`✅ Loaded ${loadedCount} sample objects`);
+    console.log(`✅ Rendered ${loadedCount}/${sampleFiles.length} sample objects in grid`);
+}
+
+// Create a sample object card
+function createSampleObjectCard(filename, data) {
+    const displayName = (data.name && data.name !== 'Untitled Project') ? data.name : filename.replace('.shapeforge.json', '');
+    
+    const card = document.createElement('div');
+    card.style.cssText = `
+        border: 1px solid #e1e5e9;
+        border-radius: 12px;
+        padding: 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        min-height: 160px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+    `;
+    
+    // Check for effects badge
+    const hasEffects = data.objects && data.objects.some(obj => obj.effect);
+    const effectsBadge = hasEffects ? 
+        `<div style="position: absolute; top: 8px; right: 8px; background: linear-gradient(135deg, #ff6b35, #ff8c42); color: white; font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: bold; box-shadow: 0 2px 4px rgba(255,107,53,0.3);">FX</div>` : '';
+    
+    // Default thumbnail
+    const defaultThumbnail = `data:image/svg+xml;base64,${btoa(`
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="80" height="80" fill="url(#grad)"/>
+            <defs>
+                <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <g transform="translate(20, 20)">
+                <path d="M10 10h20v20h-20z" stroke="white" stroke-width="2" fill="none" opacity="0.7"/>
+                <path d="M15 15h15v15h-15z" stroke="white" stroke-width="2" fill="none" opacity="0.5"/>
+                <path d="M20 20h10v10h-10z" stroke="white" stroke-width="2" fill="none" opacity="0.3"/>
+            </g>
+        </svg>
+    `)}`;
+
+    card.innerHTML = `
+        ${effectsBadge}
+        <div>
+            <img src="${data.thumbnail || defaultThumbnail}" 
+                 style="width: 80px; height: 80px; margin: 0 auto 12px auto; object-fit: cover; border-radius: 8px; display: block;" 
+                 alt="${displayName}">
+        </div>
+        <div>
+            <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px; color: #2c3e50; line-height: 1.3; min-height: 32px; display: flex; align-items: center; justify-content: center;">${displayName}</div>
+            <div style="font-size: 11px; color: #7f8c8d; opacity: 0.8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${filename}</div>
+        </div>
+    `;
+    
+    // Hover effects
+    card.addEventListener('mouseenter', () => {
+        card.style.transform = 'translateY(-4px) scale(1.02)';
+        card.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.15)';
+        card.style.borderColor = '#667eea';
+    });
+    
+    card.addEventListener('mouseleave', () => {
+        card.style.transform = 'translateY(0) scale(1)';
+        card.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+        card.style.borderColor = '#e1e5e9';
+    });
+    
+    // Click handler
+    card.addEventListener('click', () => {
+        loadShapeForgeObject(data, filename);
+        card.closest('sl-dialog').hide();
+    });
+    
+    return card;
+}
+
+// Load selected ShapeForge object into editor
+function loadShapeForgeObject(data, filename) {
+    console.log(`🔄 Loading ${filename} into editor...`);
+    
+    try {
+        // Set as current object
+        currentObject = data;
+        
+        console.log(`✅ Successfully loaded ${filename} into current object`);
+        
+        // Initialize ShapeForge workspace if needed
+        if (!shapeForge) {
+            console.log("🎨 Initializing ShapeForge workspace...");
+            initializeShapeForgeWorkspace();
+        }
+        
+        // Load the object into ShapeForge after a short delay to ensure initialization
+        setTimeout(() => {
+            if (shapeForge && shapeForge.loadProjectFromJson) {
+                console.log("📦 Loading object into ShapeForge...");
+                shapeForge.loadProjectFromJson(data);
+            } else {
+                console.log("🔄 ShapeForge not ready, retrying...");
+                // Retry after another delay
+                setTimeout(() => {
+                    if (shapeForge && shapeForge.loadProjectFromJson) {
+                        shapeForge.loadProjectFromJson(data);
+                    }
+                }, 1000);
+            }
+        }, 500);
+        
+        // Show success notification
+        showNotification(`Loaded: ${data.name || filename}`, 'success');
+        
+    } catch (error) {
+        console.error(`❌ Failed to load ${filename}:`, error);
+        showNotification(`Failed to load ${filename}: ${error.message}`, 'error');
     }
 }
 
-function loadSampleObject(filename, objectData) {
-    console.log(`📦 Loading sample object: ${filename}`);
-    
-    // Store filename in the object data for later reference
-    objectData._filename = filename;
-    currentObject = objectData;
-    
-    // Show a success message
-    const alert = document.createElement('div');
-    alert.style.cssText = `
+// Show notification helper
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: #4CAF50;
-        color: white;
         padding: 12px 16px;
-        border-radius: 4px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
         z-index: 10000;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
     `;
-    alert.textContent = `Loaded: ${objectData.name}`;
-    document.body.appendChild(alert);
+    notification.textContent = message;
+    document.body.appendChild(notification);
     
+    // Auto-remove after 3 seconds
     setTimeout(() => {
-        alert.remove();
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => notification.remove(), 300);
     }, 3000);
-    
-    // Automatically open the 3D viewer to show the object
-    setTimeout(async () => {
-        await open3DViewer();
-    }, 100);
 }
 
-function loadObjectIntoViewer(objectData) {
-    console.log("🔧 loadObjectIntoViewer called with:", objectData.name);
+// File operations
+function newObject() {
+    currentObject = {
+        name: "New Object",
+        objects: []
+    };
     
-    if (!scene3DController) {
-        console.warn("Scene3D not available, opening 3D viewer first");
-        open3DViewer().then(() => {
-            // Retry after initialization
-            setTimeout(() => loadObjectIntoViewer(objectData), 500);
-        });
-        return;
+    // Clear editor
+    if (window.editor3D) {
+        window.editor3D.clearScene();
     }
     
-    if (!scene3DController.scene) {
-        console.warn("Scene3D scene not ready, retrying in 1 second...");
-        setTimeout(() => loadObjectIntoViewer(objectData), 1000);
-        return;
-    }
-    
-    if (!window.ShapeForgeParser) {
-        console.error("❌ ShapeForgeParser not available");
-        return;
-    }
-    
-    try {
-        console.log("🎯 Attempting to parse object with ShapeForgeParser...");
-        
-        // Use ShapeForgeParser to load the object into the scene
-        const parser = new ShapeForgeParser(
-            scene3DController.scene, 
-            resourceManager, 
-            shaderEffectsManager
-        );
-        const result = parser.loadModelFromJson(objectData);
-        
-        console.log("📊 Parser result:", result);
-        
-        if (result) {
-            // Initialize ShapeForge models tracking if not exists
-            if (!scene3DController.shapeForgeModels) {
-                scene3DController.shapeForgeModels = new Map();
-            }
-            
-            // Clear previous objects (optional)
-            if (scene3DController.scene) {
-                console.log("🧹 Clearing previous ShapeForge objects...");
-                // Remove existing ShapeForge objects
-                const objectsToRemove = [];
-                scene3DController.scene.traverse((child) => {
-                    if (child.userData && child.userData.isShapeForgeObject) {
-                        objectsToRemove.push(child);
-                    }
-                });
-                objectsToRemove.forEach(obj => scene3DController.scene.remove(obj));
-                console.log(`🗑️ Removed ${objectsToRemove.length} previous objects`);
-                
-                // Clear previous parser tracking
-                scene3DController.shapeForgeModels.clear();
-                
-                // Track the parser for effect updates
-                scene3DController.shapeForgeModels.set('currentModel', {
-                    parser: parser,
-                    filename: objectData._filename || 'unknown',
-                    objectData: objectData
-                });
-                console.log("📝 Tracking parser for effect updates");
-                
-                // Handle result - could be single object or array
-                const objects = Array.isArray(result) ? result : [result];
-                console.log(`📦 Processing ${objects.length} objects...`);
-                
-                objects.forEach((obj, index) => {
-                    // Extract the actual Three.js mesh from ShapeForge object structure
-                    let mesh = null;
-                    
-                    if (obj && obj.mesh && obj.mesh.isObject3D) {
-                        // ShapeForge object with mesh property
-                        mesh = obj.mesh;
-                        console.log(`📦 Extracted mesh from ShapeForge object ${index + 1}:`, mesh);
-                    } else if (obj && obj.isObject3D) {
-                        // Direct Three.js object
-                        mesh = obj;
-                        console.log(`📦 Using direct Three.js object ${index + 1}:`, mesh);
-                    } else {
-                        console.warn(`⚠️ Object ${index + 1} has no valid mesh:`, obj);
-                        return; // Skip this object
-                    }
-                    
-                    if (mesh && mesh.isObject3D) {
-                        console.log(`➕ Adding object ${index + 1}/${objects.length} to scene:`, mesh);
-                        
-                        // Ensure userData exists and mark this object as a ShapeForge object
-                        if (!mesh.userData) {
-                            mesh.userData = {};
-                        }
-                        mesh.userData.isShapeForgeObject = true;
-                        
-                        // Make it visible
-                        mesh.visible = true;
-                        
-                        // Scale it up if it's too small to see
-                        if (mesh.scale.length() < 0.1) {
-                            mesh.scale.multiplyScalar(10);
-                            console.log("🔍 Scaled up small object");
-                        }
-                        
-                        // Add the object to the scene
-                        scene3DController.scene.add(mesh);
-                        
-                        console.log(`✅ Object ${index + 1} added. Position:`, mesh.position, "Scale:", mesh.scale);
-                    } else {
-                        console.warn(`⚠️ Object ${index + 1} mesh is not a valid Three.js object:`, mesh);
-                    }
-                });
-                
-                // Move camera to see the object better
-                if (scene3DController.camera) {
-                    scene3DController.camera.position.set(5, 3, 5);
-                    scene3DController.camera.lookAt(0, 0, 0);
-                    console.log("📷 Camera positioned to view object");
-                }
-                
-                // Add some basic lighting if missing
-                const ambientLight = scene3DController.scene.getObjectByName('ambientLight');
-                if (!ambientLight) {
-                    const ambient = new THREE.AmbientLight(0x404040, 1);
-                    ambient.name = 'ambientLight';
-                    scene3DController.scene.add(ambient);
-                    console.log("💡 Added ambient lighting");
-                }
-                
-                const directionalLight = scene3DController.scene.getObjectByName('directionalLight');
-                if (!directionalLight) {
-                    const light = new THREE.DirectionalLight(0xffffff, 1);
-                    light.position.set(10, 10, 5);
-                    light.name = 'directionalLight';
-                    scene3DController.scene.add(light);
-                    console.log("🔦 Added directional lighting");
-                }
-                
-                // Add a simple grid floor for reference
-                const existingGrid = scene3DController.scene.getObjectByName('referenceGrid');
-                if (!existingGrid) {
-                    const gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0xcccccc);
-                    gridHelper.name = 'referenceGrid';
-                    scene3DController.scene.add(gridHelper);
-                    console.log("📐 Added reference grid");
-                }
-                
-                console.log(`✅ Object "${objectData.name}" loaded into 3D viewer (${objects.length} meshes)`);
-                console.log("🎬 Current scene children count:", scene3DController.scene.children.length);
-            } else {
-                console.error("❌ Scene3D scene not ready");
-            }
-        } else {
-            console.error("❌ Failed to parse ShapeForge object - parser returned null/undefined");
-        }
-        
-    } catch (error) {
-        console.error("❌ Failed to load object into viewer:", error);
-        console.error("Stack trace:", error.stack);
-    }
+    console.log("📝 Created new object");
 }
 
 // Load object from file
