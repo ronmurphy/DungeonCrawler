@@ -83,6 +83,10 @@ class ThreeMapRenderer {
         this.statsEnabled = false;
         this.initStats();
         
+        // Shader Effects Manager for special tile effects
+        this.shaderEffects = null;
+        this.shaderEffectsEnabled = true;
+        
         // LOD (Level of Detail) and Frustum Culling system for performance
         this.lodEnabled = true;
         this.frustumCullingEnabled = true;
@@ -163,6 +167,16 @@ class ThreeMapRenderer {
             this.statsEnabled = !this.statsEnabled;
             this.stats.dom.style.display = this.statsEnabled ? 'block' : 'none';
             console.log(`📊 Performance stats ${this.statsEnabled ? 'enabled' : 'disabled'}`);
+        }
+    }
+    
+    // Initialize Shader Effects Manager
+    initShaderEffects() {
+        if (typeof ShaderEffectsManager !== 'undefined' && this.shaderEffectsEnabled) {
+            this.shaderEffects = new ShaderEffectsManager(this);
+            console.log('🎨 ShaderEffectsManager initialized');
+        } else {
+            console.warn('⚠️  ShaderEffectsManager not available or disabled');
         }
     }
     
@@ -372,6 +386,9 @@ class ThreeMapRenderer {
             timestamp: new Date().toISOString()
         });
         
+        // Initialize Shader Effects Manager for special tile effects
+        this.initShaderEffects();
+        
         // Start render loop
         this.startRenderLoop();
         
@@ -469,6 +486,7 @@ class ThreeMapRenderer {
             this.updateCameraMovement(delta);
             this.updateBillboards();
             this.updateBillboardScaling();
+            this.updateShaderEffects();
             this.renderer.render(this.scene, this.camera);
             
             // End performance monitoring
@@ -1730,7 +1748,19 @@ class ThreeMapRenderer {
         tileGroup.add(groundMesh);
         if (billboardMesh) {
             tileGroup.add(billboardMesh);
+            // Store tile type information in billboard for LOD system
+            if (billboardMesh.userData) {
+                billboardMesh.userData.tileType = tileName;
+            }
         }
+        
+        // Store tile information in the group
+        tileGroup.userData.tileType = tileName;
+        tileGroup.userData.tileCol = col;
+        tileGroup.userData.tileRow = row;
+        
+        // Apply shader effects for special tiles
+        this.applyTileShaderEffects(tileName, tileGroup, col, row);
         
         // Store tile metadata
         tileGroup.userData = {
@@ -2378,6 +2408,9 @@ class ThreeMapRenderer {
                 if (object.userData.currentLOD !== newLodLevel) {
                     console.log(`🔄 DYNAMIC LOD: ${object.userData.modelType} at tile (${object.userData.tileCol},${object.userData.tileRow}) changed from ${object.userData.currentLOD || 'initial'} → ${newLodLevel} (distance: ${distance.toFixed(1)})`);
                     this.applyDynamicLOD(object, newLodLevel);
+                    
+                    // 🎨 Update shader effects based on new LOD level
+                    this.updateShaderEffectsLOD(object, newLodLevel);
                 }
             }
         });
@@ -2827,6 +2860,237 @@ class ThreeMapRenderer {
         castleGroup.add(castleBillboard);
         
         return castleGroup;
+    }
+    
+    // ========================================
+    // SHADER EFFECTS SYSTEM
+    // ========================================
+    
+    /**
+     * Apply shader effects to special tile types
+     * @param {string} tileName - Type of tile (fire, water, skull, dragon)
+     * @param {THREE.Group} tileGroup - The tile group to apply effects to
+     * @param {number} col - Tile column
+     * @param {number} row - Tile row
+     */
+    applyTileShaderEffects(tileName, tileGroup, col, row) {
+        // 🔍 DEBUG: Always log what tiles we're checking
+        console.log(`🎨🎨🎨 SHADER CHECK: "${tileName}" at (${col}, ${row})`);
+        
+        // Skip if shader effects are disabled or not available
+        if (!this.shaderEffects || !this.shaderEffectsEnabled) {
+            console.log(`🎨❌ Shader effects disabled or unavailable - enabled: ${this.shaderEffectsEnabled}, manager: ${!!this.shaderEffects}`);
+            return;
+        }
+        
+        // Use existing LOD system for shader effects distance and quality
+        const distance = this.calculateTileDistance(col, row);
+        const lodLevel = this.getLODLevel(distance);
+        
+        console.log(`🎨📏 Tile "${tileName}" distance: ${distance.toFixed(1)}, LOD: ${lodLevel}`);
+        
+        // Respect frustum culling - no effects beyond cull distance
+        if (lodLevel === 'cull') {
+            console.log(`🎨🚫 Skipping shader effects - beyond cull distance`);
+            return; // Beyond frustum culling distance
+        }
+        
+        // No effects at 'far' LOD level for performance
+        if (lodLevel === 'far') {
+            console.log(`🎨🚫 Skipping shader effects - at far LOD level`);
+            return; // Too far for shader effects
+        }
+        
+        // Apply effects based on tile type
+        let effectType = null;
+        const lowerTileName = tileName.toLowerCase();
+        console.log(`🎨🔍 Looking for effects for tile: "${lowerTileName}"`);
+        
+        switch (lowerTileName) {
+            case 'fire':
+                effectType = 'fire';
+                break;
+            case 'water':
+                effectType = 'waterProp';
+                break;
+            case 'skull':
+                effectType = 'coldMagic';
+                break;
+            case 'dragon':
+                effectType = 'dragon';
+                break;
+            default:
+                console.log(`🎨⚪ No shader effect defined for tile type: "${lowerTileName}"`);
+                return; // No effect for this tile type
+        }
+        
+        console.log(`🎨✅ APPLYING ${effectType} effect to ${tileName} tile at (${col}, ${row})!`);
+        
+        try {
+            // Create a dummy object at tile position for the effect system
+            const effectTarget = new THREE.Object3D();
+            effectTarget.position.set(col, 0, row);
+            
+            // Determine shader quality based on LOD level
+            let shaderQuality = 'low';
+            if (lodLevel === 'close') {
+                shaderQuality = this.isMobile ? 'low' : 'medium';
+            } else if (lodLevel === 'medium') {
+                shaderQuality = 'low';
+            }
+            
+            // Apply the effect with LOD-appropriate quality
+            console.log(`🎨⚙️ Attempting to apply ${effectType} effect with quality: ${shaderQuality}`);
+            const effectData = this.shaderEffects.applyEffect(effectTarget, effectType, shaderQuality);
+            
+            if (effectData) {
+                // Store effect reference for cleanup
+                tileGroup.userData.shaderEffect = effectData;
+                console.log(`🎨🎉 SUCCESS! Applied ${effectType} effect to ${tileName} tile at (${col}, ${row})`);
+            } else {
+                console.log(`🎨❌ FAILED! Effect creation returned null/false for ${effectType}`);
+            }
+        } catch (error) {
+            console.warn(`⚠️  Failed to apply ${effectType} effect:`, error);
+        }
+    }
+    
+    /**
+     * Update shader effects based on LOD level changes
+     * @param {THREE.Object3D} object - The tile object
+     * @param {string} newLodLevel - New LOD level (close/medium/far/cull)
+     */
+    updateShaderEffectsLOD(object, newLodLevel) {
+        if (!this.shaderEffects || !this.shaderEffectsEnabled) {
+            return;
+        }
+        
+        const col = object.userData.tileCol;
+        const row = object.userData.tileRow;
+        const effectId = `tile_${col}_${row}`;
+        
+        // Get the tile group (parent of the object)
+        let tileGroup = object.parent;
+        while (tileGroup && !tileGroup.userData.shaderEffect) {
+            tileGroup = tileGroup.parent;
+        }
+        
+        // Handle effect based on LOD level
+        if (newLodLevel === 'cull' || newLodLevel === 'far') {
+            // Remove effects at far distances for performance
+            if (tileGroup && tileGroup.userData.shaderEffect) {
+                console.log(`🎨 Removing shader effect at tile (${col}, ${row}) - LOD: ${newLodLevel}`);
+                this.shaderEffects.removeEffect(tileGroup.userData.shaderEffect.originalObject.id);
+                tileGroup.userData.shaderEffect = null;
+            }
+        } else if (newLodLevel === 'close' || newLodLevel === 'medium') {
+            // Add effects at close/medium distances if not already present
+            if (!tileGroup || !tileGroup.userData.shaderEffect) {
+                // Need to determine tile type from object or scene data
+                const tileName = this.getTileNameFromObject(object);
+                if (tileName && this.isShaderEffectTile(tileName)) {
+                    console.log(`🎨 Adding shader effect to ${tileName} tile at (${col}, ${row}) - LOD: ${newLodLevel}`);
+                    
+                    // Apply the effect with appropriate quality
+                    const quality = newLodLevel === 'close' ? (this.isMobile ? 'low' : 'medium') : 'low';
+                    this.applyTileShaderEffectsToExisting(tileName, tileGroup || object, col, row, quality);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Get tile name from object userData
+     */
+    getTileNameFromObject(object) {
+        // Check object's userData for tile type information
+        if (object.userData.tileType) {
+            return object.userData.tileType;
+        }
+        if (object.userData.modelType) {
+            return object.userData.modelType;
+        }
+        // Could also check parent or scene data here
+        return null;
+    }
+    
+    /**
+     * Check if tile type should have shader effects
+     */
+    isShaderEffectTile(tileName) {
+        const effectTiles = ['fire', 'water', 'skull', 'dragon'];
+        return effectTiles.includes(tileName.toLowerCase());
+    }
+    
+    /**
+     * Apply shader effects to existing tile (for dynamic LOD updates)
+     */
+    applyTileShaderEffectsToExisting(tileName, tileGroup, col, row, quality = 'low') {
+        if (!this.shaderEffects || !this.shaderEffectsEnabled) {
+            return;
+        }
+        
+        let effectType = null;
+        switch (tileName.toLowerCase()) {
+            case 'fire':
+                effectType = 'fire';
+                break;
+            case 'water':
+                effectType = 'waterProp';
+                break;
+            case 'skull':
+                effectType = 'coldMagic';
+                break;
+            case 'dragon':
+                effectType = 'dragon';
+                break;
+            default:
+                return;
+        }
+        
+        try {
+            const effectTarget = new THREE.Object3D();
+            effectTarget.position.set(col, 0, row);
+            
+            const effectData = this.shaderEffects.applyEffect(effectTarget, effectType, quality);
+            
+            if (effectData && tileGroup) {
+                tileGroup.userData.shaderEffect = effectData;
+                console.log(`🎨 Applied ${effectType} effect (${quality}) to ${tileName} tile at (${col}, ${row})`);
+            }
+        } catch (error) {
+            console.warn(`⚠️  Failed to apply ${effectType} effect:`, error);
+        }
+    }
+    
+    /**
+     * Update shader effects animation
+     */
+    updateShaderEffects() {
+        if (this.shaderEffects && this.shaderEffects.enabled) {
+            // Update effects with current time
+            const time = performance.now() * 0.001;
+            
+            // Update all active effects
+            this.shaderEffects.effects.forEach((effectData) => {
+                if (effectData.animationData) {
+                    effectData.animationData.time = time;
+                    
+                    // Update dragon aura rotation and shader uniforms
+                    if (effectData.type === 'dragon' && effectData.dragonAura) {
+                        effectData.dragonAura.rotation.z = time * 0.5;
+                        if (effectData.dragonAura.material.uniforms) {
+                            effectData.dragonAura.material.uniforms.time.value = time;
+                        }
+                    }
+                    
+                    // Update water shader uniforms
+                    if (effectData.type === 'waterProp' && effectData.mesh && effectData.mesh.material.uniforms) {
+                        effectData.mesh.material.uniforms.time.value = time;
+                    }
+                }
+            });
+        }
     }
 }
 
