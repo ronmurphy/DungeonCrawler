@@ -4,6 +4,12 @@
  */
 class PlayerMapViewer {
     constructor(containerId, canvasId) {
+        // 🔍 DEBUG: Track when PlayerMapViewer instances are created
+        console.log('🏗️ NEW PlayerMapViewer instance created');
+        console.log('📍 Container ID:', containerId, 'Canvas ID:', canvasId);
+        console.log('⏰ Timestamp:', new Date().toISOString());
+        console.log('📍 Call stack trace:', new Error().stack.split('\n').slice(1, 4).join('\n'));
+        
         this.containerId = containerId;
         this.canvasId = canvasId;
         
@@ -93,16 +99,16 @@ class PlayerMapViewer {
             updateViewerTransform();
         });
 
-        // Mouse pan
-        container.addEventListener('mousedown', (e) => {
-            if (e.button === 2 || e.button === 1) { // Right or middle mouse button
-                this.isPanning = true;
-                this.lastMouseX = e.clientX;
-                this.lastMouseY = e.clientY;
-                container.style.cursor = 'grabbing';
-                e.preventDefault();
-            }
-        });
+        // Mouse pan - COMPLETELY DISABLED per user request
+        // container.addEventListener('mousedown', (e) => {
+        //     if (e.button === 2 || e.button === 1) { // Right or middle mouse button
+        //         this.isPanning = true;
+        //         this.lastMouseX = e.clientX;
+        //         this.lastMouseY = e.clientY;
+        //         container.style.cursor = 'grabbing';
+        //         e.preventDefault();
+        //     }
+        // });
 
         container.addEventListener('mousemove', (e) => {
             if (this.isPanning) {
@@ -190,6 +196,9 @@ class PlayerMapViewer {
 
         // Disable context menu for right-click panning
         container.addEventListener('contextmenu', (e) => {
+            // 🔍 DEBUG: Track when right-click context menu is disabled
+            console.log('🖱️ RIGHT-CLICK context menu disabled for 2D canvas');
+            console.log('⏰ Timestamp:', new Date().toISOString());
             e.preventDefault();
         });
         

@@ -5,6 +5,12 @@
 
 class ThreeMapRenderer {
     constructor(containerId, mapData = null) {
+        // 🔍 DEBUG: Track when new ThreeMapRenderer instances are created
+        console.log('🏗️ NEW ThreeMapRenderer instance created');
+        console.log('📍 Container ID:', containerId);
+        console.log('📊 Map data provided:', !!mapData);
+        console.log('⏰ Timestamp:', new Date().toISOString());
+        
         this.containerId = containerId;
         this.container = document.getElementById(containerId);
         
@@ -119,6 +125,12 @@ class ThreeMapRenderer {
             console.error('❌ ThreeMapRenderer: Container not found:', this.containerId);
             return;
         }
+
+        // 🔍 DEBUG: Track when init() is called to catch unexpected re-initializations
+        const initStack = new Error().stack;
+        console.log('🎮 ThreeMapRenderer.init() called');
+        console.log('📍 Call stack trace:', initStack.split('\n').slice(1, 4).join('\n'));
+        console.log('⏰ Timestamp:', new Date().toISOString());
         
         console.log('🎮 Initializing ThreeMapRenderer in container:', this.containerId);
         
@@ -1084,6 +1096,16 @@ class ThreeMapRenderer {
     
     // Main method to load new map data from transmission
     loadMapData(mapData) {
+        // 🔍 DEBUG: Track map data loading to catch unexpected reloads
+        console.log('🗺️ ThreeMapRenderer.loadMapData called');
+        console.log('📊 Data provided:', !!mapData);
+        console.log('🔄 Current mapData exists:', !!this.mapData);
+        console.log('⏰ Timestamp:', new Date().toISOString());
+        if (mapData) {
+            console.log('📏 Map dimensions:', mapData.width, 'x', mapData.height);
+            console.log('🎨 Tileset:', mapData.tileset);
+        }
+        
         console.log('🗺️ ThreeMapRenderer.loadMapData called with:', mapData);
         console.log('🔍 Map data details:', {
             hasWidth: !!mapData.width,
@@ -1314,6 +1336,12 @@ class ThreeMapRenderer {
     }
     
     clearTiles() {
+        // 🔍 DEBUG: Track when tiles get cleared (causing "brand new" rendering)
+        console.log('🧹 ThreeMapRenderer.clearTiles() called - THIS CAUSES FULL RE-RENDER');
+        console.log('📊 Current tiles count:', this.currentTiles.length);
+        console.log('📍 Call stack trace:', new Error().stack.split('\n').slice(1, 5).join('\n'));
+        console.log('⏰ Timestamp:', new Date().toISOString());
+        
         // Remove existing tile meshes from scene and dispose resources
         this.currentTiles.forEach(tile => {
             this.scene.remove(tile);

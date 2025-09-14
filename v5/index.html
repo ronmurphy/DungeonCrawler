@@ -3623,6 +3623,105 @@
             }
         };
 
+        // ========================================
+        // MAP STORAGE HELPERS
+        // ========================================
+        
+        // Store map data in localStorage with error handling
+        window.storeMapDataPersistent = function(mapData, source = 'unknown') {
+            if (!mapData) {
+                console.warn('⚠️ Attempted to store null/undefined map data');
+                return false;
+            }
+            
+            try {
+                const mapDataString = JSON.stringify(mapData);
+                const sizeKB = Math.round(mapDataString.length / 1024);
+                
+                localStorage.setItem('dungeonCrawler_mapData', mapDataString);
+                localStorage.setItem('dungeonCrawler_mapData_timestamp', Date.now().toString());
+                localStorage.setItem('dungeonCrawler_mapData_source', source);
+                
+                console.log(`💾 Map data stored to localStorage (${sizeKB}KB) from: ${source}`);
+                return true;
+            } catch (error) {
+                console.error('❌ Failed to store map data to localStorage:', error);
+                // Try to clear localStorage if quota exceeded
+                if (error.name === 'QuotaExceededError') {
+                    console.log('🧹 Clearing old map data due to quota exceeded');
+                    window.clearStoredMapData();
+                }
+                return false;
+            }
+        };
+        
+        // Retrieve map data from localStorage
+        window.getStoredMapData = function() {
+            try {
+                const mapDataString = localStorage.getItem('dungeonCrawler_mapData');
+                const timestamp = localStorage.getItem('dungeonCrawler_mapData_timestamp');
+                const source = localStorage.getItem('dungeonCrawler_mapData_source') || 'unknown';
+                
+                if (!mapDataString) {
+                    console.log('📦 No stored map data found in localStorage');
+                    return null;
+                }
+                
+                const mapData = JSON.parse(mapDataString);
+                const age = timestamp ? Math.round((Date.now() - parseInt(timestamp)) / 1000) : 'unknown';
+                const sizeKB = Math.round(mapDataString.length / 1024);
+                
+                console.log(`📦 Retrieved stored map data (${sizeKB}KB, ${age}s old) from: ${source}`);
+                return mapData;
+            } catch (error) {
+                console.error('❌ Failed to retrieve stored map data:', error);
+                return null;
+            }
+        };
+        
+        // Clear stored map data
+        window.clearStoredMapData = function() {
+            try {
+                localStorage.removeItem('dungeonCrawler_mapData');
+                localStorage.removeItem('dungeonCrawler_mapData_timestamp');
+                localStorage.removeItem('dungeonCrawler_mapData_source');
+                console.log('🧹 Cleared stored map data from localStorage');
+            } catch (error) {
+                console.error('❌ Failed to clear stored map data:', error);
+            }
+        };
+        
+        // Get best available map data (memory first, then localStorage)
+        window.getBestAvailableMapData = function() {
+            // Priority 1: Current memory data
+            if (window.latestMapData) {
+                console.log('🎯 Using map data from memory (window.latestMapData)');
+                return { data: window.latestMapData, source: 'memory' };
+            }
+            
+            // Priority 2: ThreeMapRenderer cached data
+            if (window.threeMapRenderer?.mapData) {
+                console.log('🎯 Using map data from ThreeMapRenderer cache');
+                return { data: window.threeMapRenderer.mapData, source: 'renderer_cache' };
+            }
+            
+            // Priority 3: mapSyncAdapter data
+            if (window.mapSyncAdapter?.mapClientManager?.mapViewer?.currentMapData) {
+                console.log('🎯 Using map data from mapSyncAdapter');
+                return { data: window.mapSyncAdapter.mapClientManager.mapViewer.currentMapData, source: 'map_sync_adapter' };
+            }
+            
+            // Priority 4: localStorage fallback
+            const storedData = window.getStoredMapData();
+            if (storedData) {
+                console.log('🎯 Using map data from localStorage (fallback)');
+                return { data: storedData, source: 'localStorage' };
+            }
+            
+            console.warn('⚠️ No map data available from any source');
+            return null;
+        };
+
         // Toggle map overlay visibility
         window.toggleMapDisplay = function() {
             const overlay = document.getElementById('map-overlay');
@@ -3632,10 +3731,30 @@
                     hideMapOverlay();
                 } else {
                     console.log('🗺️ Toggling map ON');
-                    // Only show map if we have map data, otherwise open maps view
-                    if (window.mapsManager && window.mapsManager.savedMaps.size > 0) {
+                    
+                    // Try to get best available map data
+                    const mapResult = window.getBestAvailableMapData();
+                    
+                    if (mapResult) {
+                        console.log(`🗺️ Found map data from: ${mapResult.source}`);
+                        
+                        // Ensure the data is loaded in all systems before showing overlay
+                        if (!window.latestMapData && mapResult.data) {
+                            console.log('🔄 Loading map data into memory...');
+                            window.latestMapData = mapResult.data;
+                        }
+                        
+                        // Ensure 3D renderer has the data
+                        if (window.threeMapRenderer && mapResult.data) {
+                            if (!window.threeMapRenderer.mapData) {
+                                console.log('🔄 Loading map data into 3D renderer...');
+                                window.threeMapRenderer.loadMapData(mapResult.data);
+                            }
+                        }
+                        
                         showMapOverlay();
                     } else {
+                        console.log('🗺️ No map data available, opening maps view');
                         openMapsView();
                     }
                 }
@@ -3766,6 +3885,13 @@
             } else if (window.mapSyncAdapter?.currentMapData) {
                 mapData = window.mapSyncAdapter.currentMapData;
                 dataSource = 'mapSyncAdapter.currentMapData';
+            } else {
+                // Check localStorage as last resort
+                const storedData = window.getStoredMapData();
+                if (storedData) {
+                    mapData = storedData;
+                    dataSource = 'localStorage (persistent storage)';
+                }
             }
             
             if (!mapData) {
@@ -3780,6 +3906,19 @@
                 debugInfo += `• mapSyncAdapter.mapClientManager: ${window.mapSyncAdapter?.mapClientManager ? '✅ Available' : '❌ Not set'}<br>`;
                 debugInfo += `• mapClientManager.mapViewer: ${window.mapSyncAdapter?.mapClientManager?.mapViewer ? '✅ Available' : '❌ Not set'}<br>`;
                 debugInfo += `• mapViewer.currentMapData: ${window.mapSyncAdapter?.mapClientManager?.mapViewer?.currentMapData ? '✅ Available' : '❌ Not set'}<br>`;
+                
+                // Check localStorage status
+                const storedData = window.getStoredMapData();
+                debugInfo += `• localStorage mapData: ${storedData ? '✅ Available' : '❌ Not set'}<br>`;
+                
+                if (storedData) {
+                    const timestamp = localStorage.getItem('dungeonCrawler_mapData_timestamp');
+                    const source = localStorage.getItem('dungeonCrawler_mapData_source') || 'unknown';
+                    const age = timestamp ? Math.round((Date.now() - parseInt(timestamp)) / 1000) : 'unknown';
+                    const sizeKB = Math.round(JSON.stringify(storedData).length / 1024);
+                    debugInfo += `  └─ Source: ${source}, Age: ${age}s, Size: ${sizeKB}KB<br>`;
+                }
+                
                 debugInfo += '</div>';
                 content.innerHTML = debugInfo;
             } else {
@@ -3811,6 +3950,9 @@
                 mapData = window.mapSyncAdapter.mapClientManager.mapViewer.currentMapData;
             } else if (window.mapSyncAdapter?.currentMapData) {
                 mapData = window.mapSyncAdapter.currentMapData;
+            } else {
+                // Check localStorage as fallback
+                mapData = window.getStoredMapData();
             }
             
             if (!mapData) {
@@ -3863,6 +4005,48 @@
                 button.style.background = debugEnabled ? '#ff6b35' : '#666';
             }
         });
+
+        // ========================================
+        // PERSISTENT MAP STORAGE DEBUG FUNCTIONS
+        // ========================================
+        
+        // Debug: Check localStorage map data status
+        window.debugStoredMapData = function() {
+            console.log('🔍 localStorage Map Data Debug:');
+            const storedData = window.getStoredMapData();
+            if (storedData) {
+                const timestamp = localStorage.getItem('dungeonCrawler_mapData_timestamp');
+                const source = localStorage.getItem('dungeonCrawler_mapData_source') || 'unknown';
+                const age = timestamp ? Math.round((Date.now() - parseInt(timestamp)) / 1000) : 'unknown';
+                const sizeKB = Math.round(JSON.stringify(storedData).length / 1024);
+                
+                console.log(`✅ Stored map data found:`);
+                console.log(`   Source: ${source}`);
+                console.log(`   Age: ${age} seconds`);
+                console.log(`   Size: ${sizeKB}KB`);
+                console.log(`   Grid size: ${storedData.height || 'unknown'} x ${storedData.width || 'unknown'}`);
+                console.log(`   Tileset: ${storedData.tileset || 'unknown'}`);
+            } else {
+                console.log('❌ No stored map data found');
+            }
+        };
+        
+        // Debug: Force store current map data
+        window.forceStoreMapData = function() {
+            const mapResult = window.getBestAvailableMapData();
+            if (mapResult) {
+                const success = window.storeMapDataPersistent(mapResult.data, `manual_${mapResult.source}`);
+                console.log(success ? '✅ Map data stored successfully' : '❌ Failed to store map data');
+            } else {
+                console.log('❌ No map data available to store');
+            }
+        };
+        
+        // Debug: Clear stored map data
+        window.clearStoredMapDataDebug = function() {
+            window.clearStoredMapData();
+            console.log('🧹 Stored map data cleared');
+        };
         
         function formatMapDataForDebug(mapData) {
             let html = '<div style="color: #00ffff;">📊 Map Data Structure:</div><br>';
@@ -6303,6 +6487,9 @@
                                         // Store latest map data globally
                                         window.latestMapData = mapData;
                                         
+                                        // Store map data persistently for survival across refreshes
+                                        window.storeMapDataPersistent(mapData, 'supabase_auto_retrieval');
+                                        
                                         // Update 3D renderer if available
                                         if (window.threeMapRenderer) {
                                             console.log('🎮 Updating ThreeMapRenderer with new data');
@@ -6789,6 +6976,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     } else {
         console.warn('⚠️ initializeCommandInterceptor function not found');
+    }
+    
+    // Initialize persistent map data storage system
+    console.log('🗺️ Initializing persistent map storage system...');
+    try {
+        // Check if we have stored map data from previous session
+        const storedMapData = window.getStoredMapData();
+        if (storedMapData) {
+            // Load stored data into memory for immediate use
+            console.log('🔄 Loading stored map data into memory for quick access');
+            window.latestMapData = storedMapData;
+            
+            // If 3D renderer gets initialized later, it will pick this up
+            console.log('✅ Persistent map data ready for use');
+        } else {
+            console.log('📭 No persistent map data found - will store when received');
+        }
+    } catch (error) {
+        console.error('❌ Failed to initialize persistent map storage:', error);
     }
     
     // Initialize minimap canvas sizing

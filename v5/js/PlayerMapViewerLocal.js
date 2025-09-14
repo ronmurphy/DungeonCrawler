@@ -93,16 +93,16 @@ class PlayerMapViewerLocal {
             updateViewerTransform();
         });
 
-        // Mouse pan
-        container.addEventListener('mousedown', (e) => {
-            if (e.button === 2 || e.button === 1) { // Right or middle mouse button
-                this.isPanning = true;
-                this.lastMouseX = e.clientX;
-                this.lastMouseY = e.clientY;
-                container.style.cursor = 'grabbing';
-                e.preventDefault();
-            }
-        });
+        // Mouse pan - COMPLETELY DISABLED per user request
+        // container.addEventListener('mousedown', (e) => {
+        //     if (e.button === 2 || e.button === 1) { // Right or middle mouse button  
+        //         this.isPanning = true;
+        //         this.lastMouseX = e.clientX;
+        //         this.lastMouseY = e.clientY;
+        //         container.style.cursor = 'grabbing';
+        //         e.preventDefault();
+        //     }
+        // });
 
         container.addEventListener('mousemove', (e) => {
             if (this.isPanning) {

@@ -98,6 +98,12 @@ class MapClientManager {
 
     // Initialize PlayerMapViewer once DOM elements are available
     initializeViewer() {
+        // 🔍 DEBUG: Track when PlayerMapViewer gets reinitialized  
+        console.log('🔄 MapClientManager.initializeViewer() called');
+        console.log('📍 Call stack trace:', new Error().stack.split('\n').slice(1, 4).join('\n'));
+        console.log('⏰ Timestamp:', new Date().toISOString());
+        console.log('🖥️ Current mapViewer exists:', !!this.mapViewer);
+        
         console.log('🔧 Attempting to initialize PlayerMapViewer...');
         try {
             // Check if required elements exist
