@@ -72,6 +72,32 @@ class ThreeMapRenderer {
         this.grassDensityMultiplier = this.isMobile ? 0.25 : 1.0; // Reduce grass density on mobile
         this.renderDistance = this.isMobile ? 50 : 100; // Shorter render distance on mobile
         
+        // Initialize ShapeForge model cache for performance optimization
+        // This prevents re-loading and re-creating the same models hundreds of times
+        this.shapeforgeCache = new Map();           // Stores parsed JSON data
+        this.shapeforgeGeometryCache = new Map();   // Stores created ThreeJS geometry groups
+        this.shapeforgeLoadingPromises = new Map(); // Prevents duplicate network requests
+        
+        // LOD (Level of Detail) and Frustum Culling system for performance
+        this.lodEnabled = true;
+        this.frustumCullingEnabled = true;
+        this.lodDistances = {
+            close: 30,    // Full detail within 30 units
+            medium: 80,   // Simplified detail 30-80 units  
+            far: 150      // Simple shapes 80-150 units, beyond = culled
+        };
+        
+        // Track tiles for LOD updates
+        this.activeTiles = new Map(); // Map of tile coordinates to tile objects
+        this.lodUpdateCounter = 0;    // Throttle LOD updates
+        
+        // Performance monitoring for LOD system
+        this.lodStats = {
+            tilesRendered: 0,
+            tilesCulled: 0,
+            lodBreakdown: { close: 0, medium: 0, far: 0, culled: 0 }
+        };
+        
         this.cameraControls = {
             moveSpeed: 8.0, // Base movement speed (similar to dungeon game)
             rotateSpeed: 0.002,
@@ -1422,6 +1448,9 @@ class ThreeMapRenderer {
     renderGrid(grid) {
         console.log('🎨 Rendering grid:', grid.length, 'x', grid[0]?.length || 0);
         
+        // Reset LOD stats for new grid rendering
+        this.resetLODStats();
+        
         const rows = grid.length;
         const cols = grid[0]?.length || 0;
         
@@ -1454,6 +1483,11 @@ class ThreeMapRenderer {
         }
         
         console.log('✅ Rendered', this.currentTiles.length, 'tiles');
+        
+        // Log LOD performance stats after rendering
+        setTimeout(() => {
+            this.logLODStats();
+        }, 3000); // Wait 3 seconds for async ShapeForge loading to complete
         
         // Initialize player position and camera for first-person view
         this.initializePlayerPosition(cols, rows);
@@ -1615,13 +1649,13 @@ class ThreeMapRenderer {
             // Create billboard sprites for trees, mountains, buildings, etc.
             if (tileName === 'grass') {
                 // Create multiple small grass sprites scattered across the tile
-                billboardMesh = this.loadShapeForgeFile(spriteData, tileName);
+                billboardMesh = this.loadShapeForgeFile(spriteData, tileName, col, row);
             } else if (tileName === 'mountain') {
                 // Use ShapeForge mountains instead of billboard sprites
-                billboardMesh = this.loadShapeForgeFile(spriteData, tileName);
+                billboardMesh = this.loadShapeForgeFile(spriteData, tileName, col, row);
             } else if (tileName === 'castle') {
                 // Use ShapeForge mountains instead of billboard sprites
-                billboardMesh = this.loadShapeForgeFile(spriteData, tileName);
+                billboardMesh = this.loadShapeForgeFile(spriteData, tileName, col, row);
             } else {
                 billboardMesh = this.createBillboardSprite(spriteData, tileName);
             }
@@ -1631,13 +1665,13 @@ class ThreeMapRenderer {
         } else {
             // Create simple colored elements for tiles without sprites
             if (tileName === 'grass') {
-                billboardMesh = this.loadShapeForgeFile(null, tileName);
+                billboardMesh = this.loadShapeForgeFile(null, tileName, col, row);
             } else if (tileName === 'mountain') {
                 // Use ShapeForge mountains even without sprite data
-                billboardMesh = this.loadShapeForgeFile(null, tileName);
+                billboardMesh = this.loadShapeForgeFile(null, tileName, col, row);
             } else if (tileName === 'castle') {
                 // Use ShapeForge mountains instead of billboard sprites
-                billboardMesh = this.loadShapeForgeFile(spriteData, tileName);
+                billboardMesh = this.loadShapeForgeFile(spriteData, tileName, col, row);
             } else if (!shouldBeFlat) {
                 billboardMesh = this.createColorBillboard(tileName);
             }
@@ -1771,23 +1805,63 @@ class ThreeMapRenderer {
 
     // Originally named createGrassField, made by Claude
     // Load ShapeForge models or create billboard sprites based on tile type
-    loadShapeForgeFile(spriteData, tileName) {
+    loadShapeForgeFile(spriteData, tileName, tileCol = 0, tileRow = 0) {
         console.log('🔍 loadShapeForgeFile called with tileName:', tileName);
+        
+        // Check if tile should be culled (too far away)
+        if (this.shouldCullTile(tileCol, tileRow)) {
+            console.log(`🚫 Culling tile at ${tileCol},${tileRow} - too far away`);
+            return new THREE.Group(); // Return empty group
+        }
         
         // Check if we should use ShapeForge models for grass
         if (tileName === 'grass') {
-            return this.loadSfGrass();
+            // Return a placeholder group immediately, load actual model asynchronously
+            const placeholderGroup = new THREE.Group();
+            this.loadSfGrass(tileCol, tileRow).then(grassGroup => {
+                if (grassGroup && placeholderGroup.parent) {
+                    // Copy children from loaded group to placeholder
+                    while (grassGroup.children.length > 0) {
+                        placeholderGroup.add(grassGroup.children[0]);
+                    }
+                }
+            }).catch(error => {
+                console.warn('Failed to load cached grass:', error);
+            });
+            return placeholderGroup;
         }
         
         // Check if we should use ShapeForge models for mountains
         if (tileName === 'mountain') {
             console.log('🏔️ Mountain Should Be Here - shapeforge');
-            return this.loadSfMountain();
+            const placeholderGroup = new THREE.Group();
+            this.loadSfMountain(tileCol, tileRow).then(mountainGroup => {
+                if (mountainGroup && placeholderGroup.parent) {
+                    // Copy children from loaded group to placeholder
+                    while (mountainGroup.children.length > 0) {
+                        placeholderGroup.add(mountainGroup.children[0]);
+                    }
+                }
+            }).catch(error => {
+                console.warn('Failed to load cached mountain:', error);
+            });
+            return placeholderGroup;
         }
 
         if (tileName === 'castle') {
             console.log('🏰 Castle Should Be Here - shapeforge');
-            return this.loadSfCastle();
+            const placeholderGroup = new THREE.Group();
+            this.loadSfCastle(tileCol, tileRow).then(castleGroup => {
+                if (castleGroup && placeholderGroup.parent) {
+                    // Copy children from loaded group to placeholder
+                    while (castleGroup.children.length > 0) {
+                        placeholderGroup.add(castleGroup.children[0]);
+                    }
+                }
+            }).catch(error => {
+                console.warn('Failed to load cached castle:', error);
+            });
+            return placeholderGroup;
         }
         
         const grassGroup = new THREE.Group();
@@ -1949,120 +2023,538 @@ class ThreeMapRenderer {
     // SHAPEFORGE INTEGRATION
     // ========================================
     
-    // Load ShapeForge grass model instead of billboard sprites
-    loadSfGrass() {
-        const grassGroup = new THREE.Group();
+    // Cached loading method for ShapeForge models - prevents duplicate network requests and geometry creation
+    // Now supports LOD (Level of Detail) for performance scaling
+    async loadShapeForgeModelCached(modelName, lodLevel = 'close') {
+        const cacheKey = `${modelName}_${lodLevel}`;
+        console.log(`🔄 Loading cached ShapeForge model: ${modelName} (LOD: ${lodLevel})`);
         
-        // Load the grass.shapeforge.json file
-        fetch('assets/shapeforge/grass.shapeforge.json')
-            .then(response => response.json())
-            .then(shapeforgeData => {
-                
-                // Create 2-4 grass patches per tile for variety
-                const patchCount = 2 + Math.floor(Math.random() * 3);
-                
-                for (let i = 0; i < patchCount; i++) {
-                    const grassMesh = this.createShapeForgeModel(shapeforgeData);
-                    if (grassMesh) {
-                        // Random position within tile bounds
-                        const randomX = (Math.random() - 0.5) * this.tileSize * 0.7;
-                        const randomZ = (Math.random() - 0.5) * this.tileSize * 0.7;
-                        
-                        // Random scale variation (0.8x to 1.2x)
-                        const scale = 0.8 + Math.random() * 0.4;
-                        
-                        // Random rotation for variety
-                        const rotation = Math.random() * Math.PI * 2;
-                        
-                        grassMesh.position.set(randomX, 0, randomZ);
-                        grassMesh.scale.setScalar(scale);
-                        grassMesh.rotation.y = rotation;
-                        
-                        grassGroup.add(grassMesh);
-                    }
+        // Check if we already have this model at this LOD level in cache
+        if (this.shapeforgeGeometryCache.has(cacheKey)) {
+            console.log(`✅ Using cached geometry for ${modelName} LOD:${lodLevel} (MAJOR PERFORMANCE BOOST!)`);
+            return this.cloneShapeForgeModel(this.shapeforgeGeometryCache.get(cacheKey));
+        }
+        
+        // Check if we're already loading this model to prevent duplicate requests
+        const loadingKey = `${modelName}_loading`;
+        if (this.shapeforgeLoadingPromises.has(loadingKey)) {
+            console.log(`⏳ Waiting for existing ${modelName} load to complete`);
+            const shapeforgeData = await this.shapeforgeLoadingPromises.get(loadingKey);
+            const modelGroup = this.createShapeForgeModelWithLOD(shapeforgeData, lodLevel);
+            if (modelGroup) {
+                this.shapeforgeGeometryCache.set(cacheKey, modelGroup);
+                return this.cloneShapeForgeModel(modelGroup);
+            }
+            return null;
+        }
+        
+        // Start new loading process (only load JSON once, create multiple LOD levels)
+        console.log(`🌐 Fetching ${modelName}.shapeforge.json from network (FIRST TIME ONLY)`);
+        const loadingPromise = fetch(`assets/shapeforge/${modelName}.shapeforge.json`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
+                return response.json();
+            })
+            .then(shapeforgeData => {
+                console.log(`📦 Parsed JSON data for ${modelName}:`, shapeforgeData);
+                this.shapeforgeCache.set(modelName, shapeforgeData);
+                return shapeforgeData;
             })
             .catch(error => {
-                console.warn('⚠️ Failed to load ShapeForge grass, falling back to billboard:', error);
-                // Fallback to original billboard method
-                return this.createGrassFieldFallback();
+                console.error(`❌ Failed to load ${modelName}:`, error);
+                throw error;
+            })
+            .finally(() => {
+                // Clean up the loading promise once complete
+                this.shapeforgeLoadingPromises.delete(loadingKey);
             });
+        
+        // Store the promise to prevent duplicate requests
+        this.shapeforgeLoadingPromises.set(loadingKey, loadingPromise);
+        
+        try {
+            const shapeforgeData = await loadingPromise;
+            
+            // Create the model at the requested LOD level and cache it
+            const modelGroup = this.createShapeForgeModelWithLOD(shapeforgeData, lodLevel);
+            if (modelGroup) {
+                console.log(`🎯 Caching LOD:${lodLevel} geometry for ${modelName} - future instances will be INSTANT`);
+                this.shapeforgeGeometryCache.set(cacheKey, modelGroup);
+                
+                // Return a clone for use
+                return this.cloneShapeForgeModel(modelGroup);
+            }
+            return null;
+        } catch (error) {
+            console.warn(`⚠️ Failed to load ShapeForge model ${modelName}:`, error);
+            return null;
+        }
+    }
+    
+    // Create ShapeForge model with different levels of detail for performance optimization
+    createShapeForgeModelWithLOD(shapeforgeData, lodLevel = 'close') {
+        if (!shapeforgeData.objects || shapeforgeData.objects.length === 0) {
+            console.warn('⚠️ No objects found in ShapeForge data');
+            return null;
+        }
+        
+        // Handle different LOD levels
+        switch (lodLevel) {
+            case 'close':
+                // Full detail - use original method
+                return this.createShapeForgeModel(shapeforgeData);
+                
+            case 'medium':
+                // Reduced detail - simplify geometry, fewer objects
+                return this.createShapeForgeModelMediumLOD(shapeforgeData);
+                
+            case 'far':
+                // Simple shapes - basic geometry only
+                return this.createShapeForgeModelFarLOD(shapeforgeData);
+                
+            default:
+                console.warn(`Unknown LOD level: ${lodLevel}, using close`);
+                return this.createShapeForgeModel(shapeforgeData);
+        }
+    }
+    
+    // Medium LOD: Reduced complexity but recognizable shapes
+    createShapeForgeModelMediumLOD(shapeforgeData) {
+        // Check for workspace size (v1.3 support)
+        let workspaceScale = 1.0;
+        if (shapeforgeData.workspaceSize) {
+            const maxWorkspaceDimension = Math.max(shapeforgeData.workspaceSize.x, shapeforgeData.workspaceSize.y, shapeforgeData.workspaceSize.z);
+            workspaceScale = this.tileSize / maxWorkspaceDimension;
+        }
+        
+        const modelGroup = new THREE.Group();
+        
+        // Only process half the objects for medium LOD (performance boost)
+        const objectsToProcess = shapeforgeData.objects.filter((obj, index) => index % 2 === 0);
+        
+        objectsToProcess.forEach(obj => {
+            let geometry;
+            
+            if (obj.geometryData && obj.geometryData.vertices) {
+                // Simplify complex geometry by reducing vertices
+                geometry = new THREE.BufferGeometry();
+                
+                // Use every other vertex for reduced detail
+                const originalVertices = obj.geometryData.vertices;
+                const simplifiedVertices = [];
+                for (let i = 0; i < originalVertices.length; i += 6) { // Skip every other vertex
+                    simplifiedVertices.push(originalVertices[i], originalVertices[i+1], originalVertices[i+2]);
+                }
+                
+                const vertices = new Float32Array(simplifiedVertices);
+                geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+                geometry.computeVertexNormals(); // Recompute normals for simplified geometry
+                
+            } else if (obj.type && obj.parameters) {
+                // Use simpler primitive shapes
+                switch (obj.type) {
+                    case 'cone':
+                        geometry = new THREE.ConeGeometry(
+                            obj.parameters.radius || 0.5,
+                            obj.parameters.height || 1,
+                            4 // Reduced segments for performance
+                        );
+                        break;
+                    case 'cube':
+                    case 'box':
+                        geometry = new THREE.BoxGeometry(
+                            obj.parameters.width || 1,
+                            obj.parameters.height || 1,
+                            obj.parameters.depth || 1
+                        );
+                        break;
+                    case 'sphere':
+                        geometry = new THREE.SphereGeometry(
+                            obj.parameters.radius || 0.5,
+                            8, // Reduced segments
+                            6  // Reduced segments
+                        );
+                        break;
+                    case 'cylinder':
+                        geometry = new THREE.CylinderGeometry(
+                            obj.parameters.radiusTop || 0.5,
+                            obj.parameters.radiusBottom || 0.5,
+                            obj.parameters.height || 1,
+                            6 // Reduced segments
+                        );
+                        break;
+                    default:
+                        geometry = new THREE.BoxGeometry(1, 1, 1);
+                }
+            }
+            
+            if (geometry) {
+                const material = new THREE.MeshLambertMaterial({
+                    color: obj.material?.color || 0x4a7c59,
+                    transparent: obj.material?.transparent || false,
+                    opacity: (obj.material?.opacity || 1.0) * 0.8, // Slightly more transparent
+                    side: THREE.DoubleSide
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                // Apply transforms with workspace scaling
+                if (obj.position) {
+                    mesh.position.set(
+                        obj.position.x * workspaceScale, 
+                        obj.position.y * workspaceScale, 
+                        obj.position.z * workspaceScale
+                    );
+                }
+                if (obj.rotation) {
+                    mesh.rotation.set(obj.rotation.x, obj.rotation.y, obj.rotation.z);
+                }
+                if (obj.scale) {
+                    mesh.scale.set(
+                        obj.scale.x * workspaceScale, 
+                        obj.scale.y * workspaceScale, 
+                        obj.scale.z * workspaceScale
+                    );
+                }
+                
+                modelGroup.add(mesh);
+            }
+        });
+        
+        return modelGroup;
+    }
+    
+    // Far LOD: Very simple shapes, basic colors
+    createShapeForgeModelFarLOD(shapeforgeData) {
+        const modelGroup = new THREE.Group();
+        
+        // For far LOD, create a single simple shape representing the entire model
+        let geometry;
+        let color = 0x888888; // Default gray
+        
+        // Determine model type and create appropriate simple shape
+        if (shapeforgeData.objects && shapeforgeData.objects.length > 0) {
+            const firstObj = shapeforgeData.objects[0];
+            color = firstObj.material?.color || 0x888888;
+            
+            // Create very simple representation
+            geometry = new THREE.BoxGeometry(1, 1, 1); // Simple box for everything at distance
+        } else {
+            geometry = new THREE.BoxGeometry(1, 1, 1);
+        }
+        
+        const material = new THREE.MeshBasicMaterial({ 
+            color: color,
+            transparent: true,
+            opacity: 0.6 // More transparent for distant objects
+        });
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        modelGroup.add(mesh);
+        
+        return modelGroup;
+    }
+    cloneShapeForgeModel(originalGroup) {
+        const clonedGroup = new THREE.Group();
+        
+        originalGroup.children.forEach(child => {
+            if (child.isMesh) {
+                // Clone the mesh with shared geometry but unique transforms
+                const clonedMesh = new THREE.Mesh(
+                    child.geometry, // Share the geometry (memory efficient)
+                    child.material.clone() // Clone material for independent properties
+                );
+                
+                // Copy transform properties
+                clonedMesh.position.copy(child.position);
+                clonedMesh.rotation.copy(child.rotation);
+                clonedMesh.scale.copy(child.scale);
+                
+                // Copy user data if needed
+                if (child.userData) {
+                    clonedMesh.userData = { ...child.userData };
+                }
+                
+                clonedGroup.add(clonedMesh);
+            } else if (child.isGroup) {
+                // Recursively clone groups
+                const clonedChild = this.cloneShapeForgeModel(child);
+                clonedGroup.add(clonedChild);
+            }
+        });
+        
+        return clonedGroup;
+    }
+    
+    // Calculate distance from camera to tile for LOD determination
+    calculateTileDistance(tileCol, tileRow) {
+        if (!this.camera) return 0;
+        
+        // Convert tile coordinates to world position
+        const tileWorldX = (tileCol - this.mapData.width / 2) * this.tileSize;
+        const tileWorldZ = (tileRow - this.mapData.height / 2) * this.tileSize;
+        
+        // Calculate distance from camera position
+        const cameraPos = this.camera.position;
+        const distance = Math.sqrt(
+            Math.pow(cameraPos.x - tileWorldX, 2) + 
+            Math.pow(cameraPos.z - tileWorldZ, 2)
+        );
+        
+        return distance;
+    }
+    
+    // Determine appropriate LOD level based on distance
+    getLODLevel(distance) {
+        if (!this.lodEnabled) return 'close';
+        
+        if (distance <= this.lodDistances.close) {
+            return 'close';
+        } else if (distance <= this.lodDistances.medium) {
+            return 'medium';
+        } else if (distance <= this.lodDistances.far) {
+            return 'far';
+        } else {
+            return 'culled'; // Too far away, don't render
+        }
+    }
+    
+    // Check if tile should be culled (not rendered) due to frustum or distance
+    shouldCullTile(tileCol, tileRow) {
+        if (!this.frustumCullingEnabled || !this.camera) return false;
+        
+        const distance = this.calculateTileDistance(tileCol, tileRow);
+        
+        // Distance culling
+        if (distance > this.lodDistances.far) {
+            return true;
+        }
+        
+        // TODO: Add frustum culling calculation here
+        // For now, just use distance culling
+        
+        return false;
+    }
+    
+    // Performance monitoring - log LOD statistics
+    logLODStats() {
+        const total = this.lodStats.tilesRendered + this.lodStats.tilesCulled;
+        if (total > 0) {
+            console.log(`📊 LOD Performance Stats:
+🎯 Total Tiles: ${total}
+✅ Rendered: ${this.lodStats.tilesRendered} (${(this.lodStats.tilesRendered/total*100).toFixed(1)}%)
+🚫 Culled: ${this.lodStats.tilesCulled} (${(this.lodStats.tilesCulled/total*100).toFixed(1)}%)
+📍 Close LOD: ${this.lodStats.lodBreakdown.close}
+📍 Medium LOD: ${this.lodStats.lodBreakdown.medium} 
+📍 Far LOD: ${this.lodStats.lodBreakdown.far}
+🔥 Performance Boost: ${this.lodStats.tilesCulled > 0 ? 'MASSIVE' : 'Good'} (${this.lodStats.tilesCulled} tiles not rendered)`);
+        }
+    }
+    
+    // Reset LOD statistics for new measurement
+    resetLODStats() {
+        this.lodStats = {
+            tilesRendered: 0,
+            tilesCulled: 0,
+            lodBreakdown: { close: 0, medium: 0, far: 0, culled: 0 }
+        };
+    }
+    
+    // Get current LOD statistics (for external monitoring)
+    getLODStats() {
+        return { ...this.lodStats };
+    }
+    
+    // Enable/disable LOD system
+    setLODEnabled(enabled) {
+        this.lodEnabled = enabled;
+        console.log(`🎯 LOD System ${enabled ? 'ENABLED' : 'DISABLED'}`);
+        if (!enabled) {
+            console.log('⚠️ WARNING: Disabling LOD will hurt performance on large maps!');
+        }
+    }
+    
+    // Enable/disable frustum culling
+    setFrustumCullingEnabled(enabled) {
+        this.frustumCullingEnabled = enabled;
+        console.log(`🎯 Frustum Culling ${enabled ? 'ENABLED' : 'DISABLED'}`);
+    }
+    
+    // Load ShapeForge grass model instead of billboard sprites
+    async loadSfGrass(tileCol = 0, tileRow = 0) {
+        console.log('🌿 Loading cached grass model...');
+        const grassGroup = new THREE.Group();
+        
+        // Calculate distance and LOD level
+        const distance = this.calculateTileDistance(tileCol, tileRow);
+        const lodLevel = this.getLODLevel(distance);
+        
+        // Skip grass entirely at far distances for performance
+        if (lodLevel === 'culled' || lodLevel === 'far') {
+            console.log(`🌿 Skipping grass at distance ${distance.toFixed(1)} (LOD: ${lodLevel})`);
+            this.lodStats.lodBreakdown[lodLevel]++;
+            if (lodLevel === 'culled') this.lodStats.tilesCulled++;
+            return grassGroup; // Return empty group
+        }
+        
+        this.lodStats.tilesRendered++;
+        this.lodStats.lodBreakdown[lodLevel]++;
+        
+        try {
+            // Adjust grass density based on LOD level
+            let patchCount;
+            switch (lodLevel) {
+                case 'close':
+                    patchCount = 2 + Math.floor(Math.random() * 3); // 2-4 patches
+                    break;
+                case 'medium':
+                    patchCount = 1 + Math.floor(Math.random() * 2); // 1-2 patches
+                    break;
+                default:
+                    patchCount = 1; // Single patch
+            }
+            
+            console.log(`🌿 Creating ${patchCount} grass patches (LOD: ${lodLevel}, distance: ${distance.toFixed(1)})`);
+            
+            for (let i = 0; i < patchCount; i++) {
+                const grassMesh = await this.loadShapeForgeModelCached('grass', lodLevel);
+                if (grassMesh) {
+                    // Random position within tile bounds
+                    const randomX = (Math.random() - 0.5) * this.tileSize * 0.7;
+                    const randomZ = (Math.random() - 0.5) * this.tileSize * 0.7;
+                    
+                    // Scale variation based on LOD
+                    let scale;
+                    switch (lodLevel) {
+                        case 'close':
+                            scale = 0.8 + Math.random() * 0.4; // 0.8x to 1.2x
+                            break;
+                        case 'medium':
+                            scale = 0.6 + Math.random() * 0.3; // 0.6x to 0.9x (smaller)
+                            break;
+                        default:
+                            scale = 0.5; // Fixed small size
+                    }
+                    
+                    // Random rotation for variety (except for far LOD)
+                    const rotation = lodLevel === 'far' ? 0 : Math.random() * Math.PI * 2;
+                    
+                    grassMesh.position.set(randomX, 0, randomZ);
+                    grassMesh.scale.setScalar(scale);
+                    grassMesh.rotation.y = rotation;
+                    
+                    grassGroup.add(grassMesh);
+                }
+            }
+        } catch (error) {
+            console.warn('⚠️ Failed to load cached grass, falling back to billboard:', error);
+            // Fallback to original billboard method
+            return this.createGrassFieldFallback();
+        }
         
         return grassGroup;
     }
     
     // Load ShapeForge mountain model instead of billboard sprites  
-    loadSfMountain() {
-        console.log('🏔️ Loading ShapeForge mountain model...');
+    async loadSfMountain(tileCol = 0, tileRow = 0) {
+        console.log('🏔️ Loading cached mountain model...');
         const mountainGroup = new THREE.Group();
         
-        // Load the mountain.shapeforge.json file
-        fetch('assets/shapeforge/mountain.shapeforge.json')
-            .then(response => {
-                console.log('🏔️ Mountain fetch response:', response.status, response.ok);
-                return response.json();
-            })
-            .then(shapeforgeData => {
-                // console.log('🏔️ Mountain ShapeForge data loaded:', shapeforgeData);
-                
-                // Create single massive mountain per tile (they're big enough!)
-                const mountainMesh = this.createShapeForgeModel(shapeforgeData);
-                
-                if (mountainMesh) {
-                    console.log('✅ Mountain mesh created successfully - adding to scene');
-                    // Mountains are already properly sized and positioned
-                    // No random positioning needed - they're meant to dominate the tile
-                    mountainGroup.add(mountainMesh);
-                } else {
-                    console.warn('⚠️ Failed to create mountain mesh from ShapeForge data');
-                }
-            })
-            .catch(error => {
-                console.warn('⚠️ Failed to load ShapeForge mountain, falling back to billboard:', error);
-                // Fallback to original billboard method - but we need to add it to the group
+        // Calculate distance and LOD level
+        const distance = this.calculateTileDistance(tileCol, tileRow);
+        const lodLevel = this.getLODLevel(distance);
+        
+        // Skip mountains entirely if too far (culled)
+        if (lodLevel === 'culled') {
+            console.log(`🏔️ Culling mountain at distance ${distance.toFixed(1)}`);
+            this.lodStats.tilesCulled++;
+            this.lodStats.lodBreakdown.culled++;
+            return mountainGroup; // Return empty group
+        }
+        
+        this.lodStats.tilesRendered++;
+        this.lodStats.lodBreakdown[lodLevel]++;
+        
+        console.log(`🏔️ Creating mountain (LOD: ${lodLevel}, distance: ${distance.toFixed(1)})`);
+        
+        try {
+            // Create mountain with appropriate LOD level
+            const mountainMesh = await this.loadShapeForgeModelCached('mountain', lodLevel);
+            
+            if (mountainMesh) {
+                console.log(`✅ Mountain mesh created from cache (LOD: ${lodLevel}) - adding to scene`);
+                // Mountains are already properly sized and positioned
+                // No random positioning needed - they're meant to dominate the tile
+                mountainGroup.add(mountainMesh);
+            } else {
+                console.warn('⚠️ Failed to create mountain mesh from cached data');
+                // Fallback to original billboard method
                 const fallbackMountain = this.createMountainFieldFallback();
                 if (fallbackMountain) {
                     mountainGroup.add(fallbackMountain);
                 }
-            });
+            }
+        } catch (error) {
+            console.warn('⚠️ Failed to load cached mountain, falling back to billboard:', error);
+            // Fallback to original billboard method
+            const fallbackMountain = this.createMountainFieldFallback();
+            if (fallbackMountain) {
+                mountainGroup.add(fallbackMountain);
+            }
+        }
         
         return mountainGroup;
     }
 
        // Load ShapeForge castle model instead of billboard sprites  
-    loadSfCastle() {
-        console.log(' Loading ShapeForge castle model...');
+    async loadSfCastle(tileCol = 0, tileRow = 0) {
+        console.log('🏰 Loading cached castle model...');
         const castleGroup = new THREE.Group();
         
-        // Load the mountain.shapeforge.json file
-        fetch('assets/shapeforge/castle.shapeforge.json')
-            .then(response => {
-                console.log(' Castle fetch response:', response.status, response.ok);
-                return response.json();
-            })
-            .then(shapeforgeData => {
-                // console.log('🏰 Castle ShapeForge data loaded:', shapeforgeData);
+        // Calculate distance and LOD level
+        const distance = this.calculateTileDistance(tileCol, tileRow);
+        const lodLevel = this.getLODLevel(distance);
+        
+        // Skip castles entirely if too far (culled)
+        if (lodLevel === 'culled') {
+            console.log(`🏰 Culling castle at distance ${distance.toFixed(1)}`);
+            this.lodStats.tilesCulled++;
+            this.lodStats.lodBreakdown.culled++;
+            return castleGroup; // Return empty group
+        }
+        
+        this.lodStats.tilesRendered++;
+        this.lodStats.lodBreakdown[lodLevel]++;
+        
+        console.log(`🏰 Creating castle (LOD: ${lodLevel}, distance: ${distance.toFixed(1)})`);
+        
+        try {
+            // Create castle with appropriate LOD level
+            const castleMesh = await this.loadShapeForgeModelCached('castle', lodLevel);
 
-                // Create single massive castle per tile (they're big enough!)
-                const castleMesh = this.createShapeForgeModel(shapeforgeData);
-
-                if (castleMesh) {
-                    console.log('✅ Castle mesh created successfully - adding to scene');
-                    // Castles are already properly sized and positioned
-                    // No random positioning needed - they're meant to dominate the tile
-                    castleGroup.add(castleMesh);
-                } else {
-                    console.warn('⚠️ Failed to create castle mesh from ShapeForge data');
-                }
-            })
-            .catch(error => {
-                console.warn('⚠️ Failed to load ShapeForge castle, falling back to billboard:', error);
-                // Fallback to original billboard method - but we need to add it to the group
+            if (castleMesh) {
+                console.log(`✅ Castle mesh created from cache (LOD: ${lodLevel}) - adding to scene`);
+                // Castles are already properly sized and positioned
+                // No random positioning needed - they're meant to dominate the tile
+                castleGroup.add(castleMesh);
+            } else {
+                console.warn('⚠️ Failed to create castle mesh from cached data');
+                // Fallback to original billboard method
                 const fallbackCastle = this.createCastleFieldFallback();
                 if (fallbackCastle) {
                     castleGroup.add(fallbackCastle);
                 }
-            });
+            }
+        } catch (error) {
+            console.warn('⚠️ Failed to load cached castle, falling back to billboard:', error);
+            // Fallback to original billboard method
+            const fallbackCastle = this.createCastleFieldFallback();
+            if (fallbackCastle) {
+                castleGroup.add(fallbackCastle);
+            }
+        }
 
         return castleGroup;
     }
@@ -2257,6 +2749,28 @@ class ThreeMapRenderer {
         mountainGroup.add(mountainBillboard);
         
         return mountainGroup;
+    }
+    
+    // Fallback method for castles if ShapeForge loading fails
+    createCastleFieldFallback() {
+        const castleGroup = new THREE.Group();
+        
+        // Simple fallback with single large castle billboard
+        const size = this.getBillboardSize('castle');
+        
+        const geometry = new THREE.PlaneGeometry(size.width, size.height);
+        const material = new THREE.MeshLambertMaterial({ 
+            color: 0x696969,  // Castle gray color
+            transparent: true,
+            opacity: 0.9
+        });
+        
+        const castleBillboard = new THREE.Mesh(geometry, material);
+        castleBillboard.position.set(0, size.height / 2, 0);
+        
+        castleGroup.add(castleBillboard);
+        
+        return castleGroup;
     }
 }
 
