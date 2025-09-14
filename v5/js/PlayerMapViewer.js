@@ -49,6 +49,35 @@ class PlayerMapViewer {
     
     // Setup canvas for high-DPI displays
     setupCanvas() {
+        // 🔧 MINIMAP FIX: Check if this is the minimap canvas and preserve its sizing
+        if (this.canvas.id === 'map-canvas' && this.canvas.hasAttribute('data-minimap-width')) {
+            // This is the minimap canvas - use the preserved sizing
+            const minimapWidth = parseInt(this.canvas.getAttribute('data-minimap-width'));
+            const minimapHeight = parseInt(this.canvas.getAttribute('data-minimap-height'));
+            const dpr = window.devicePixelRatio || 1;
+            
+            console.log('🎨 setupCanvas detected minimap - preserving size:', minimapWidth, 'x', minimapHeight);
+            
+            // Set CSS size (displayed size) to minimap size
+            this.canvas.style.width = minimapWidth + 'px';
+            this.canvas.style.height = minimapHeight + 'px';
+            
+            // Set actual canvas size (for high-DPI) based on minimap size
+            this.canvas.width = minimapWidth * dpr;
+            this.canvas.height = minimapHeight * dpr;
+            
+            // Scale canvas context for high-DPI
+            this.ctx.scale(dpr, dpr);
+            
+            // Set canvas style for positioning
+            this.canvas.style.position = 'absolute';
+            this.canvas.style.top = '0';
+            this.canvas.style.left = '0';
+            
+            return; // Exit early to avoid overriding minimap sizing
+        }
+        
+        // Original setupCanvas logic for non-minimap canvases
         const rect = this.container.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
         

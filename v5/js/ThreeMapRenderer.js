@@ -443,6 +443,9 @@ class ThreeMapRenderer {
         this.playerPosition = { x, y };
         this.updatePlayerFromPosition();
         this.debugLog('� Player position set to:', this.playerPosition);
+        
+        // 🎯 NEW: Update minimap when position is set
+        this.updateMinimapPlayerDot();
     }
     
     // Get current player position from global system
@@ -524,8 +527,67 @@ class ThreeMapRenderer {
         // Keep player at proper height (in case of any drift)
         this.player.position.y = this.cameraHeight;
         
+        // 🎯 NEW: Update tile position tracking after movement
+        this.updatePlayerTilePosition();
+        
         // TODO: Add collision detection here if needed
         // For now, basic bounds checking could be added
+    }
+    
+    // 🎯 NEW: Convert world position to tile coordinates and update tracking
+    updatePlayerTilePosition() {
+        if (!this.player || !this.mapData) return;
+        
+        // Convert world position back to tile coordinates
+        const worldX = this.player.position.x;
+        const worldZ = this.player.position.z;
+        
+        // Calculate which tile the player is on
+        // Note: Need to account for map centering offset
+        const mapWidth = this.mapData.width || 0;
+        const mapHeight = this.mapData.height || 0;
+        
+        if (mapWidth === 0 || mapHeight === 0) return;
+        
+        // Calculate the map's world offset (how it's centered in the scene)
+        const mapWorldWidth = mapWidth * this.tileSize;
+        const mapWorldHeight = mapHeight * this.tileSize;
+        const mapOffsetX = -mapWorldWidth / 2;
+        const mapOffsetZ = -mapWorldHeight / 2;
+        
+        // Convert world position to tile coordinates
+        const tileX = Math.floor((worldX - mapOffsetX) / this.tileSize);
+        const tileY = Math.floor((worldZ - mapOffsetZ) / this.tileSize);
+        
+        // Clamp to map bounds
+        const clampedX = Math.max(0, Math.min(mapWidth - 1, tileX));
+        const clampedY = Math.max(0, Math.min(mapHeight - 1, tileY));
+        
+        // Update player position if it changed
+        if (this.playerPosition.x !== clampedX || this.playerPosition.y !== clampedY) {
+            this.playerPosition.x = clampedX;
+            this.playerPosition.y = clampedY;
+            
+            console.log('🎯 Player moved to tile:', this.playerPosition, 
+                       'world pos:', { x: worldX.toFixed(2), z: worldZ.toFixed(2) });
+            
+            // Trigger minimap update if it exists
+            this.updateMinimapPlayerDot();
+        }
+    }
+    
+    // 🎯 NEW: Update the minimap player dot without full re-render
+    updateMinimapPlayerDot() {
+        // Quick check if minimap canvas exists
+        const canvas = document.getElementById('map-canvas');
+        if (!canvas || !this.mapData) return;
+        
+        // For now, just trigger a full minimap re-render
+        // Later we could optimize this to only redraw the player dot
+        if (window.renderMinimapCanvas) {
+            const rect = canvas.getBoundingClientRect();
+            window.renderMinimapCanvas(this.mapData, rect.width, rect.height);
+        }
     }
     
     // Setup all control systems

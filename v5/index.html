@@ -4185,18 +4185,184 @@
             
             console.log('🎨 Minimap canvas resized to:', availableWidth, 'x', availableHeight, 'actual:', canvas.width, 'x', canvas.height);
             
-            // Force re-render of current map if available
-            if (window.mapSyncAdapter && window.mapSyncAdapter.mapClientManager && window.mapSyncAdapter.mapClientManager.mapViewer) {
+            // 🔧 NEW APPROACH: Render minimap separately instead of calling renderCurrentMap()
+            // This prevents the ThreeJS refresh cycle
+            if (window.latestMapData || (window.mapSyncAdapter?.mapClientManager?.mapViewer?.currentMapData)) {
+                const mapData = window.latestMapData || window.mapSyncAdapter.mapClientManager.mapViewer.currentMapData;
+                console.log('🗺️ Rendering minimap with separate small-scale renderer');
                 setTimeout(() => {
-                    const mapViewer = window.mapSyncAdapter.mapClientManager.mapViewer;
-                    if (mapViewer.currentMapData) {
-                        console.log('🔄 Re-rendering map after resize');
-                        // DON'T call setupCanvas as it resets our canvas size
-                        // mapViewer.setupCanvas(); // Commented out to preserve our minimap sizing
-                        mapViewer.renderCurrentMap();
-                    }
+                    window.renderMinimapCanvas(mapData, availableWidth, availableHeight);
                 }, 100);
             }
+        };
+
+        // 🔧 NEW: Separate minimap rendering function that doesn't trigger ThreeJS refresh
+        window.renderMinimapCanvas = function(mapData, canvasWidth, canvasHeight) {
+            const canvas = document.getElementById('map-canvas');
+            if (!canvas || !mapData) return;
+            
+            console.log('🎨 Rendering dedicated minimap canvas...');
+            
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            
+            // Clear canvas
+            ctx.fillStyle = '#222';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            // Get map dimensions
+            const mapWidth = mapData.width || 0;
+            const mapHeight = mapData.height || 0;
+            
+            if (mapWidth === 0 || mapHeight === 0) {
+                console.warn('⚠️ Invalid map dimensions for minimap');
+                return;
+            }
+            
+            // Calculate optimal tile size for minimap (much smaller than 64x64)
+            const maxTileSize = 16; // Start with 16x16 pixels per tile
+            const tileWidth = Math.min(maxTileSize, Math.floor(canvasWidth / mapWidth));
+            const tileHeight = Math.min(maxTileSize, Math.floor(canvasHeight / mapHeight));
+            const tileSize = Math.min(tileWidth, tileHeight); // Keep tiles square
+            
+            // Center the map in the canvas
+            const totalMapWidth = mapWidth * tileSize;
+            const totalMapHeight = mapHeight * tileSize;
+            const offsetX = (canvasWidth - totalMapWidth) / 2;
+            const offsetY = (canvasHeight - totalMapHeight) / 2;
+            
+            console.log(`🎨 Minimap tile size: ${tileSize}x${tileSize}, map: ${mapWidth}x${mapHeight}`);
+            
+            // Extract grid from map data (same logic as ThreeMapRenderer)
+            let grid = [];
+            if (mapData.grid && Array.isArray(mapData.grid)) {
+                grid = mapData.grid;
+            } else if (mapData.spriteNames && mapData.width && mapData.height) {
+                // Convert flat spriteNames array to 2D grid
+                let index = 0;
+                for (let y = 0; y < mapData.height; y++) {
+                    const row = [];
+                    for (let x = 0; x < mapData.width; x++) {
+                        row.push(mapData.spriteNames[index] || 'empty');
+                        index++;
+                    }
+                    grid.push(row);
+                }
+            }
+            
+            if (grid.length === 0) {
+                console.warn('⚠️ No grid data found for minimap');
+                return;
+            }
+            
+            // Simple color mapping for tiles (can be enhanced later)
+            const tileColors = {
+                'grass': '#4a7c59',
+                'water': '#1e3a8a',
+                'mountain': '#8b7355',
+                'forest': '#2d5016',
+                'desert': '#d2b48c',
+                'wall': '#666666',
+                'door': '#8b4513',
+                'floor': '#deb887',
+                'road': '#696969',
+                'town': '#cd853f',
+                'city': '#b8860b',
+                'castle': '#778899',
+                'default': '#333333'
+            };
+            
+            // Render each tile
+            for (let y = 0; y < grid.length; y++) {
+                for (let x = 0; x < grid[y].length; x++) {
+                    const tileName = grid[y][x] || 'default';
+                    const color = tileColors[tileName] || tileColors['default'];
+                    
+                    ctx.fillStyle = color;
+                    ctx.fillRect(
+                        offsetX + x * tileSize,
+                        offsetY + y * tileSize,
+                        tileSize,
+                        tileSize
+                    );
+                    
+                    // Add subtle border for visibility
+                    if (tileSize > 4) {
+                        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                        ctx.lineWidth = 0.5;
+                        ctx.strokeRect(
+                            offsetX + x * tileSize,
+                            offsetY + y * tileSize,
+                            tileSize,
+                            tileSize
+                        );
+                    }
+                }
+            }
+            
+            console.log('✅ Minimap rendered successfully without triggering ThreeJS refresh');
+            
+            // 🎯 NEW: Draw player position dot
+            window.drawPlayerDotOnMinimap(ctx, offsetX, offsetY, tileSize, mapWidth, mapHeight);
+        };
+
+        // 🎯 NEW: Draw player position indicator on minimap
+        window.drawPlayerDotOnMinimap = function(ctx, offsetX, offsetY, tileSize, mapWidth, mapHeight) {
+            // Try to get player position from various sources
+            let playerPos = null;
+            
+            // Source 1: ThreeMapRenderer (most reliable for current position)
+            if (window.threeMapRenderer && window.threeMapRenderer.playerPosition) {
+                playerPos = window.threeMapRenderer.playerPosition;
+                console.log('🎯 Player position from ThreeMapRenderer:', playerPos);
+            }
+            // Source 2: Global MapSyncAdapter
+            else if (window.globalMapSyncAdapter && typeof window.globalMapSyncAdapter.getCurrentPosition === 'function') {
+                playerPos = window.globalMapSyncAdapter.getCurrentPosition();
+                console.log('🎯 Player position from globalMapSyncAdapter:', playerPos);
+            }
+            // Source 3: MapSyncAdapter current position
+            else if (window.mapSyncAdapter && window.mapSyncAdapter.currentPlayerPosition) {
+                playerPos = window.mapSyncAdapter.currentPlayerPosition;
+                console.log('🎯 Player position from mapSyncAdapter:', playerPos);
+            }
+            // Source 4: MapClientManager
+            else if (window.mapSyncAdapter && window.mapSyncAdapter.mapClientManager && window.mapSyncAdapter.mapClientManager.currentPlayerPosition) {
+                playerPos = window.mapSyncAdapter.mapClientManager.currentPlayerPosition;
+                console.log('🎯 Player position from mapClientManager:', playerPos);
+            }
+            
+            if (!playerPos) {
+                console.log('⚠️ No player position found for minimap dot');
+                return;
+            }
+            
+            // Validate position is within map bounds
+            if (playerPos.x < 0 || playerPos.x >= mapWidth || playerPos.y < 0 || playerPos.y >= mapHeight) {
+                console.log('⚠️ Player position out of map bounds:', playerPos);
+                return;
+            }
+            
+            // Calculate player dot position on minimap
+            const dotX = offsetX + (playerPos.x * tileSize) + (tileSize / 2);
+            const dotY = offsetY + (playerPos.y * tileSize) + (tileSize / 2);
+            
+            // Draw player dot (bright, visible color)
+            const dotRadius = Math.max(2, Math.min(6, tileSize / 3)); // Scale with tile size, min 2px, max 6px
+            
+            // Draw white outline for visibility
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, dotRadius + 1, 0, 2 * Math.PI);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            
+            // Draw colored center (bright cyan/aqua)
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, dotRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = '#00ffff'; // Bright cyan - very visible on any background
+            ctx.fill();
+            
+            console.log('🎯 Player dot drawn at minimap position:', { dotX, dotY, playerPos, dotRadius });
         };
 
         // Force check for existing maps and display them
