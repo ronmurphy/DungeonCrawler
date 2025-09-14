@@ -556,6 +556,9 @@ class ThreeMapRenderer {
         // 🎯 NEW: Update tile position tracking after movement
         this.updatePlayerTilePosition();
         
+        // 🎯 NEW: Update LOD for all models based on current camera position
+        this.updateDynamicLOD();
+        
         // TODO: Add collision detection here if needed
         // For now, basic bounds checking could be added
     }
@@ -2024,15 +2027,14 @@ class ThreeMapRenderer {
     // ========================================
     
     // Cached loading method for ShapeForge models - prevents duplicate network requests and geometry creation
-    // Now supports LOD (Level of Detail) for performance scaling
-    async loadShapeForgeModelCached(modelName, lodLevel = 'close') {
-        const cacheKey = `${modelName}_${lodLevel}`;
-        console.log(`🔄 Loading cached ShapeForge model: ${modelName} (LOD: ${lodLevel})`);
+    // Now caches only FULL DETAIL models, LOD is applied dynamically in real-time
+    async loadShapeForgeModelCached(modelName) {
+        console.log(`🔄 Loading cached ShapeForge model: ${modelName} (FULL DETAIL)`);
         
-        // Check if we already have this model at this LOD level in cache
-        if (this.shapeforgeGeometryCache.has(cacheKey)) {
-            console.log(`✅ Using cached geometry for ${modelName} LOD:${lodLevel} (MAJOR PERFORMANCE BOOST!)`);
-            return this.cloneShapeForgeModel(this.shapeforgeGeometryCache.get(cacheKey));
+        // Check if we already have this model in cache (always full detail)
+        if (this.shapeforgeGeometryCache.has(modelName)) {
+            console.log(`✅ Using cached FULL DETAIL geometry for ${modelName} (MAJOR PERFORMANCE BOOST!)`);
+            return this.cloneShapeForgeModel(this.shapeforgeGeometryCache.get(modelName));
         }
         
         // Check if we're already loading this model to prevent duplicate requests
@@ -2040,15 +2042,15 @@ class ThreeMapRenderer {
         if (this.shapeforgeLoadingPromises.has(loadingKey)) {
             console.log(`⏳ Waiting for existing ${modelName} load to complete`);
             const shapeforgeData = await this.shapeforgeLoadingPromises.get(loadingKey);
-            const modelGroup = this.createShapeForgeModelWithLOD(shapeforgeData, lodLevel);
+            const modelGroup = this.createShapeForgeModel(shapeforgeData); // Always full detail
             if (modelGroup) {
-                this.shapeforgeGeometryCache.set(cacheKey, modelGroup);
+                this.shapeforgeGeometryCache.set(modelName, modelGroup);
                 return this.cloneShapeForgeModel(modelGroup);
             }
             return null;
         }
         
-        // Start new loading process (only load JSON once, create multiple LOD levels)
+        // Start new loading process (only load JSON once, create full detail model)
         console.log(`🌐 Fetching ${modelName}.shapeforge.json from network (FIRST TIME ONLY)`);
         const loadingPromise = fetch(`assets/shapeforge/${modelName}.shapeforge.json`)
             .then(response => {
@@ -2077,11 +2079,11 @@ class ThreeMapRenderer {
         try {
             const shapeforgeData = await loadingPromise;
             
-            // Create the model at the requested LOD level and cache it
-            const modelGroup = this.createShapeForgeModelWithLOD(shapeforgeData, lodLevel);
+            // Create the FULL DETAIL model and cache it
+            const modelGroup = this.createShapeForgeModel(shapeforgeData);
             if (modelGroup) {
-                console.log(`🎯 Caching LOD:${lodLevel} geometry for ${modelName} - future instances will be INSTANT`);
-                this.shapeforgeGeometryCache.set(cacheKey, modelGroup);
+                console.log(`🎯 Caching FULL DETAIL geometry for ${modelName} - LOD will be applied dynamically`);
+                this.shapeforgeGeometryCache.set(modelName, modelGroup);
                 
                 // Return a clone for use
                 return this.cloneShapeForgeModel(modelGroup);
@@ -2093,169 +2095,100 @@ class ThreeMapRenderer {
         }
     }
     
-    // Create ShapeForge model with different levels of detail for performance optimization
-    createShapeForgeModelWithLOD(shapeforgeData, lodLevel = 'close') {
-        if (!shapeforgeData.objects || shapeforgeData.objects.length === 0) {
-            console.warn('⚠️ No objects found in ShapeForge data');
-            return null;
+    // Apply Level-of-Detail reduction to an existing full-detail model in real-time
+    applyDynamicLOD(modelGroup, lodLevel) {
+        if (!modelGroup || !modelGroup.children) return modelGroup;
+        
+        // Store the original LOD level to avoid redundant processing
+        if (modelGroup.userData.currentLOD === lodLevel) {
+            return modelGroup; // Already at this LOD level
         }
         
-        // Handle different LOD levels
+        console.log(`🎯 Applying dynamic LOD: ${lodLevel} to model`);
+        
         switch (lodLevel) {
             case 'close':
-                // Full detail - use original method
-                return this.createShapeForgeModel(shapeforgeData);
+                // Full detail - show all objects
+                this.setModelVisibilityAndDetail(modelGroup, 1.0, 1.0, true);
+                break;
                 
             case 'medium':
-                // Reduced detail - simplify geometry, fewer objects
-                return this.createShapeForgeModelMediumLOD(shapeforgeData);
+                // Medium detail - hide some objects, reduce opacity
+                this.setModelVisibilityAndDetail(modelGroup, 0.8, 0.7, true);
+                this.simplifyModelGeometry(modelGroup, 0.5); // Hide every other object
+                break;
                 
             case 'far':
-                // Simple shapes - basic geometry only
-                return this.createShapeForgeModelFarLOD(shapeforgeData);
+                // Far detail - very simple representation
+                this.setModelVisibilityAndDetail(modelGroup, 0.6, 0.5, false);
+                this.simplifyModelGeometry(modelGroup, 0.2); // Hide most objects, keep only main shapes
+                break;
+                
+            case 'culled':
+                // Completely hidden
+                modelGroup.visible = false;
+                break;
                 
             default:
-                console.warn(`Unknown LOD level: ${lodLevel}, using close`);
-                return this.createShapeForgeModel(shapeforgeData);
-        }
-    }
-    
-    // Medium LOD: Reduced complexity but recognizable shapes
-    createShapeForgeModelMediumLOD(shapeforgeData) {
-        // Check for workspace size (v1.3 support)
-        let workspaceScale = 1.0;
-        if (shapeforgeData.workspaceSize) {
-            const maxWorkspaceDimension = Math.max(shapeforgeData.workspaceSize.x, shapeforgeData.workspaceSize.y, shapeforgeData.workspaceSize.z);
-            workspaceScale = this.tileSize / maxWorkspaceDimension;
+                console.warn(`Unknown LOD level: ${lodLevel}`);
         }
         
-        const modelGroup = new THREE.Group();
-        
-        // Only process half the objects for medium LOD (performance boost)
-        const objectsToProcess = shapeforgeData.objects.filter((obj, index) => index % 2 === 0);
-        
-        objectsToProcess.forEach(obj => {
-            let geometry;
-            
-            if (obj.geometryData && obj.geometryData.vertices) {
-                // Simplify complex geometry by reducing vertices
-                geometry = new THREE.BufferGeometry();
-                
-                // Use every other vertex for reduced detail
-                const originalVertices = obj.geometryData.vertices;
-                const simplifiedVertices = [];
-                for (let i = 0; i < originalVertices.length; i += 6) { // Skip every other vertex
-                    simplifiedVertices.push(originalVertices[i], originalVertices[i+1], originalVertices[i+2]);
-                }
-                
-                const vertices = new Float32Array(simplifiedVertices);
-                geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-                geometry.computeVertexNormals(); // Recompute normals for simplified geometry
-                
-            } else if (obj.type && obj.parameters) {
-                // Use simpler primitive shapes
-                switch (obj.type) {
-                    case 'cone':
-                        geometry = new THREE.ConeGeometry(
-                            obj.parameters.radius || 0.5,
-                            obj.parameters.height || 1,
-                            4 // Reduced segments for performance
-                        );
-                        break;
-                    case 'cube':
-                    case 'box':
-                        geometry = new THREE.BoxGeometry(
-                            obj.parameters.width || 1,
-                            obj.parameters.height || 1,
-                            obj.parameters.depth || 1
-                        );
-                        break;
-                    case 'sphere':
-                        geometry = new THREE.SphereGeometry(
-                            obj.parameters.radius || 0.5,
-                            8, // Reduced segments
-                            6  // Reduced segments
-                        );
-                        break;
-                    case 'cylinder':
-                        geometry = new THREE.CylinderGeometry(
-                            obj.parameters.radiusTop || 0.5,
-                            obj.parameters.radiusBottom || 0.5,
-                            obj.parameters.height || 1,
-                            6 // Reduced segments
-                        );
-                        break;
-                    default:
-                        geometry = new THREE.BoxGeometry(1, 1, 1);
-                }
-            }
-            
-            if (geometry) {
-                const material = new THREE.MeshLambertMaterial({
-                    color: obj.material?.color || 0x4a7c59,
-                    transparent: obj.material?.transparent || false,
-                    opacity: (obj.material?.opacity || 1.0) * 0.8, // Slightly more transparent
-                    side: THREE.DoubleSide
-                });
-                
-                const mesh = new THREE.Mesh(geometry, material);
-                
-                // Apply transforms with workspace scaling
-                if (obj.position) {
-                    mesh.position.set(
-                        obj.position.x * workspaceScale, 
-                        obj.position.y * workspaceScale, 
-                        obj.position.z * workspaceScale
-                    );
-                }
-                if (obj.rotation) {
-                    mesh.rotation.set(obj.rotation.x, obj.rotation.y, obj.rotation.z);
-                }
-                if (obj.scale) {
-                    mesh.scale.set(
-                        obj.scale.x * workspaceScale, 
-                        obj.scale.y * workspaceScale, 
-                        obj.scale.z * workspaceScale
-                    );
-                }
-                
-                modelGroup.add(mesh);
-            }
-        });
-        
+        // Store current LOD level to avoid redundant processing
+        modelGroup.userData.currentLOD = lodLevel;
         return modelGroup;
     }
     
-    // Far LOD: Very simple shapes, basic colors
-    createShapeForgeModelFarLOD(shapeforgeData) {
-        const modelGroup = new THREE.Group();
+    // Helper method to adjust model visibility and detail
+    setModelVisibilityAndDetail(modelGroup, scaleMultiplier, opacityMultiplier, showDetails) {
+        modelGroup.visible = true;
         
-        // For far LOD, create a single simple shape representing the entire model
-        let geometry;
-        let color = 0x888888; // Default gray
-        
-        // Determine model type and create appropriate simple shape
-        if (shapeforgeData.objects && shapeforgeData.objects.length > 0) {
-            const firstObj = shapeforgeData.objects[0];
-            color = firstObj.material?.color || 0x888888;
-            
-            // Create very simple representation
-            geometry = new THREE.BoxGeometry(1, 1, 1); // Simple box for everything at distance
-        } else {
-            geometry = new THREE.BoxGeometry(1, 1, 1);
-        }
-        
-        const material = new THREE.MeshBasicMaterial({ 
-            color: color,
-            transparent: true,
-            opacity: 0.6 // More transparent for distant objects
+        modelGroup.children.forEach((child, index) => {
+            if (child.isMesh) {
+                // Adjust material opacity
+                if (child.material && child.material.opacity !== undefined) {
+                    child.material.opacity = Math.min(1.0, (child.material.opacity || 1.0) * opacityMultiplier);
+                    child.material.transparent = child.material.opacity < 1.0;
+                }
+                
+                // For far LOD, simplify to basic material
+                if (!showDetails && child.material) {
+                    // Store original material if not already stored
+                    if (!child.userData.originalMaterial) {
+                        child.userData.originalMaterial = child.material.clone();
+                    }
+                    
+                    // Use simplified material for far distances
+                    child.material = new THREE.MeshBasicMaterial({
+                        color: child.userData.originalMaterial.color || 0x888888,
+                        transparent: true,
+                        opacity: 0.5
+                    });
+                } else if (showDetails && child.userData.originalMaterial) {
+                    // Restore original material for close/medium distances
+                    child.material = child.userData.originalMaterial.clone();
+                }
+            } else if (child.isGroup) {
+                // Recursively apply to child groups
+                this.setModelVisibilityAndDetail(child, scaleMultiplier, opacityMultiplier, showDetails);
+            }
         });
-        
-        const mesh = new THREE.Mesh(geometry, material);
-        modelGroup.add(mesh);
-        
-        return modelGroup;
     }
+    
+    // Helper method to simplify geometry by hiding some objects
+    simplifyModelGeometry(modelGroup, keepRatio) {
+        modelGroup.children.forEach((child, index) => {
+            if (child.isMesh) {
+                // Hide objects based on keepRatio (0.5 = keep 50% of objects)
+                const shouldKeep = Math.random() < keepRatio || index === 0; // Always keep first object
+                child.visible = shouldKeep;
+            } else if (child.isGroup) {
+                // Recursively apply to child groups
+                this.simplifyModelGeometry(child, keepRatio);
+            }
+        });
+    }
+    
+    // Clone a cached ShapeForge model for reuse (much faster than re-creating geometry)
     cloneShapeForgeModel(originalGroup) {
         const clonedGroup = new THREE.Group();
         
@@ -2382,6 +2315,30 @@ class ThreeMapRenderer {
         console.log(`🎯 Frustum Culling ${enabled ? 'ENABLED' : 'DISABLED'}`);
     }
     
+    // Update LOD for all ShapeForge models based on current camera position
+    updateDynamicLOD() {
+        if (!this.lodEnabled || !this.camera) return;
+        
+        // Throttle LOD updates to avoid excessive processing
+        this.lodUpdateCounter++;
+        if (this.lodUpdateCounter % 10 !== 0) return; // Update every 10 frames (~6 times per second at 60fps)
+        
+        // Find all ShapeForge models in the scene and update their LOD
+        this.scene.traverse((object) => {
+            if (object.userData && object.userData.modelType && object.userData.tileCol !== undefined) {
+                // This is a ShapeForge model with tile coordinates
+                const distance = this.calculateTileDistance(object.userData.tileCol, object.userData.tileRow);
+                const newLodLevel = this.getLODLevel(distance);
+                
+                // Only update if LOD level has changed
+                if (object.userData.currentLOD !== newLodLevel) {
+                    console.log(`🔄 DYNAMIC LOD: ${object.userData.modelType} at tile (${object.userData.tileCol},${object.userData.tileRow}) changed from ${object.userData.currentLOD || 'initial'} → ${newLodLevel} (distance: ${distance.toFixed(1)})`);
+                    this.applyDynamicLOD(object, newLodLevel);
+                }
+            }
+        });
+    }
+    
     // Load ShapeForge grass model instead of billboard sprites
     async loadSfGrass(tileCol = 0, tileRow = 0) {
         console.log('🌿 Loading cached grass model...');
@@ -2403,49 +2360,64 @@ class ThreeMapRenderer {
         this.lodStats.lodBreakdown[lodLevel]++;
         
         try {
-            // Adjust grass density based on LOD level
-            let patchCount;
-            switch (lodLevel) {
-                case 'close':
-                    patchCount = 2 + Math.floor(Math.random() * 3); // 2-4 patches
-                    break;
-                case 'medium':
-                    patchCount = 1 + Math.floor(Math.random() * 2); // 1-2 patches
-                    break;
-                default:
-                    patchCount = 1; // Single patch
-            }
+            // Load full detail grass model from cache
+            const fullDetailGrass = await this.loadShapeForgeModelCached('grass');
             
-            console.log(`🌿 Creating ${patchCount} grass patches (LOD: ${lodLevel}, distance: ${distance.toFixed(1)})`);
-            
-            for (let i = 0; i < patchCount; i++) {
-                const grassMesh = await this.loadShapeForgeModelCached('grass', lodLevel);
-                if (grassMesh) {
-                    // Random position within tile bounds
-                    const randomX = (Math.random() - 0.5) * this.tileSize * 0.7;
-                    const randomZ = (Math.random() - 0.5) * this.tileSize * 0.7;
+            if (fullDetailGrass) {
+                // Adjust grass density based on LOD level
+                let patchCount;
+                switch (lodLevel) {
+                    case 'close':
+                        patchCount = 2 + Math.floor(Math.random() * 3); // 2-4 patches
+                        break;
+                    case 'medium':
+                        patchCount = 1 + Math.floor(Math.random() * 2); // 1-2 patches
+                        break;
+                    default:
+                        patchCount = 1; // Single patch
+                }
+                
+                console.log(`🌿 Creating ${patchCount} grass patches (LOD: ${lodLevel}, distance: ${distance.toFixed(1)})`);
+                
+                for (let i = 0; i < patchCount; i++) {
+                    // Clone the full detail model
+                    const grassMesh = this.cloneShapeForgeModel(fullDetailGrass);
                     
-                    // Scale variation based on LOD
-                    let scale;
-                    switch (lodLevel) {
-                        case 'close':
-                            scale = 0.8 + Math.random() * 0.4; // 0.8x to 1.2x
-                            break;
-                        case 'medium':
-                            scale = 0.6 + Math.random() * 0.3; // 0.6x to 0.9x (smaller)
-                            break;
-                        default:
-                            scale = 0.5; // Fixed small size
+                    if (grassMesh) {
+                        // Apply dynamic LOD to this instance
+                        this.applyDynamicLOD(grassMesh, lodLevel);
+                        
+                        // Store tile coordinates for dynamic updates
+                        grassMesh.userData.tileCol = tileCol;
+                        grassMesh.userData.tileRow = tileRow;
+                        grassMesh.userData.modelType = 'grass';
+                        
+                        // Random position within tile bounds
+                        const randomX = (Math.random() - 0.5) * this.tileSize * 0.7;
+                        const randomZ = (Math.random() - 0.5) * this.tileSize * 0.7;
+                        
+                        // Scale variation based on LOD
+                        let scale;
+                        switch (lodLevel) {
+                            case 'close':
+                                scale = 0.8 + Math.random() * 0.4; // 0.8x to 1.2x
+                                break;
+                            case 'medium':
+                                scale = 0.6 + Math.random() * 0.3; // 0.6x to 0.9x (smaller)
+                                break;
+                            default:
+                                scale = 0.5; // Fixed small size
+                        }
+                        
+                        // Random rotation for variety (except for far LOD)
+                        const rotation = lodLevel === 'far' ? 0 : Math.random() * Math.PI * 2;
+                        
+                        grassMesh.position.set(randomX, 0, randomZ);
+                        grassMesh.scale.setScalar(scale);
+                        grassMesh.rotation.y = rotation;
+                        
+                        grassGroup.add(grassMesh);
                     }
-                    
-                    // Random rotation for variety (except for far LOD)
-                    const rotation = lodLevel === 'far' ? 0 : Math.random() * Math.PI * 2;
-                    
-                    grassMesh.position.set(randomX, 0, randomZ);
-                    grassMesh.scale.setScalar(scale);
-                    grassMesh.rotation.y = rotation;
-                    
-                    grassGroup.add(grassMesh);
                 }
             }
         } catch (error) {
@@ -2480,17 +2452,37 @@ class ThreeMapRenderer {
         console.log(`🏔️ Creating mountain (LOD: ${lodLevel}, distance: ${distance.toFixed(1)})`);
         
         try {
-            // Create mountain with appropriate LOD level
-            const mountainMesh = await this.loadShapeForgeModelCached('mountain', lodLevel);
+            // Load full detail mountain model from cache
+            const fullDetailMountain = await this.loadShapeForgeModelCached('mountain');
             
-            if (mountainMesh) {
-                console.log(`✅ Mountain mesh created from cache (LOD: ${lodLevel}) - adding to scene`);
-                // Mountains are already properly sized and positioned
-                // No random positioning needed - they're meant to dominate the tile
-                mountainGroup.add(mountainMesh);
+            if (fullDetailMountain) {
+                // Clone the full detail model
+                const mountainMesh = this.cloneShapeForgeModel(fullDetailMountain);
+                
+                if (mountainMesh) {
+                    console.log(`✅ Mountain mesh created from cache (will apply LOD: ${lodLevel}) - adding to scene`);
+                    
+                    // Apply dynamic LOD to this instance
+                    this.applyDynamicLOD(mountainMesh, lodLevel);
+                    
+                    // Store tile coordinates for dynamic updates
+                    mountainMesh.userData.tileCol = tileCol;
+                    mountainMesh.userData.tileRow = tileRow;
+                    mountainMesh.userData.modelType = 'mountain';
+                    
+                    // Mountains are already properly sized and positioned
+                    // No random positioning needed - they're meant to dominate the tile
+                    mountainGroup.add(mountainMesh);
+                } else {
+                    console.warn('⚠️ Failed to clone mountain mesh from cached data');
+                    // Fallback to original billboard method
+                    const fallbackMountain = this.createMountainFieldFallback();
+                    if (fallbackMountain) {
+                        mountainGroup.add(fallbackMountain);
+                    }
+                }
             } else {
-                console.warn('⚠️ Failed to create mountain mesh from cached data');
-                // Fallback to original billboard method
+                console.warn('⚠️ Failed to load mountain from cache');
                 const fallbackMountain = this.createMountainFieldFallback();
                 if (fallbackMountain) {
                     mountainGroup.add(fallbackMountain);
@@ -2531,17 +2523,37 @@ class ThreeMapRenderer {
         console.log(`🏰 Creating castle (LOD: ${lodLevel}, distance: ${distance.toFixed(1)})`);
         
         try {
-            // Create castle with appropriate LOD level
-            const castleMesh = await this.loadShapeForgeModelCached('castle', lodLevel);
+            // Load full detail castle model from cache
+            const fullDetailCastle = await this.loadShapeForgeModelCached('castle');
 
-            if (castleMesh) {
-                console.log(`✅ Castle mesh created from cache (LOD: ${lodLevel}) - adding to scene`);
-                // Castles are already properly sized and positioned
-                // No random positioning needed - they're meant to dominate the tile
-                castleGroup.add(castleMesh);
+            if (fullDetailCastle) {
+                // Clone the full detail model
+                const castleMesh = this.cloneShapeForgeModel(fullDetailCastle);
+                
+                if (castleMesh) {
+                    console.log(`✅ Castle mesh created from cache (will apply LOD: ${lodLevel}) - adding to scene`);
+                    
+                    // Apply dynamic LOD to this instance
+                    this.applyDynamicLOD(castleMesh, lodLevel);
+                    
+                    // Store tile coordinates for dynamic updates
+                    castleMesh.userData.tileCol = tileCol;
+                    castleMesh.userData.tileRow = tileRow;
+                    castleMesh.userData.modelType = 'castle';
+                    
+                    // Castles are already properly sized and positioned
+                    // No random positioning needed - they're meant to dominate the tile
+                    castleGroup.add(castleMesh);
+                } else {
+                    console.warn('⚠️ Failed to clone castle mesh from cached data');
+                    // Fallback to original billboard method
+                    const fallbackCastle = this.createCastleFieldFallback();
+                    if (fallbackCastle) {
+                        castleGroup.add(fallbackCastle);
+                    }
+                }
             } else {
-                console.warn('⚠️ Failed to create castle mesh from cached data');
-                // Fallback to original billboard method
+                console.warn('⚠️ Failed to load castle from cache');
                 const fallbackCastle = this.createCastleFieldFallback();
                 if (fallbackCastle) {
                     castleGroup.add(fallbackCastle);
