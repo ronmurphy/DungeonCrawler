@@ -2187,14 +2187,14 @@ class ThreeMapRenderer {
                 break;
                 
             case 'medium':
-                // Medium detail - hide some objects, reduce opacity
-                this.setModelVisibilityAndDetail(modelGroup, 0.8, 0.7, true);
+                // Medium detail - hide some objects but keep them solid
+                this.setModelVisibilityAndDetail(modelGroup, 0.8, 1.0, true); // Keep full opacity
                 this.simplifyModelGeometry(modelGroup, 0.5); // Hide every other object
                 break;
                 
             case 'far':
-                // Far detail - very simple representation
-                this.setModelVisibilityAndDetail(modelGroup, 0.6, 0.5, false);
+                // Far detail - very simple representation but solid
+                this.setModelVisibilityAndDetail(modelGroup, 0.6, 1.0, false); // Keep full opacity
                 this.simplifyModelGeometry(modelGroup, 0.2); // Hide most objects, keep only main shapes
                 break;
                 
@@ -2218,10 +2218,13 @@ class ThreeMapRenderer {
         
         modelGroup.children.forEach((child, index) => {
             if (child.isMesh) {
-                // Adjust material opacity
-                if (child.material && child.material.opacity !== undefined) {
-                    child.material.opacity = Math.min(1.0, (child.material.opacity || 1.0) * opacityMultiplier);
-                    child.material.transparent = child.material.opacity < 1.0;
+                // Keep materials solid - don't reduce opacity for ShapeForge models
+                if (child.material && opacityMultiplier < 1.0) {
+                    // Only reduce opacity for non-ShapeForge objects (e.g., effect sprites)
+                    if (!child.userData || child.userData.modelType !== 'shapeforge') {
+                        child.material.opacity = Math.min(1.0, (child.material.opacity || 1.0) * opacityMultiplier);
+                        child.material.transparent = child.material.opacity < 1.0;
+                    }
                 }
                 
                 // For far LOD, simplify to basic material

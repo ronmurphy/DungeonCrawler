@@ -357,13 +357,6 @@
                     display: block;
                     transition: all 0.3s ease;
                 ">
-                    <div style="
-                        color: white;
-                        text-align: center;
-                        padding: 5px;
-                        font-size: 12px;
-                        border-bottom: 1px solid #333;
-                    ">2D Minimap</div>
                     <canvas id="map-canvas" style="
                         width: calc(100% - 10px);
                         height: calc(100% - 35px);
@@ -422,6 +415,15 @@
                             cursor: pointer;
                             font-size: 14px;
                         ">🐛 Debug: ON</button>
+                        <button id="fps-toggle-button" onclick="toggleFPSStats()" style="
+                            background: #35ff6b;
+                            color: white;
+                            border: none;
+                            padding: 8px 16px;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            font-size: 14px;
+                        ">📊 FPS</button>
                         <button onclick="copyMapDataToClipboard()" style="
                             background: var(--accent-color);
                             color: white;
@@ -3993,6 +3995,17 @@
             
             // Show feedback
             console.log(`🔧 Debug console ${newDebugState ? 'ENABLED' : 'DISABLED'}`);
+        };
+
+        // FPS Stats Toggle Function  
+        window.toggleFPSStats = function() {
+            // Call the exact same method as F1 key
+            if (window.threeMapRenderer && typeof window.threeMapRenderer.toggleStats === 'function') {
+                window.threeMapRenderer.toggleStats();
+                console.log('📊 FPS stats toggled via button');
+            } else {
+                console.warn('⚠️ FPS stats not available - ThreeMapRenderer not initialized');
+            }
         };
         
         // Initialize debug state on page load
