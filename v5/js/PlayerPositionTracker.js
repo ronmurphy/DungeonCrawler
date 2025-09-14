@@ -15,6 +15,10 @@ class PlayerPositionTracker {
         this.maxHistorySize = 50;
         this.lastUpdateTime = 0;
         this.updateThrottleMs = 100; // Throttle updates to prevent spam
+        this.lastMoveDirection = null; // For dash functionality
+        this.dashDistance = 2; // How far dash moves (in grid units)
+        this.dashCooldown = 1000; // Dash cooldown in milliseconds
+        this.lastDashTime = 0; // Track when last dash occurred
         
         // Movement constraints
         this.constraints = {
@@ -274,6 +278,68 @@ class PlayerPositionTracker {
         console.log('🗑️ Position history cleared');
     }
 
+    // Dash movement - faster movement with cooldown
+    dash(deltaX, deltaY) {
+        const now = Date.now();
+        
+        // Check cooldown
+        if (now - this.lastDashTime < this.dashCooldown) {
+            const remainingCooldown = Math.ceil((this.dashCooldown - (now - this.lastDashTime)) / 1000);
+            console.log(`⚡ Dash on cooldown (${remainingCooldown}s remaining)`);
+            // Still allow regular movement if dash is on cooldown
+            this.moveRelative(deltaX, deltaY);
+            return;
+        }
+        
+        // Calculate dash destination
+        const dashX = deltaX * this.dashDistance;
+        const dashY = deltaY * this.dashDistance;
+        
+        // Try to move the full dash distance
+        const targetX = this.currentPosition.x + dashX;
+        const targetY = this.currentPosition.y + dashY;
+        
+        // Check constraints
+        if (this.isValidPosition(targetX, targetY)) {
+            // Full dash movement
+            this.setPosition(targetX, targetY, 'dash');
+            this.lastDashTime = now;
+            console.log(`⚡ Dashed to (${targetX}, ${targetY})`);
+        } else {
+            // Try shorter dash distances if full dash is blocked
+            let moved = false;
+            for (let distance = this.dashDistance - 1; distance > 0; distance--) {
+                const partialX = this.currentPosition.x + (deltaX * distance);
+                const partialY = this.currentPosition.y + (deltaY * distance);
+                
+                if (this.isValidPosition(partialX, partialY)) {
+                    this.setPosition(partialX, partialY, 'partial-dash');
+                    this.lastDashTime = now;
+                    console.log(`⚡ Partial dash to (${partialX}, ${partialY})`);
+                    moved = true;
+                    break;
+                }
+            }
+            
+            if (!moved) {
+                // If even short dash fails, try regular movement
+                console.log('⚡ Dash blocked, attempting regular movement');
+                this.moveRelative(deltaX, deltaY);
+            }
+        }
+    }
+
+    // Check if dash is available (not on cooldown)
+    canDash() {
+        return (Date.now() - this.lastDashTime) >= this.dashCooldown;
+    }
+
+    // Get dash cooldown remaining in seconds
+    getDashCooldownRemaining() {
+        const remaining = this.dashCooldown - (Date.now() - this.lastDashTime);
+        return Math.max(0, Math.ceil(remaining / 1000));
+    }
+
     // Get current position
     getCurrentPosition() {
         return { ...this.currentPosition };
@@ -283,7 +349,7 @@ class PlayerPositionTracker {
     setupKeyboardMovement(enabled = true) {
         if (enabled) {
             document.addEventListener('keydown', this.handleKeyPress.bind(this));
-            console.log('⌨️ Keyboard movement enabled (WASD/Arrow keys)');
+            console.log('⌨️ Keyboard movement enabled (WASD/Arrow keys, Shift+Move to dash, Spacebar to dash forward)');
         } else {
             document.removeEventListener('keydown', this.handleKeyPress.bind(this));
             console.log('⌨️ Keyboard movement disabled');
@@ -295,6 +361,12 @@ class PlayerPositionTracker {
         if (!this.isMovementEnabled) return;
         
         let deltaX = 0, deltaY = 0;
+        let isDash = false;
+        
+        // Check for dash (Shift key held)
+        if (event.shiftKey) {
+            isDash = true;
+        }
         
         switch (event.code) {
             case 'ArrowUp':
@@ -313,17 +385,41 @@ class PlayerPositionTracker {
             case 'KeyD':
                 deltaX = 1;
                 break;
+            case 'Space':
+                // Spacebar for dash in current facing direction
+                // Use last movement direction or default forward
+                if (this.lastMoveDirection) {
+                    deltaX = this.lastMoveDirection.x;
+                    deltaY = this.lastMoveDirection.y;
+                    isDash = true;
+                } else {
+                    deltaY = -1; // Default forward
+                    isDash = true;
+                }
+                break;
             default:
                 return; // Not a movement key
         }
         
         event.preventDefault();
-        this.moveRelative(deltaX, deltaY);
+        
+        // Execute movement with dash multiplier
+        if (isDash) {
+            this.dash(deltaX, deltaY);
+        } else {
+            this.moveRelative(deltaX, deltaY);
+            // Store last direction for spacebar dash
+            this.lastMoveDirection = { x: deltaX, y: deltaY };
+        }
     }
 
     // Set up click-to-move on map tiles
     setupClickToMove(mapContainer) {
         if (!mapContainer) return;
+        
+        let lastTapTime = 0;
+        let lastTapTile = null;
+        const doubleTapDelay = 300; // milliseconds
         
         mapContainer.addEventListener('click', (event) => {
             if (!this.isMovementEnabled) return;
@@ -332,11 +428,41 @@ class PlayerPositionTracker {
             if (tile) {
                 const x = parseInt(tile.dataset.x);
                 const y = parseInt(tile.dataset.y);
-                this.moveTo(x, y);
+                const now = Date.now();
+                
+                // Check for double-tap for mobile dash
+                if (lastTapTile === tile && (now - lastTapTime) < doubleTapDelay) {
+                    // Double-tap detected - perform dash
+                    console.log('📱 Double-tap detected - dashing to tile');
+                    const deltaX = x - this.currentPosition.x;
+                    const deltaY = y - this.currentPosition.y;
+                    
+                    // Normalize direction for dash
+                    const normalizedX = deltaX > 0 ? 1 : deltaX < 0 ? -1 : 0;
+                    const normalizedY = deltaY > 0 ? 1 : deltaY < 0 ? -1 : 0;
+                    
+                    if (normalizedX !== 0 || normalizedY !== 0) {
+                        this.dash(normalizedX, normalizedY);
+                    }
+                } else {
+                    // Single tap - regular movement
+                    this.moveTo(x, y);
+                }
+                
+                lastTapTime = now;
+                lastTapTile = tile;
             }
         });
         
-        console.log('🖱️ Click-to-move enabled');
+        // Add touch events for better mobile experience
+        mapContainer.addEventListener('touchstart', (event) => {
+            // Prevent default to avoid double-firing with click
+            if (event.touches.length === 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+        
+        console.log('🖱️ Click-to-move enabled (double-tap to dash on mobile)');
     }
 
     // Calculate distance between two positions

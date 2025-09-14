@@ -579,3 +579,70 @@
         height: 45px;
     }
 }
+
+/* Mobile Dash Button Enhancements */
+#mobile-dash-button {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+#mobile-dash-button .material-icons {
+    transition: all 0.3s ease;
+}
+
+/* Dash button active state */
+#mobile-dash-button:active {
+    transform: scale(0.95);
+    background: linear-gradient(135deg, #ff6b35, #e74c3c);
+}
+
+/* Dash button cooldown state */
+#mobile-dash-button.cooldown {
+    opacity: 0.5;
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+    cursor: not-allowed;
+}
+
+#mobile-dash-button.cooldown::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to right, rgba(52, 73, 94, 0.8) 0%, rgba(52, 73, 94, 0.8) var(--cooldown-progress, 0%), transparent var(--cooldown-progress, 0%));
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+/* Enhanced dash button with lightning effect */
+#mobile-dash-button::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, transparent, rgba(255, 193, 7, 0.3), transparent);
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+}
+
+#mobile-dash-button:hover::before {
+    opacity: 1;
+}
+
+/* Lightning flash animation for dash activation */
+@keyframes dashFlash {
+    0% { transform: scale(1) rotate(0deg); opacity: 1; }
+    50% { transform: scale(1.2) rotate(180deg); opacity: 0.8; }
+    100% { transform: scale(1) rotate(360deg); opacity: 1; }
+}
+
+#mobile-dash-button.activated .material-icons {
+    animation: dashFlash 0.6s ease;
+    color: #fff700;
+}

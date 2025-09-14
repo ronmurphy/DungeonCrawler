@@ -131,60 +131,62 @@ class PlayerMapViewer {
             container.style.cursor = 'grab';
         });
 
-        // Touch support
-        container.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                this.isPanning = true;
-                this.lastMouseX = e.touches[0].clientX;
-                this.lastMouseY = e.touches[0].clientY;
-            } else if (e.touches.length === 2) {
-                this.isMultiTouch = true;
-                this.isPanning = false;
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-                this.lastTouchDistance = Math.sqrt(
-                    Math.pow(touch2.clientX - touch1.clientX, 2) +
-                    Math.pow(touch2.clientY - touch1.clientY, 2)
-                );
-            }
-            e.preventDefault();
-        });
+        // Touch support - DISABLED to prevent conflicts with virtual controls
+        // container.addEventListener('touchstart', (e) => {
+        //     if (e.touches.length === 1) {
+        //         this.isPanning = true;
+        //         this.lastMouseX = e.touches[0].clientX;
+        //         this.lastMouseY = e.touches[0].clientY;
+        //     } else if (e.touches.length === 2) {
+        //         this.isMultiTouch = true;
+        //         this.isPanning = false;
+        //         const touch1 = e.touches[0];
+        //         const touch2 = e.touches[1];
+        //         this.lastTouchDistance = Math.sqrt(
+        //             Math.pow(touch2.clientX - touch1.clientX, 2) +
+        //             Math.pow(touch2.clientY - touch1.clientY, 2)
+        //         );
+        //     }
+        //     e.preventDefault();
+        // });
 
-        container.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 1 && this.isPanning && !this.isMultiTouch) {
-                const deltaX = e.touches[0].clientX - this.lastMouseX;
-                const deltaY = e.touches[0].clientY - this.lastMouseY;
-                
-                this.viewerPanX += deltaX / this.viewerZoom;
-                this.viewerPanY += deltaY / this.viewerZoom;
-                
-                this.lastMouseX = e.touches[0].clientX;
-                this.lastMouseY = e.touches[0].clientY;
-                
-                updateViewerTransform();
-            } else if (e.touches.length === 2 && this.isMultiTouch) {
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-                const distance = Math.sqrt(
-                    Math.pow(touch2.clientX - touch1.clientX, 2) +
-                    Math.pow(touch2.clientY - touch1.clientY, 2)
-                );
-                
-                if (this.lastTouchDistance > 0) {
-                    const scale = distance / this.lastTouchDistance;
-                    this.viewerZoom = Math.max(0.2, Math.min(5, this.viewerZoom * scale));
-                    updateViewerTransform();
-                }
-                this.lastTouchDistance = distance;
-            }
-            e.preventDefault();
-        });
+        // Touch move - DISABLED to prevent conflicts with virtual controls
+        // container.addEventListener('touchmove', (e) => {
+        //     if (e.touches.length === 1 && this.isPanning && !this.isMultiTouch) {
+        //         const deltaX = e.touches[0].clientX - this.lastMouseX;
+        //         const deltaY = e.touches[0].clientY - this.lastMouseY;
+        //         
+        //         this.viewerPanX += deltaX / this.viewerZoom;
+        //         this.viewerPanY += deltaY / this.viewerZoom;
+        //         
+        //         this.lastMouseX = e.touches[0].clientX;
+        //         this.lastMouseY = e.touches[0].clientY;
+        //         
+        //         updateViewerTransform();
+        //     } else if (e.touches.length === 2 && this.isMultiTouch) {
+        //         const touch1 = e.touches[0];
+        //         const touch2 = e.touches[1];
+        //         const distance = Math.sqrt(
+        //             Math.pow(touch2.clientX - touch1.clientX, 2) +
+        //             Math.pow(touch2.clientY - touch1.clientY, 2)
+        //         );
+        //         
+        //         if (this.lastTouchDistance > 0) {
+        //             const scale = distance / this.lastTouchDistance;
+        //             this.viewerZoom = Math.max(0.2, Math.min(5, this.viewerZoom * scale));
+        //             updateViewerTransform();
+        //         }
+        //         this.lastTouchDistance = distance;
+        //     }
+        //     e.preventDefault();
+        // });
 
-        container.addEventListener('touchend', () => {
-            this.isPanning = false;
-            this.isMultiTouch = false;
-            this.lastTouchDistance = 0;
-        });
+        // Touch end - DISABLED to prevent conflicts with virtual controls
+        // container.addEventListener('touchend', () => {
+        //     this.isPanning = false;
+        //     this.isMultiTouch = false;
+        //     this.lastTouchDistance = 0;
+        // });
 
         // Disable context menu for right-click panning
         container.addEventListener('contextmenu', (e) => {

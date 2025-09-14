@@ -104,6 +104,16 @@ class ShapeForgeParser {
         this.cleanupAllShaderEffects();
         this.newProject();
 
+        // Load workspace size (backward compatible) - v1.3 support
+        if (jsonData.workspaceSize) {
+            this.workspaceSize = { ...jsonData.workspaceSize };
+            console.log(`Loading workspace size: ${this.workspaceSize.x}x${this.workspaceSize.y}x${this.workspaceSize.z}`);
+        } else {
+            // For v1.2 and older projects, use default workspace size
+            this.workspaceSize = { x: 10, y: 10, z: 10 };
+            console.log(`Using default workspace size for v1.2 project: ${this.workspaceSize.x}x${this.workspaceSize.y}x${this.workspaceSize.z}`);
+        }
+
         // Keep track of created objects that need textures
         const objectsNeedingTextures = [];
 
@@ -215,6 +225,9 @@ class ShapeForgeParser {
         // Special handling for merged objects with geometryData
         if (objData.type === 'merged' && objData.geometryData) {
             console.log("Creating merged geometry from geometryData");
+            console.log(`Vertices: ${objData.geometryData.vertices ? objData.geometryData.vertices.length / 3 : 0}`);
+            console.log(`Indices: ${objData.geometryData.indices ? objData.geometryData.indices.length : 0}`);
+            console.log(`Normals: ${objData.geometryData.normals ? objData.geometryData.normals.length / 3 : 0}`);
 
             // Create a BufferGeometry from the saved vertex data
             geometry = new THREE.BufferGeometry();
@@ -235,8 +248,23 @@ class ShapeForgeParser {
                 geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
             }
 
+            // Handle both indices and faces formats
             if (objData.geometryData.indices && objData.geometryData.indices.length > 0) {
                 geometry.setIndex(objData.geometryData.indices);
+            } else if (objData.geometryData.faces && objData.geometryData.faces.length > 0) {
+                // Convert faces format to indices format
+                const indices = [];
+                for (let i = 0; i < objData.geometryData.faces.length; i += 3) {
+                    indices.push(objData.geometryData.faces[i]);
+                    indices.push(objData.geometryData.faces[i + 1]);
+                    indices.push(objData.geometryData.faces[i + 2]);
+                }
+                geometry.setIndex(indices);
+            }
+
+            // Compute normals if missing or if they seem incorrect
+            if (!objData.geometryData.normals || objData.geometryData.normals.length === 0) {
+                geometry.computeVertexNormals();
             }
         } else {
             switch (objData.type) {

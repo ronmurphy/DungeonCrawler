@@ -57,7 +57,12 @@ class ThreeMapRenderer {
         this.velocity = { x: 0, z: 0 };
         
         // Mobile performance detection and optimization
-        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // Enhanced detection for mobile devices AND responsive mode
+        const userAgentMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const touchCapable = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const smallScreen = window.innerWidth <= 768; // Typical mobile breakpoint
+        this.isMobile = userAgentMobile || (touchCapable && smallScreen);
+        
         this.grassDensityMultiplier = this.isMobile ? 0.25 : 1.0; // Reduce grass density on mobile
         this.renderDistance = this.isMobile ? 50 : 100; // Shorter render distance on mobile
         
@@ -77,7 +82,6 @@ class ThreeMapRenderer {
         // Touch and mobile controls
         this.virtualStick = null;
         this.touchStartPos = null;
-        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
         // Sprite/Tileset handling
         this.spriteTexture = null;
@@ -120,7 +124,18 @@ class ThreeMapRenderer {
         
         // Log mobile optimizations
         if (this.isMobile) {
-            console.log('📱 Mobile device detected - applying performance optimizations:');
+            const detectionReasons = [];
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                detectionReasons.push('User Agent');
+            }
+            if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                detectionReasons.push('Touch Capable');
+            }
+            if (window.innerWidth <= 768) {
+                detectionReasons.push('Small Screen');
+            }
+            
+            console.log(`📱 Mobile/responsive mode detected (${detectionReasons.join(', ')}) - applying optimizations:`);
             console.log(`  • Grass density: ${Math.round(this.grassDensityMultiplier * 100)}% of desktop`);
             console.log(`  • Render distance: ${this.renderDistance} units`);
             console.log(`  • Tile size: ${this.tileSize} units (optimized for exploration)`);
@@ -467,8 +482,15 @@ class ThreeMapRenderer {
             direction.z /= length;
         }
         
-        // Apply movement to velocity
-        const speed = controls.moveSpeed;
+        // Apply movement to velocity with speed boost
+        let speed = controls.moveSpeed;
+        if (this.rightMousePressed) {
+            speed *= 2; // Double speed when right mouse is held
+        }
+        // Also apply speed boost for Shift + movement keys
+        if (this.shiftPressed && (controls.keys.forward || controls.keys.backward || controls.keys.left || controls.keys.right)) {
+            speed *= 2; // Double speed when shift is held with movement
+        }
         if (direction.z !== 0) this.velocity.z += direction.z * speed * delta;
         if (direction.x !== 0) this.velocity.x += direction.x * speed * delta;
         
@@ -509,6 +531,19 @@ class ThreeMapRenderer {
     setupKeyboardControls() {
         const controls = this.cameraControls;
         
+        // Add dash properties to camera controls
+        controls.dash = {
+            distance: 2, // How far to dash (in movement units)
+            cooldown: 1000, // Dash cooldown in milliseconds
+            lastDashTime: 0 // Track when last dash occurred
+        };
+        
+        // Track shift key state separately for reliable dash detection
+        this.shiftPressed = false;
+        
+        // Track right mouse button state for speed boost
+        this.rightMousePressed = false;
+        
         const keyMap = {
             'KeyW': 'forward',
             'KeyS': 'backward', 
@@ -522,21 +557,158 @@ class ThreeMapRenderer {
             'KeyE': 'turnRight'
         };
         
-        window.addEventListener('keydown', (event) => {
+        const self = this; // Store reference for event handlers
+        
+        window.addEventListener('keydown', function(event) {
+            // Track shift key state
+            if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
+                self.shiftPressed = true;
+                console.log(`🔄 Shift key pressed - shift state: ${self.shiftPressed}, moveSpeed: ${controls.moveSpeed} -> ${controls.moveSpeed * 2} (when moving)`);
+                return;
+            }
+            
+            // Debug logging for all key presses
+            console.log(`🎮 Key pressed: ${event.code}, Shift state: ${self.shiftPressed}, Event shift: ${event.shiftKey}, Repeat: ${event.repeat}, RMB boost: ${self.rightMousePressed}`);
+            
             if (keyMap[event.code] && !event.repeat) {
+                // Check for dash (Shift + movement key) - use both tracked state AND event.shiftKey
+                if ((self.shiftPressed || event.shiftKey) && ['KeyW', 'KeyS', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown'].includes(event.code)) {
+                    console.log(`⚡ Dash detected: ${event.code} + Shift (tracked: ${self.shiftPressed}, event: ${event.shiftKey}), moveSpeed: ${controls.moveSpeed}`);
+                    self.handleKeyboardDash(event.code);
+                    event.preventDefault();
+                    return;
+                }
+                
+                // Handle spacebar dash (dash in current facing direction)
+                if (event.code === 'Space') {
+                    console.log(`⚡ Spacebar dash detected`);
+                    self.handleSpacebarDash();
+                    event.preventDefault();
+                    return;
+                }
+                
+                // Regular movement
                 controls.keys[keyMap[event.code]] = true;
                 event.preventDefault();
             }
         });
         
-        window.addEventListener('keyup', (event) => {
+        window.addEventListener('keyup', function(event) {
+            // Track shift key release
+            if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
+                self.shiftPressed = false;
+                console.log(`🔄 Shift key released - shift state: ${self.shiftPressed}, moveSpeed: ${controls.moveSpeed} (boost deactivated)`);
+                return;
+            }
+            
             if (keyMap[event.code]) {
                 controls.keys[keyMap[event.code]] = false;
                 event.preventDefault();
             }
         });
         
-        this.debugLog('⌨️ Keyboard controls setup');
+        // Mouse event listeners for speed boost
+        window.addEventListener('mousedown', function(event) {
+            if (event.button === 2) { // Right mouse button
+                self.rightMousePressed = true;
+                console.log(`🖱️ Right mouse pressed - speed boost activated, moveSpeed: ${controls.moveSpeed} -> ${controls.moveSpeed * 2}`);
+                event.preventDefault();
+            }
+        });
+        
+        window.addEventListener('mouseup', function(event) {
+            if (event.button === 2) { // Right mouse button
+                self.rightMousePressed = false;
+                console.log(`🖱️ Right mouse released - speed boost deactivated, moveSpeed: ${controls.moveSpeed}`);
+                event.preventDefault();
+            }
+        });
+        
+        // Prevent context menu on right click
+        window.addEventListener('contextmenu', function(event) {
+            event.preventDefault();
+        });
+        
+        this.debugLog('⌨️ Keyboard controls setup (WASD/Arrows + Shift to dash, Spacebar to dash forward)');
+    }
+    
+    // Handle keyboard dash (Shift + movement key)
+    handleKeyboardDash(keyCode) {
+        const now = Date.now();
+        const dashData = this.cameraControls.dash;
+        
+        // Check cooldown
+        if (now - dashData.lastDashTime < dashData.cooldown) {
+            const remaining = Math.ceil((dashData.cooldown - (now - dashData.lastDashTime)) / 1000);
+            console.log(`⚡ Dash on cooldown (${remaining}s remaining)`);
+            return;
+        }
+        
+        // Determine dash direction based on key
+        let deltaX = 0, deltaZ = 0;
+        switch (keyCode) {
+            case 'KeyW':
+            case 'ArrowUp':
+                deltaZ = -dashData.distance;
+                break;
+            case 'KeyS':
+            case 'ArrowDown':
+                deltaZ = dashData.distance;
+                break;
+            case 'KeyA':
+                deltaX = -dashData.distance;
+                break;
+            case 'KeyD':
+                deltaX = dashData.distance;
+                break;
+        }
+        
+        this.executeDash(deltaX, deltaZ);
+        dashData.lastDashTime = now;
+        console.log(`⚡ Keyboard dash executed: direction (${deltaX}, ${deltaZ}), moveSpeed: ${this.cameraControls.moveSpeed}`);
+    }
+    
+    // Handle spacebar dash (dash forward in current facing direction)
+    handleSpacebarDash() {
+        const now = Date.now();
+        const dashData = this.cameraControls.dash;
+        
+        // Check cooldown
+        if (now - dashData.lastDashTime < dashData.cooldown) {
+            const remaining = Math.ceil((dashData.cooldown - (now - dashData.lastDashTime)) / 1000);
+            console.log(`⚡ Dash on cooldown (${remaining}s remaining)`);
+            return;
+        }
+        
+        // Dash forward in current facing direction
+        const deltaX = 0;
+        const deltaZ = -dashData.distance; // Forward
+        
+        this.executeDash(deltaX, deltaZ);
+        dashData.lastDashTime = now;
+        console.log(`⚡ Spacebar dash executed: forward direction, moveSpeed: ${this.cameraControls.moveSpeed}`);
+    }
+    
+    // Execute the actual dash movement
+    executeDash(deltaX, deltaZ) {
+        // Apply rotation to movement direction based on player's current rotation
+        const playerRotationY = this.player.rotation.y;
+        const cos = Math.cos(playerRotationY);
+        const sin = Math.sin(playerRotationY);
+        
+        const rotatedX = deltaX * cos - deltaZ * sin;
+        const rotatedZ = deltaX * sin + deltaZ * cos;
+        
+        // Apply dash movement to player position
+        this.player.position.x += rotatedX;
+        this.player.position.z += rotatedZ;
+        
+        // Update minimap if available
+        if (this.minimapRenderer) {
+            this.minimapRenderer.updatePlayerPosition(this.player.position.x, this.player.position.z);
+        }
+        
+        console.log(`⚡ Dash movement applied: (${rotatedX.toFixed(2)}, ${rotatedZ.toFixed(2)}), current moveSpeed: ${this.cameraControls.moveSpeed}`);
     }
     
     // Setup mouse controls for camera rotation
@@ -765,13 +937,12 @@ class ThreeMapRenderer {
                 const deltaX = event.touches[0].clientX - touchStartX;
                 const deltaY = event.touches[0].clientY - touchStartY;
                 
-                // Rotate camera based on touch movement
-                this.camera.rotateY(-deltaX * 0.005);
-                this.camera.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), -deltaY * 0.005);
+                // Rotate player (Y-axis) and camera (X-axis) based on touch movement - same as mouse controls
+                this.player.rotation.y -= deltaX * 0.003;
+                this.camera.rotation.x -= deltaY * 0.003;
                 
-                // Clamp vertical rotation
-                const rotation = this.camera.rotation;
-                rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotation.x));
+                // Clamp vertical rotation to prevent ground tilting
+                this.camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.camera.rotation.x));
                 
                 touchStartX = event.touches[0].clientX;
                 touchStartY = event.touches[0].clientY;
@@ -1347,13 +1518,18 @@ class ThreeMapRenderer {
         // Determine if this tile should be flat (water, road) or billboard
         const flatTileTypes = ['water', 'road', 'stone', 'dirt', 'floor'];
         const shouldBeFlat = flatTileTypes.includes(tileName.toLowerCase());
-        
+
+        // Load ShapeForge files too replace billboards
+
         if (spriteData && !shouldBeFlat) {
             // Create billboard sprites for trees, mountains, buildings, etc.
             if (tileName === 'grass') {
                 // Create multiple small grass sprites scattered across the tile
                 billboardMesh = this.loadShapeForgeFile(spriteData, tileName);
             } else if (tileName === 'mountain') {
+                // Use ShapeForge mountains instead of billboard sprites
+                billboardMesh = this.loadShapeForgeFile(spriteData, tileName);
+            } else if (tileName === 'castle') {
                 // Use ShapeForge mountains instead of billboard sprites
                 billboardMesh = this.loadShapeForgeFile(spriteData, tileName);
             } else {
@@ -1369,6 +1545,9 @@ class ThreeMapRenderer {
             } else if (tileName === 'mountain') {
                 // Use ShapeForge mountains even without sprite data
                 billboardMesh = this.loadShapeForgeFile(null, tileName);
+            } else if (tileName === 'castle') {
+                // Use ShapeForge mountains instead of billboard sprites
+                billboardMesh = this.loadShapeForgeFile(spriteData, tileName);
             } else if (!shouldBeFlat) {
                 billboardMesh = this.createColorBillboard(tileName);
             }
@@ -1514,6 +1693,11 @@ class ThreeMapRenderer {
         if (tileName === 'mountain') {
             console.log('🏔️ Mountain Should Be Here - shapeforge');
             return this.loadSfMountain();
+        }
+
+        if (tileName === 'castle') {
+            console.log('🏰 Castle Should Be Here - shapeforge');
+            return this.loadSfCastle();
         }
         
         const grassGroup = new THREE.Group();
@@ -1729,7 +1913,7 @@ class ThreeMapRenderer {
                 return response.json();
             })
             .then(shapeforgeData => {
-                console.log('🏔️ Mountain ShapeForge data loaded:', shapeforgeData);
+                // console.log('🏔️ Mountain ShapeForge data loaded:', shapeforgeData);
                 
                 // Create single massive mountain per tile (they're big enough!)
                 const mountainMesh = this.createShapeForgeModel(shapeforgeData);
@@ -1754,6 +1938,44 @@ class ThreeMapRenderer {
         
         return mountainGroup;
     }
+
+       // Load ShapeForge castle model instead of billboard sprites  
+    loadSfCastle() {
+        console.log(' Loading ShapeForge castle model...');
+        const castleGroup = new THREE.Group();
+        
+        // Load the mountain.shapeforge.json file
+        fetch('assets/shapeforge/castle.shapeforge.json')
+            .then(response => {
+                console.log(' Castle fetch response:', response.status, response.ok);
+                return response.json();
+            })
+            .then(shapeforgeData => {
+                // console.log('🏰 Castle ShapeForge data loaded:', shapeforgeData);
+
+                // Create single massive castle per tile (they're big enough!)
+                const castleMesh = this.createShapeForgeModel(shapeforgeData);
+
+                if (castleMesh) {
+                    console.log('✅ Castle mesh created successfully - adding to scene');
+                    // Castles are already properly sized and positioned
+                    // No random positioning needed - they're meant to dominate the tile
+                    castleGroup.add(castleMesh);
+                } else {
+                    console.warn('⚠️ Failed to create castle mesh from ShapeForge data');
+                }
+            })
+            .catch(error => {
+                console.warn('⚠️ Failed to load ShapeForge castle, falling back to billboard:', error);
+                // Fallback to original billboard method - but we need to add it to the group
+                const fallbackCastle = this.createCastleFieldFallback();
+                if (fallbackCastle) {
+                    castleGroup.add(fallbackCastle);
+                }
+            });
+
+        return castleGroup;
+    }
     
     // Create a Three.js mesh from ShapeForge model data
     createShapeForgeModel(shapeforgeData) {
@@ -1762,20 +1984,40 @@ class ThreeMapRenderer {
             return null;
         }
         
+        // Check for workspace size (v1.3 support)
+        let workspaceScale = 1.0;
+        if (shapeforgeData.workspaceSize) {
+            console.log(`🎯 Loading v1.3 ShapeForge with workspace: ${shapeforgeData.workspaceSize.x}x${shapeforgeData.workspaceSize.y}x${shapeforgeData.workspaceSize.z}`);
+            // Scale based on workspace vs tile size ratio
+            const maxWorkspaceDimension = Math.max(shapeforgeData.workspaceSize.x, shapeforgeData.workspaceSize.y, shapeforgeData.workspaceSize.z);
+            workspaceScale = this.tileSize / maxWorkspaceDimension;
+        }
+        
         const modelGroup = new THREE.Group();
         
         shapeforgeData.objects.forEach(obj => {
+            let geometry;
+            
             if (obj.geometryData) {
-                const geometry = new THREE.BufferGeometry();
+                // Handle complex merged objects with geometryData
+                geometry = new THREE.BufferGeometry();
                 
                 // Convert vertices to Three.js format
                 const vertices = new Float32Array(obj.geometryData.vertices);
                 geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
                 
-                // Convert faces to indices
-                if (obj.geometryData.faces) {
-                    const indices = new Uint16Array(obj.geometryData.faces);
-                    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+                // Handle both indices and faces formats (v1.3 compatibility)
+                if (obj.geometryData.indices && obj.geometryData.indices.length > 0) {
+                    geometry.setIndex(obj.geometryData.indices);
+                } else if (obj.geometryData.faces && obj.geometryData.faces.length > 0) {
+                    // Convert faces format to indices format
+                    const indices = [];
+                    for (let i = 0; i < obj.geometryData.faces.length; i += 3) {
+                        indices.push(obj.geometryData.faces[i]);
+                        indices.push(obj.geometryData.faces[i + 1]);
+                        indices.push(obj.geometryData.faces[i + 2]);
+                    }
+                    geometry.setIndex(indices);
                 }
                 
                 // Add normals if available
@@ -1791,32 +2033,89 @@ class ThreeMapRenderer {
                     const uvs = new Float32Array(obj.geometryData.uvs);
                     geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
                 }
-                
+            } else if (obj.type && obj.parameters) {
+                // Handle primitive objects (cone, sphere, cube, etc.)
+                switch (obj.type) {
+                    case 'cone':
+                        geometry = new THREE.ConeGeometry(
+                            obj.parameters.radius || 0.5,
+                            obj.parameters.height || 1,
+                            obj.parameters.radialSegments || 8
+                        );
+                        break;
+                    case 'cube':
+                    case 'box':
+                        geometry = new THREE.BoxGeometry(
+                            obj.parameters.width || 1,
+                            obj.parameters.height || 1,
+                            obj.parameters.depth || 1
+                        );
+                        break;
+                    case 'sphere':
+                        geometry = new THREE.SphereGeometry(
+                            obj.parameters.radius || 0.5,
+                            obj.parameters.widthSegments || 16,
+                            obj.parameters.heightSegments || 12
+                        );
+                        break;
+                    case 'cylinder':
+                        geometry = new THREE.CylinderGeometry(
+                            obj.parameters.radiusTop || 0.5,
+                            obj.parameters.radiusBottom || 0.5,
+                            obj.parameters.height || 1,
+                            obj.parameters.radialSegments || 8
+                        );
+                        break;
+                    case 'plane':
+                        geometry = new THREE.PlaneGeometry(
+                            obj.parameters.width || 1,
+                            obj.parameters.height || 1
+                        );
+                        break;
+                    default:
+                        console.warn(`Unsupported object type: ${obj.type}`);
+                        geometry = new THREE.BoxGeometry(1, 1, 1); // fallback
+                }
+            } else {
+                console.warn('Object has neither geometryData nor valid type/parameters');
+                return; // skip this object
+            }
+            
+            if (geometry) {
                 // Create material from ShapeForge data
                 const material = new THREE.MeshLambertMaterial({
-                    color: obj.material.color || 0x4a7c59,
-                    transparent: obj.material.transparent || false,
-                    opacity: obj.material.opacity || 1.0,
+                    color: obj.material?.color || 0x4a7c59,
+                    transparent: obj.material?.transparent || false,
+                    opacity: obj.material?.opacity || 1.0,
                     side: THREE.DoubleSide // Show both sides for grass blades
                 });
                 
                 const mesh = new THREE.Mesh(geometry, material);
                 
-                // Apply position, rotation, scale from ShapeForge data
+                // Apply position, rotation, scale from ShapeForge data with workspace scaling
                 if (obj.position) {
-                    mesh.position.set(obj.position.x, obj.position.y, obj.position.z);
+                    mesh.position.set(
+                        obj.position.x * workspaceScale, 
+                        obj.position.y * workspaceScale, 
+                        obj.position.z * workspaceScale
+                    );
                 }
                 if (obj.rotation) {
                     mesh.rotation.set(obj.rotation.x, obj.rotation.y, obj.rotation.z);
                 }
                 if (obj.scale) {
-                    mesh.scale.set(obj.scale.x, obj.scale.y, obj.scale.z);
+                    mesh.scale.set(
+                        obj.scale.x * workspaceScale, 
+                        obj.scale.y * workspaceScale, 
+                        obj.scale.z * workspaceScale
+                    );
                 }
                 
                 modelGroup.add(mesh);
             }
         });
         
+        console.log(`✅ Created ShapeForge model with ${shapeforgeData.objects.length} objects, workspace scale: ${workspaceScale.toFixed(2)}`);
         return modelGroup;
     }
     

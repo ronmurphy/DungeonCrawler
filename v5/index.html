@@ -134,6 +134,47 @@
         .card-action-btn.chat-btn:active {
             transform: translateY(0);
         }
+        
+        /* Virtual Dash Button Styling */
+        #virtual-dash-button {
+            transition: all 0.3s ease !important;
+        }
+        
+        #virtual-dash-button:hover {
+            background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+            transform: scale(1.05) !important;
+        }
+        
+        #virtual-dash-button:active {
+            transform: scale(0.95) !important;
+        }
+        
+        /* Mobile responsiveness for virtual dash button */
+        @media (max-width: 768px) {
+            #virtual-dash-button {
+                width: 70px !important;
+                height: 70px !important;
+                bottom: 15px !important;
+                right: 15px !important;
+            }
+            
+            #virtual-dash-button .material-icons {
+                font-size: 28px !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #virtual-dash-button {
+                width: 60px !important;
+                height: 60px !important;
+                bottom: 10px !important;
+                right: 10px !important;
+            }
+            
+            #virtual-dash-button .material-icons {
+                font-size: 24px !important;
+            }
+        }
     </style>
 
     <!-- Custom CSS -->
@@ -245,6 +286,33 @@
                         justify-content: center;
                     " title="Close Map">×</button>
                 </div>
+                
+                <!-- Virtual Dash Button for Mobile (positioned opposite virtual controller) -->
+                <div id="virtual-dash-button" style="
+                    position: absolute;
+                    bottom: 20px;
+                    right: 20px;
+                    width: 80px;
+                    height: 80px;
+                    background: linear-gradient(135deg, #ff6b35, #e74c3c);
+                    border: 3px solid rgba(255, 255, 255, 0.3);
+                    border-radius: 50%;
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    user-select: none;
+                    z-index: 1001;
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+                    transition: all 0.3s ease;
+                " onclick="mobileDash()" title="Dash Forward">
+                    <i class="material-icons" style="
+                        font-size: 32px;
+                        color: white;
+                        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+                    ">flash_on</i>
+                </div>
+                
                 <!-- Main 3D Map Display -->
                 <div id="threejs-container" style="
                     width: 100%;
@@ -3474,6 +3542,15 @@
                 overlay.style.display = 'flex';
                 window.mapsViewerOpen = true;
                 
+                // Show virtual dash button only on mobile devices
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                                 (('ontouchstart' in window || navigator.maxTouchPoints > 0) && window.innerWidth <= 768);
+                const dashButton = document.getElementById('virtual-dash-button');
+                if (dashButton) {
+                    dashButton.style.display = isMobile ? 'flex' : 'none';
+                    console.log(`📱 Virtual dash button: ${isMobile ? 'shown' : 'hidden'} (mobile detected: ${isMobile})`);
+                }
+                
                 // Force canvas resize after overlay becomes visible
                 setTimeout(() => {
                     const canvas = document.getElementById('map-canvas');
@@ -3543,6 +3620,98 @@
             if (overlay) {
                 overlay.style.display = 'none';
                 window.mapsViewerOpen = false;
+            }
+        };
+
+        // Toggle map overlay visibility
+        window.toggleMapDisplay = function() {
+            const overlay = document.getElementById('map-overlay');
+            if (overlay) {
+                if (overlay.style.display === 'flex' || window.mapsViewerOpen) {
+                    console.log('🗺️ Toggling map OFF');
+                    hideMapOverlay();
+                } else {
+                    console.log('🗺️ Toggling map ON');
+                    // Only show map if we have map data, otherwise open maps view
+                    if (window.mapsManager && window.mapsManager.savedMaps.size > 0) {
+                        showMapOverlay();
+                    } else {
+                        openMapsView();
+                    }
+                }
+            } else {
+                console.log('🗺️ Map overlay not found, opening maps view');
+                openMapsView();
+            }
+        };
+
+        // Mobile dash function
+        window.mobileDash = function() {
+            console.log('📱 Mobile dash button pressed');
+            
+            const dashButton = document.getElementById('virtual-dash-button');
+            
+            // Check if we have position tracker available
+            if (window.mapSyncAdapter && window.mapSyncAdapter.positionTracker) {
+                const tracker = window.mapSyncAdapter.positionTracker;
+                
+                // Check dash cooldown
+                if (!tracker.canDash()) {
+                    const remaining = tracker.getDashCooldownRemaining();
+                    console.log(`⚡ Dash on cooldown (${remaining}s remaining)`);
+                    
+                    // Show visual feedback for cooldown
+                    if (dashButton) {
+                        dashButton.style.opacity = '0.5';
+                        dashButton.title = `Dash Cooldown (${remaining}s)`;
+                        
+                        setTimeout(() => {
+                            dashButton.style.opacity = '1';
+                            dashButton.title = 'Dash Forward';
+                        }, remaining * 1000);
+                    }
+                    return;
+                }
+                
+                // Use last movement direction or default forward
+                let dashX = 0, dashY = -1; // Default forward (up)
+                
+                if (tracker.lastMoveDirection) {
+                    dashX = tracker.lastMoveDirection.x;
+                    dashY = tracker.lastMoveDirection.y;
+                } 
+                
+                // Visual feedback for activation
+                if (dashButton) {
+                    dashButton.style.transform = 'scale(1.1)';
+                    dashButton.style.boxShadow = '0 0 20px rgba(255, 107, 53, 0.8)';
+                    setTimeout(() => {
+                        dashButton.style.transform = 'scale(1)';
+                        dashButton.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.3)';
+                    }, 300);
+                }
+                
+                // Perform dash
+                tracker.dash(dashX, dashY);
+                
+                // Add haptic feedback on mobile
+                if (navigator.vibrate) {
+                    navigator.vibrate(100);
+                }
+                
+                console.log(`⚡ Mobile dash executed: direction (${dashX}, ${dashY})`);
+            } else {
+                console.log('❌ Position tracker not available for dash');
+                
+                // Visual feedback for error
+                if (dashButton) {
+                    dashButton.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+                    setTimeout(() => {
+                        dashButton.style.background = 'linear-gradient(135deg, #ff6b35, #e74c3c)';
+                    }, 300);
+                }
+                
+                alert('Movement system not available. Make sure you are connected to a game session.');
             }
         };
 
@@ -6394,8 +6563,8 @@
             <div class="feral-option" onclick="openChatBottomSheet()" title="Game Chat">
                 <i class="material-icons">chat_bubble</i>
             </div>
-            <!-- Maps - Show current map -->
-            <div class="feral-option" onclick="openMapsView()" title="Show Map">
+            <!-- Maps - Toggle map visibility -->
+            <div class="feral-option" onclick="toggleMapDisplay()" title="Toggle Map">
                 <i class="material-icons">map</i>
             </div>
             <!-- Character Stats -->
