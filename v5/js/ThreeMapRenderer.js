@@ -78,6 +78,11 @@ class ThreeMapRenderer {
         this.shapeforgeGeometryCache = new Map();   // Stores created ThreeJS geometry groups
         this.shapeforgeLoadingPromises = new Map(); // Prevents duplicate network requests
         
+        // Performance monitoring with Stats.js
+        this.stats = null;
+        this.statsEnabled = false;
+        this.initStats();
+        
         // LOD (Level of Detail) and Frustum Culling system for performance
         this.lodEnabled = true;
         this.frustumCullingEnabled = true;
@@ -136,6 +141,28 @@ class ThreeMapRenderer {
         // Load initial data if provided
         if (mapData) {
             this.loadMapData(mapData);
+        }
+    }
+    
+    // Initialize Stats.js for performance monitoring
+    initStats() {
+        if (typeof Stats !== 'undefined') {
+            this.stats = new Stats();
+            this.stats.showPanel(0); // 0: fps, 1: ms, 2: mb
+            this.stats.dom.style.display = 'none'; // Hidden by default
+            document.body.appendChild(this.stats.dom);
+            console.log('📊 Stats.js initialized - Press F1 to toggle display');
+        } else {
+            console.warn('⚠️  Stats.js not available');
+        }
+    }
+    
+    // Toggle stats display
+    toggleStats() {
+        if (this.stats) {
+            this.statsEnabled = !this.statsEnabled;
+            this.stats.dom.style.display = this.statsEnabled ? 'block' : 'none';
+            console.log(`📊 Performance stats ${this.statsEnabled ? 'enabled' : 'disabled'}`);
         }
     }
     
@@ -428,6 +455,11 @@ class ThreeMapRenderer {
         const animate = () => {
             this.animationId = requestAnimationFrame(animate);
             
+            // Begin performance monitoring
+            if (this.stats && this.statsEnabled) {
+                this.stats.begin();
+            }
+            
             // Calculate delta time for FPS-independent movement
             const time = performance.now();
             const delta = (time - this.prevTime) / 1000;
@@ -438,6 +470,11 @@ class ThreeMapRenderer {
             this.updateBillboards();
             this.updateBillboardScaling();
             this.renderer.render(this.scene, this.camera);
+            
+            // End performance monitoring
+            if (this.stats && this.statsEnabled) {
+                this.stats.end();
+            }
         };
         animate();
     }
@@ -663,6 +700,13 @@ class ThreeMapRenderer {
         const self = this; // Store reference for event handlers
         
         window.addEventListener('keydown', function(event) {
+            // F1 key to toggle performance stats
+            if (event.code === 'F1') {
+                self.toggleStats();
+                event.preventDefault();
+                return;
+            }
+            
             // Track shift key state
             if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
                 self.shiftPressed = true;
@@ -2321,7 +2365,7 @@ class ThreeMapRenderer {
         
         // Throttle LOD updates to avoid excessive processing
         this.lodUpdateCounter++;
-        if (this.lodUpdateCounter % 10 !== 0) return; // Update every 10 frames (~6 times per second at 60fps)
+        if (this.lodUpdateCounter % 20 !== 0) return; // Update every 20 frames (~3 times per second at 60fps)
         
         // Find all ShapeForge models in the scene and update their LOD
         this.scene.traverse((object) => {
