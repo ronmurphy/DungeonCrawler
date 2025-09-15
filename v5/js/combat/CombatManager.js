@@ -16,6 +16,14 @@ export class CombatManager {
         this.activeEnemies = [];
         this.combatLog = [];
         
+        // Combat statistics tracking
+        this.combatStats = {
+            damageDealt: 0,
+            damageTaken: 0,
+            startTime: null,
+            endTime: null
+        };
+        
         this.init();
     }
 
@@ -47,6 +55,40 @@ export class CombatManager {
                 <div class="combat-ui">
                     <div class="combat-controls" id="combat-controls">
                         <!-- Attack menus and controls -->
+                    </div>
+                </div>
+                
+                <!-- Combat Results Modal -->
+                <div class="combat-results-modal hidden" id="combat-results-modal">
+                    <div class="combat-results-content">
+                        <div class="combat-results-header">
+                            <h2 class="combat-results-title" id="combat-results-title">Victory!</h2>
+                        </div>
+                        <div class="combat-results-body">
+                            <div class="combat-stats">
+                                <div class="combat-stat">
+                                    <span class="stat-label">Damage Dealt:</span>
+                                    <span class="stat-value" id="damage-dealt">0</span>
+                                </div>
+                                <div class="combat-stat">
+                                    <span class="stat-label">Damage Taken:</span>
+                                    <span class="stat-value" id="damage-taken">0</span>
+                                </div>
+                                <div class="combat-stat">
+                                    <span class="stat-label">Combat Duration:</span>
+                                    <span class="stat-value" id="combat-duration">0s</span>
+                                </div>
+                            </div>
+                            <div class="loot-section">
+                                <h3>Loot Gained</h3>
+                                <div class="loot-container" id="loot-container">
+                                    <!-- Loot items will be added here -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="combat-results-footer">
+                            <button class="btn-continue" id="continue-button" onclick="window.combatManager.closeCombatResults()">Continue</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -196,6 +238,191 @@ export class CombatManager {
                 gap: 15px;
             }
             
+            
+            /* Combat Results Modal */
+            .combat-results-modal {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                backdrop-filter: blur(5px);
+            }
+            
+            .combat-results-modal.hidden {
+                display: none;
+            }
+            
+            .combat-results-content {
+                width: 500px;
+                max-width: 90vw;
+                background: linear-gradient(135deg, #1a1a2e, #16213e);
+                border-radius: 15px;
+                border: 2px solid #4a9eff;
+                box-shadow: 0 20px 40px rgba(74, 158, 255, 0.5);
+                overflow: hidden;
+                animation: modalSlideIn 0.3s ease-out;
+            }
+            
+            @keyframes modalSlideIn {
+                from {
+                    transform: translateY(-50px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+            
+            .combat-results-header {
+                padding: 20px;
+                text-align: center;
+                background: rgba(74, 158, 255, 0.1);
+                border-bottom: 1px solid #4a9eff;
+            }
+            
+            .combat-results-title {
+                margin: 0;
+                color: #4a9eff;
+                font-size: 1.8em;
+                font-weight: bold;
+                text-shadow: 0 0 10px rgba(74, 158, 255, 0.5);
+            }
+            
+            .combat-results-title.victory {
+                color: #4eff4a;
+                text-shadow: 0 0 10px rgba(78, 255, 74, 0.5);
+            }
+            
+            .combat-results-title.defeat {
+                color: #ff4a4a;
+                text-shadow: 0 0 10px rgba(255, 74, 74, 0.5);
+            }
+            
+            .combat-results-body {
+                padding: 20px;
+            }
+            
+            .combat-stats {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+            
+            .combat-stat {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 12px;
+                background: rgba(74, 158, 255, 0.1);
+                border-radius: 8px;
+                border: 1px solid rgba(74, 158, 255, 0.3);
+            }
+            
+            .stat-label {
+                color: #cccccc;
+                font-weight: 500;
+            }
+            
+            .stat-value {
+                color: #4a9eff;
+                font-weight: bold;
+            }
+            
+            .loot-section h3 {
+                color: #4a9eff;
+                margin: 0 0 15px 0;
+                font-size: 1.2em;
+            }
+            
+            .loot-container {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 10px;
+                max-height: 200px;
+                overflow-y: auto;
+            }
+            
+            .loot-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px;
+                background: rgba(78, 255, 74, 0.1);
+                border-radius: 8px;
+                border: 1px solid rgba(78, 255, 74, 0.3);
+                transition: all 0.2s ease;
+            }
+            
+            .loot-item:hover {
+                background: rgba(78, 255, 74, 0.2);
+                transform: translateY(-2px);
+            }
+            
+            .loot-icon {
+                font-size: 1.2em;
+            }
+            
+            .loot-info {
+                flex: 1;
+            }
+            
+            .loot-name {
+                color: #4eff4a;
+                font-weight: bold;
+                margin: 0;
+            }
+            
+            .loot-value {
+                color: #cccccc;
+                font-size: 0.9em;
+                margin: 0;
+            }
+            
+            .combat-results-footer {
+                padding: 20px;
+                text-align: center;
+                background: rgba(74, 158, 255, 0.05);
+                border-top: 1px solid rgba(74, 158, 255, 0.3);
+            }
+            
+            .btn-continue {
+                background: linear-gradient(135deg, #4a9eff, #357abd);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 12px 30px;
+                font-size: 1.1em;
+                font-weight: bold;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                min-width: 120px;
+            }
+            
+            .btn-continue:hover {
+                background: linear-gradient(135deg, #357abd, #2e6a9e);
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(74, 158, 255, 0.4);
+            }
+            
+            /* Mobile responsiveness */
+            @media (max-width: 768px) {
+                .combat-results-content {
+                    width: 95vw;
+                }
+                
+                .loot-container {
+                    grid-template-columns: 1fr;
+                }
+            }
+            
             /* Mobile responsiveness */
             @media (max-width: 768px) {
                 .combat-content {
@@ -249,6 +476,14 @@ export class CombatManager {
         this.isActive = true;
         this.mapRenderer = mapRenderer;
         this.currentCombat = encounter;
+        
+        // Initialize combat statistics
+        this.combatStats = {
+            damageDealt: 0,
+            damageTaken: 0,
+            startTime: Date.now(),
+            endTime: null
+        };
         
         // Pause the map renderer
         if (this.mapRenderer && this.mapRenderer.pauseRendering) {
@@ -822,6 +1057,9 @@ export class CombatManager {
         // Apply damage to enemy
         enemy.hp = Math.max(0, enemy.hp - damage);
         
+        // Track damage dealt to enemies
+        this.combatStats.damageDealt += damage;
+        
         console.log(`💥 ${action.name}: ${damage} damage! ${enemy.name} HP: ${enemy.hp}/${enemy.maxHp}`);
         
         // Check if enemy defeated
@@ -913,6 +1151,9 @@ export class CombatManager {
         
         console.log(`💥 ${enemy.name} attacks ${target.name} for ${damage} damage`);
         
+        // Track damage taken by party
+        this.combatStats.damageTaken += damage;
+        
         // Apply damage
         this.partyManager.applyDamage(target.name, damage);
         
@@ -936,6 +1177,9 @@ export class CombatManager {
         
         // Apply damage to enemy
         enemy.hp = Math.max(0, enemy.hp - damage);
+        
+        // Track damage dealt to enemies
+        this.combatStats.damageDealt += damage;
         
         console.log(`💥 ${damage} damage! ${enemy.name} HP: ${enemy.hp}/${enemy.maxHp || enemy.hp + damage}`);
         
@@ -978,11 +1222,182 @@ export class CombatManager {
     }
 
     /**
-     * End combat and return to map
+     * End combat and show results
      */
     endCombat(result = 'retreat') {
         console.log(`🏁 Combat ended: ${result}`);
         
+        // Set end time for duration calculation
+        this.combatStats.endTime = Date.now();
+        
+        // Show combat results modal instead of immediately closing
+        this.showCombatResults(result);
+    }
+    
+    /**
+     * Show combat results modal with loot and statistics
+     */
+    showCombatResults(result) {
+        const modal = document.getElementById('combat-results-modal');
+        const titleElement = document.getElementById('combat-results-title');
+        
+        // Set title and styling based on result
+        if (result === 'victory') {
+            titleElement.textContent = '🎉 Victory!';
+            titleElement.className = 'combat-results-title victory';
+        } else if (result === 'defeat') {
+            titleElement.textContent = '💀 Defeat!';
+            titleElement.className = 'combat-results-title defeat';
+        } else {
+            titleElement.textContent = '🏃 Retreat!';
+            titleElement.className = 'combat-results-title';
+        }
+        
+        // Update combat statistics
+        const duration = this.combatStats.endTime - this.combatStats.startTime;
+        document.getElementById('damage-dealt').textContent = this.combatStats.damageDealt;
+        document.getElementById('damage-taken').textContent = this.combatStats.damageTaken;
+        document.getElementById('combat-duration').textContent = `${Math.round(duration / 1000)}s`;
+        
+        // Generate and display loot (only on victory)
+        const lootContainer = document.getElementById('loot-container');
+        if (result === 'victory') {
+            this.generateAndDisplayLoot(lootContainer);
+        } else {
+            lootContainer.innerHTML = '<div class="no-loot">No loot gained</div>';
+        }
+        
+        // Show the modal
+        modal.classList.remove('hidden');
+    }
+    
+    /**
+     * Generate loot and add to player inventory
+     */
+    generateAndDisplayLoot(lootContainer) {
+        const lootItems = this.generateLoot();
+        lootContainer.innerHTML = '';
+        
+        if (lootItems.length === 0) {
+            lootContainer.innerHTML = '<div class="no-loot">No loot found</div>';
+            return;
+        }
+        
+        lootItems.forEach(loot => {
+            const lootElement = document.createElement('div');
+            lootElement.className = 'loot-item';
+            lootElement.innerHTML = `
+                <div class="loot-icon">${loot.icon}</div>
+                <div class="loot-info">
+                    <div class="loot-name">${loot.name}</div>
+                    <div class="loot-value">${loot.value > 0 ? loot.value + ' GP' : ''}</div>
+                </div>
+            `;
+            lootContainer.appendChild(lootElement);
+            
+            // Add to trade area instead of directly to inventory
+            this.addLootToTradeArea(loot);
+        });
+    }
+    
+    /**
+     * Generate random loot based on defeated enemies
+     */
+    generateLoot() {
+        const loot = [];
+        
+        // Base gold for defeating enemies
+        const baseGold = 10 + Math.floor(Math.random() * 20); // 10-29 gold
+        loot.push({
+            type: 'gold',
+            name: `${baseGold} Gold`,
+            value: baseGold,
+            icon: '💰'
+        });
+        
+        // Chance for additional items
+        if (Math.random() < 0.3) { // 30% chance
+            const items = [
+                { name: 'Health Potion', value: 25, icon: '🧪', itemType: 'consumable' },
+                { name: 'Magic Scroll', value: 15, icon: '📜', itemType: 'consumable' },
+                { name: 'Iron Dagger', value: 30, icon: '🗡️', itemType: 'weapon', damage: '1d4' },
+                { name: 'Leather Boots', value: 20, icon: '👢', itemType: 'armor', defense: 1 }
+            ];
+            const randomItem = items[Math.floor(Math.random() * items.length)];
+            loot.push({
+                type: 'item',
+                ...randomItem
+            });
+        }
+        
+        return loot;
+    }
+    
+    /**
+     * Add loot to player trade area (not directly to inventory)
+     */
+    async addLootToTradeArea(loot) {
+        const playerName = window.networkPlayerName || window.playerName || 'Player';
+        
+        if (!window.advancedStorageManager) {
+            console.warn('No advanced storage manager available');
+            return;
+        }
+        
+        // Get existing trade area
+        const tradeAreaKey = `trade_area_${playerName}`;
+        let tradeArea = await window.advancedStorageManager.getItem(tradeAreaKey) || {
+            gold: 0,
+            items: [],
+            lastUpdated: new Date().toISOString()
+        };
+        
+        if (loot.type === 'gold') {
+            // Add gold to trade area
+            tradeArea.gold = (tradeArea.gold || 0) + loot.value;
+            console.log(`💰 Added ${loot.value} gold to trade area! Total: ${tradeArea.gold}`);
+        } else if (loot.type === 'item') {
+            // Add item to trade area
+            if (!tradeArea.items) tradeArea.items = [];
+            
+            const tradeItem = {
+                id: Date.now() + Math.random(),
+                name: loot.name || 'Unknown Item',
+                type: loot.itemType || 'misc',
+                value: loot.value || 0,
+                quantity: 1,
+                source: 'combat_loot',
+                dateAdded: new Date().toISOString(),
+                // Add any specific properties from loot
+                ...(loot.damage && { damage: loot.damage }),
+                ...(loot.defense && { defense: loot.defense }),
+                ...(loot.properties && { properties: loot.properties })
+            };
+            
+            tradeArea.items.push(tradeItem);
+            console.log(`📦 Added ${loot.name} to trade area`);
+        }
+        
+        // Update timestamp and save
+        tradeArea.lastUpdated = new Date().toISOString();
+        await window.advancedStorageManager.setItem(tradeAreaKey, tradeArea, { forceMethod: 'indexeddb' });
+        
+        // Update trade area display using unified system
+        if (window.unifiedInventory) {
+            window.unifiedInventory.updateTradeAreaDisplay();
+        } else if (window.inventoryManager) {
+            window.inventoryManager.updateTradeAreaDisplay();
+        }
+    }
+    
+    /**
+     * Close combat results modal and return to map
+     */
+    closeCombatResults() {
+        const modal = document.getElementById('combat-results-modal');
+        modal.classList.add('hidden');
+        
+        // Now actually end combat and return to map
         this.isActive = false;
         
         // Hide combat modal
@@ -1002,6 +1417,12 @@ export class CombatManager {
         this.currentCombat = null;
         this.activeEnemies = [];
         this.combatLog = [];
+        this.combatStats = {
+            damageDealt: 0,
+            damageTaken: 0,
+            startTime: null,
+            endTime: null
+        };
         
         console.log('✅ Returned to map');
     }

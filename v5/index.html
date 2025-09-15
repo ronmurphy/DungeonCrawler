@@ -1353,7 +1353,7 @@
                         </div>
                         -->
                         
-                        <!-- DCC Items Browser - Load from dcc-items.json -->
+                        <!-- DCC Items Browser - COMMENTED OUT - BROKEN FUNCTION
                         <div class="dcc-items-section">
                             <div class="card-header">
                                 <i class="ra ra-book"></i>
@@ -1377,6 +1377,7 @@
                                 </div>
                             </div>
                         </div>
+                        END COMMENTED SECTION -->
                     </div>
                 </div>
             </section>
@@ -1959,7 +1960,12 @@
     <div id="dcc-items-modal" class="modal" style="display: none;">
         <div class="modal-content dcc-items-modal-content">
             <div class="modal-header">
-                <h3><i class="ra ra-book"></i> DCC Book Items</h3>
+                <h3><i class="ra ra-book"></i> DCC Equipment Shop</h3>
+                <div class="player-gold-display">
+                    <span class="gold-label">💰</span>
+                    <span id="dcc-modal-player-gold">0</span>
+                    <span class="gold-suffix">GP</span>
+                </div>
                 <button class="close-modal" onclick="closeDCCItemsModal()">
                     <span class="material-icons">close</span>
                 </button>
@@ -1970,8 +1976,9 @@
                         <option value="all">All Categories</option>
                         <option value="weapons">Weapons</option>
                         <option value="armor">Armor</option>
-                        <option value="equipment">Equipment</option>
-                        <option value="adventuring_gear">Adventuring Gear</option>
+                        <option value="consumables">Consumables</option>
+                        <option value="accessories">Accessories</option>
+                        <option value="miscellaneous">Miscellaneous</option>
                     </select>
                     <input type="text" id="dcc-items-search" placeholder="Search items...">
                 </div>
@@ -2702,7 +2709,7 @@
     
     <!-- Inventory and Storage System -->
     <script src="js/modules/advancedStorageManager.js"></script>
-    <script src="js/modules/inventoryManager.js"></script>
+    <script src="js/modules/UnifiedInventorySystem.js"></script>
     
     <!-- Image Hosting System -->
     <script src="js/githubTokenStorage.js"></script>
@@ -5307,9 +5314,11 @@
                     }, 200);
                 }
                 
-                // Save to IndexedDB (same as existing function)
-                if (typeof saveCharacterData === 'function') {
-                    saveCharacterData();
+                // Save character properly
+                if (typeof saveCurrentCharacterToStorage === 'function') {
+                    saveCurrentCharacterToStorage();
+                } else if (typeof saveCharacterToStorage === 'function') {
+                    saveCharacterToStorage();
                 }
             }
         }

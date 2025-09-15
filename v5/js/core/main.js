@@ -2909,6 +2909,51 @@ function useConsumable(itemId) {
     renderInventory();
 }
 
+/*
+// OLD INVENTORY SYSTEM - COMMENTED OUT FOR UNIFIED SYSTEM
+// Replaced by UnifiedInventorySystem.js
+
+function sellItem(itemId) {
+    const item = getItemById(itemId);
+    if (!item) return;
+
+    const sellValue = Math.floor((item.value || 0) / 2);
+    if (sellValue <= 0) {
+        alert('This item has no value and cannot be sold.');
+        return;
+    }
+
+    if (!confirm(`Sell "${item.name}" for ${sellValue} GP?`)) {
+        return;
+    }
+
+    // Remove from inventory
+    character.inventory = character.inventory.filter(inv => inv.id !== itemId);
+    
+    // Add gold to character
+    character.gold = (character.gold || 0) + sellValue;
+    
+    // Save character using proper function
+    if (typeof saveCurrentCharacterToStorage === 'function') {
+        saveCurrentCharacterToStorage();
+    } else if (typeof saveCharacterToStorage === 'function') {
+        saveCharacterToStorage();
+    }
+    
+    // Update displays
+    renderInventory();
+    if (window.inventoryManager) {
+        window.inventoryManager.updateGoldDisplay();
+    }
+    
+    console.log(`💰 Sold ${item.name} for ${sellValue} GP! Total gold: ${character.gold}`);
+    
+    // Show notification if chat system is available
+    if (window.addChatMessage) {
+        window.addChatMessage(`💰 Sold ${item.name} for ${sellValue} GP! Total: ${character.gold} GP`, 'system');
+    }
+}
+
 function removeItem(itemId) {
     const item = getItemById(itemId);
     if (!item) return;
@@ -2931,6 +2976,7 @@ function removeItem(itemId) {
     renderInventory();
     // alert(`Deleted "${item.name}".`);
 }
+*/
 
 // ========================================
 // INTELLIGENT ICON SYSTEM FOR EQUIPMENT
@@ -3138,6 +3184,13 @@ function getDefaultIcon(itemType, slot) {
 }
 
 function renderInventory() {
+    // DELEGATED TO UNIFIED INVENTORY SYSTEM
+    if (window.unifiedInventory) {
+        window.unifiedInventory.renderInventory();
+        return;
+    }
+    
+    // OLD IMPLEMENTATION - KEEP AS FALLBACK
     const inventoryGrid = document.getElementById('inventory-grid');
     inventoryGrid.innerHTML = '';
 
@@ -3178,8 +3231,8 @@ function renderInventory() {
                 ${isItemEquipped(item.id) ? 'Unequip' : 'Equip'}
             </button>`
             }
-        <button class="remove-btn" onclick="removeItem('${item.id}')" title="Delete Item">
-            <i class="ra ra-cancel"></i>
+        <button class="sell-btn" onclick="sellItem('${item.id}')" title="Sell for ${Math.floor((item.value || 0) / 2)} GP" style="background: #10b981; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+            💰 Sell
         </button>
     </div>
 `;

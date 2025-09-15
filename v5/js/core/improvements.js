@@ -747,29 +747,44 @@ function enhanceSpellSystem() {
     }
 }
 
-// Add DCC weapon button to inventory creation section
+// Add DCC shop button to inventory header
 function addDCCWeaponButton() {
-    console.log('🔧 Adding DCC weapon templates button...');
-    const inventoryGrid = document.getElementById('inventory-grid');
-    if (!inventoryGrid || inventoryGrid.querySelector('.dcc-templates-btn')) {
-        console.log('✅ DCC weapon button already exists or grid not found');
+    console.log('🔧 Adding DCC shop button to header...');
+    
+    // Find the inventory stats div in the header
+    const inventoryStats = document.querySelector('.inventory-stats');
+    if (!inventoryStats) {
+        console.log('❌ DCC shop button: inventory stats section not found');
         return;
     }
     
-    console.log('🔧 Creating DCC weapon button...');
-    const templatesBtn = document.createElement('div');
-    templatesBtn.className = 'dcc-templates-btn inventory-item';
-    templatesBtn.innerHTML = `
-        <div style="text-align: center; padding: 20px; border: 2px dashed #ff6b35; background: rgba(255, 107, 53, 0.1); border-radius: 8px;">
-            <i class="ra ra-book" style="font-size: 2em; color: #ff6b35; margin-bottom: 10px; display: block;"></i>
-            <strong>📚 DCC Book Weapons</strong>
-            <br><small>Click to add weapons from the books</small>
+    // Remove existing button if present
+    const existingBtn = inventoryStats.querySelector('.dcc-shop-header-btn');
+    if (existingBtn) {
+        existingBtn.remove();
+        console.log('🗑️ Removed existing DCC shop button from header');
+    }
+    
+    console.log('🔧 Creating DCC shop button in header...');
+    const shopBtn = document.createElement('div');
+    shopBtn.className = 'dcc-shop-header-btn';
+    shopBtn.innerHTML = `
+        <div class="shop-display">
+            <span>🏪</span>
+            <span>DCC Shop</span>
         </div>
     `;
-    templatesBtn.onclick = showDCCWeaponTemplates;
+    shopBtn.onclick = () => {
+        if (window.openDCCItemsModal) {
+            window.openDCCItemsModal();
+        } else {
+            console.error('❌ DCC Items Modal not available');
+        }
+    };
     
-    inventoryGrid.insertBefore(templatesBtn, inventoryGrid.firstChild);
-    console.log('✅ DCC weapon button added successfully');
+    // Add the button after the gold display
+    inventoryStats.appendChild(shopBtn);
+    console.log('✅ DCC shop button added to header successfully');
 }
 
 // Add DCC spell button to magic creation section  
@@ -805,7 +820,7 @@ function addDCCSpellButton() {
 //     modal.innerHTML = `
 //         <div class="modal-content level-up-modal-content" style="max-width: 800px;">
 //             <div class="modal-header level-up-header">
-//                 <h3><i class="ra ra-book"></i> DCC Book Weapons</h3>
+//                 <h3><i class="🏪"></i> DCC Book Weapons</h3>
 //                 <button class="modal-close" onclick="closeDCCModal()" title="Close">
 //                     <span class="material-icons">close</span>
 //                 </button>

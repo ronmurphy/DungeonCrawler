@@ -1765,6 +1765,27 @@ body.sidebar-open {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+/* DCC Shop Button in Header */
+.dcc-shop-header-btn .shop-display {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: linear-gradient(135deg, #ff6b35, #e55a2e);
+    color: white;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.dcc-shop-header-btn .shop-display:hover {
+    background: linear-gradient(135deg, #e55a2e, #d14a1f);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
 /* Trade Area Section */
 .trade-area-section {
     background: var(--bg-secondary);
@@ -2007,6 +2028,27 @@ body.sidebar-open {
     border-radius: var(--radius-sm);
     font-weight: 600;
     margin-top: var(--spacing-sm);
+    transition: all 0.2s ease;
+}
+
+.dcc-modal-item-value.clickable-price {
+    cursor: pointer;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: 2px solid #059669;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.dcc-modal-item-value.clickable-price:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.dcc-modal-item-value.insufficient-gold {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .dcc-modal-item-add-btn {
@@ -3990,12 +4032,40 @@ body.sidebar-open {
     align-items: center;
     background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));
     color: white;
+    position: relative;
 }
 
 .modal-header h3 {
     font-size: 1.25rem;
     font-weight: 600;
     color: var(--bg-primary);
+    margin: 0;
+    flex: 1;
+}
+
+/* Player gold display in DCC modal header */
+.player-gold-display {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255, 215, 0, 0.2);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 2px solid #ffd700;
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #ffd700;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.gold-label {
+    font-size: 1.2em;
+}
+
+.gold-suffix {
+    font-size: 0.9em;
+    opacity: 0.8;
 }
 
 .modal-close {

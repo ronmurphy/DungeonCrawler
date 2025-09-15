@@ -69,11 +69,11 @@
     {
       "name": "Blunderbuss of Misfires",
       "type": "weapon",
-      "damage": "2d8 (if it doesn\u2019t explode)",
+      "damage": "2d8 (if it doesn't explode)",
       "properties": [
         "unreliable"
       ],
-      "description": "Roll a d20: on a 1\u20133, it backfires and hits you instead."
+      "description": "Roll a d20: on a 1–3, it backfires and hits you instead."
     },
     {
       "name": "War Gong",
@@ -83,6 +83,106 @@
         "two-handed"
       ],
       "description": "Struck with a mallet, its sound deafens foes for 1 round."
+    },
+    {
+      "name": "Flamberge of Endless Cuts",
+      "type": "weapon",
+      "damage": "1d10",
+      "properties": [
+        "two-handed",
+        "bleeding"
+      ],
+      "description": "Each hit causes ongoing 1 damage per round until healed.",
+      "value": 180
+    },
+    {
+      "name": "Crowbar of Urban Exploration",
+      "type": "weapon",
+      "damage": "1d6",
+      "properties": [
+        "leverage",
+        "improvised"
+      ],
+      "description": "Grants advantage on breaking doors and locks.",
+      "value": 15
+    },
+    {
+      "name": "Enchanted Spatula",
+      "type": "weapon",
+      "damage": "1d4",
+      "properties": [
+        "culinary",
+        "light"
+      ],
+      "description": "Does double damage to food-based creatures. Can flip pancakes perfectly.",
+      "value": 35
+    },
+    {
+      "name": "Vorpal Bunny Slipper",
+      "type": "weapon",
+      "damage": "1d3",
+      "properties": [
+        "light",
+        "fuzzy",
+        "vorpal"
+      ],
+      "description": "Natural 20s decapitate enemies with HD 6 or less. Surprisingly comfy.",
+      "value": 666
+    },
+    {
+      "name": "Parking Meter of Justice",
+      "type": "weapon",
+      "damage": "1d8",
+      "properties": [
+        "heavy",
+        "urban decay"
+      ],
+      "description": "Ripped from a city street. Still dispenses parking tickets on crits.",
+      "value": 45
+    },
+    {
+      "name": "Nerf Crossbow of Serious Business",
+      "type": "weapon",
+      "damage": "1d6",
+      "properties": [
+        "foam ammunition",
+        "workplace appropriate"
+      ],
+      "description": "Office warfare has never been so professional.",
+      "value": 25
+    },
+    {
+      "name": "Katana of the Mall Ninja",
+      "type": "weapon",
+      "damage": "1d8",
+      "properties": [
+        "studied the blade",
+        "while you partied"
+      ],
+      "description": "Grants +2 to intimidate basement dwellers.",
+      "value": 40
+    },
+    {
+      "name": "Frying Pan of the Iron Chef",
+      "type": "weapon",
+      "damage": "1d6",
+      "properties": [
+        "cooking implement",
+        "non-stick"
+      ],
+      "description": "Can cook a meal and crack skulls in the same round.",
+      "value": 30
+    },
+    {
+      "name": "Lightsaber (Batteries Not Included)",
+      "type": "weapon",
+      "damage": "2d6",
+      "properties": [
+        "energy",
+        "requires power source"
+      ],
+      "description": "Works for 1d4 rounds before needing new batteries.",
+      "value": 500
     }
   ],
   "armor": [
@@ -151,6 +251,94 @@
         "brittle"
       ],
       "description": "Heavy armor made from baked clay tiles. Strong, but shatters on a critical hit."
+    },
+    {
+      "name": "Kevlar Vest of Questionable Legality",
+      "type": "armor",
+      "ac_bonus": 3,
+      "properties": [
+        "bulletproof",
+        "suspicious"
+      ],
+      "description": "No questions asked. Seriously, don't ask.",
+      "value": 300
+    },
+    {
+      "name": "Cardboard Box Suit",
+      "type": "armor",
+      "ac_bonus": 1,
+      "properties": [
+        "stealth",
+        "easily destroyed"
+      ],
+      "description": "Grants advantage on hiding near shipping areas. Dissolves in rain.",
+      "value": 5
+    },
+    {
+      "name": "Duct Tape Plate Mail",
+      "type": "armor",
+      "ac_bonus": 2,
+      "properties": [
+        "improvised",
+        "sticky"
+      ],
+      "description": "If it moves and shouldn't, use duct tape. If it doesn't move and should, WD-40.",
+      "value": 20
+    },
+    {
+      "name": "Bubble Wrap of Protection",
+      "type": "armor",
+      "ac_bonus": 1,
+      "properties": [
+        "satisfying",
+        "single use"
+      ],
+      "description": "Each bubble popped reduces AC bonus by 1. Irresistible to pop.",
+      "value": 15
+    },
+    {
+      "name": "Hazmat Suit of the Janitor",
+      "type": "armor",
+      "ac_bonus": 2,
+      "properties": [
+        "chemical resistant",
+        "unfashionable"
+      ],
+      "description": "Protects against acid and toxic fumes. Smells like industrial cleaner.",
+      "value": 75
+    },
+    {
+      "name": "Riot Gear of Civil Unrest",
+      "type": "armor",
+      "ac_bonus": 4,
+      "properties": [
+        "crowd control",
+        "authoritative"
+      ],
+      "description": "Grants +2 to intimidate protesters and -2 to diplomacy with civilians.",
+      "value": 180
+    },
+    {
+      "name": "Medieval Cosplay Armor",
+      "type": "armor",
+      "ac_bonus": 2,
+      "properties": [
+        "foam construction",
+        "historically inaccurate"
+      ],
+      "description": "Looks impressive from a distance. Made at the Ye Olde Factory in China.",
+      "value": 50
+    },
+    {
+      "name": "Leather Jacket of Rebellion",
+      "type": "armor",
+      "ac_bonus": 1,
+      "properties": [
+        "cool factor +5",
+        "wind resistant"
+      ],
+      "description": "Grants immunity to peer pressure and +1 to motorcycle riding.",
+      "value": 85
     }
   ],
   "consumables": [
@@ -198,13 +386,77 @@
       "name": "Stout of Stonebrew",
       "type": "consumable",
       "effect": "+2 AC for 1 hour, but movement halved.",
-      "description": "Dwarven ale said to turn one\u2019s skin to granite."
+      "description": "Dwarven ale said to turn one's skin to granite."
     },
     {
       "name": "Sizzling Salamander Skewer",
       "type": "consumable",
       "effect": "Breathe fire for 1d4 rounds.",
       "description": "Popular street food in desert markets."
+    },
+    {
+      "name": "Energy Drink of Infinite Jitters",
+      "type": "consumable",
+      "effect": "No sleep for 24 hours, +3 to all actions, then crash for 12 hours.",
+      "description": "Warning: May cause heart palpitations and reality distortion.",
+      "uses": 1,
+      "value": 25
+    },
+    {
+      "name": "Expired Yogurt of Courage",
+      "type": "consumable",
+      "effect": "Immune to fear for 1 hour. 50% chance of food poisoning.",
+      "description": "The expiration date was three weeks ago. Dare you risk it?",
+      "uses": 1,
+      "value": 3
+    },
+    {
+      "name": "Pill of Plot Convenience",
+      "type": "consumable",
+      "effect": "Instantly learn one piece of information relevant to current quest.",
+      "description": "Side effects may include deus ex machina.",
+      "uses": 1,
+      "value": 100
+    },
+    {
+      "name": "Instant Ramen of Sustenance",
+      "type": "consumable",
+      "effect": "Prevents hunger for 24 hours, but you crave real food constantly.",
+      "description": "College survival food. Just add hot water.",
+      "uses": 1,
+      "value": 2
+    },
+    {
+      "name": "Antacid of Acid Immunity",
+      "type": "consumable",
+      "effect": "Immune to acid damage for 1 hour.",
+      "description": "Also settles your stomach after eating questionable dungeon rations.",
+      "uses": 1,
+      "value": 20
+    },
+    {
+      "name": "Protein Bar of Gains",
+      "type": "consumable",
+      "effect": "+1 Strength for 8 hours, but you must describe your workout routine to everyone.",
+      "description": "Do you even lift, bro?",
+      "uses": 1,
+      "value": 15
+    },
+    {
+      "name": "Kombucha of Questionable Benefits",
+      "type": "consumable",
+      "effect": "Roll d20: 1-10 nothing, 11-15 +1 to saves, 16-19 minor healing, 20 enlightenment",
+      "description": "Tastes like vinegar but the health food store swears by it.",
+      "uses": 1,
+      "value": 12
+    },
+    {
+      "name": "Vitamin Gummies of Childhood",
+      "type": "consumable",
+      "effect": "Heal 1 HP, reduce age by 1 year for 24 hours.",
+      "description": "Flintstones brand. Makes you feel young again.",
+      "uses": 1,
+      "value": 8
     }
   ],
   "accessories": [
@@ -254,7 +506,70 @@
       "name": "Ring of Questionable Sponsorship",
       "type": "accessory",
       "effect": "Once per day, summon a random item from a corporate sponsor.",
-      "description": "Inscribed with mysterious brand sigils like \u2018Coca-Khaos\u2019."
+      "description": "Inscribed with mysterious brand sigils like 'Coca-Khaos'."
+    },
+    {
+      "name": "Bluetooth Earbuds of Isolation",
+      "type": "accessory",
+      "effect": "Immune to sonic attacks, -2 to perception of everything else.",
+      "description": "You can't hear the haters, but you also can't hear the dragon.",
+      "value": 80
+    },
+    {
+      "name": "Smartwatch of Endless Notifications",
+      "type": "accessory",
+      "effect": "Always know the time and weather. Constantly distracts you.",
+      "description": "Pings every 30 seconds with updates you don't need.",
+      "value": 200
+    },
+    {
+      "name": "Wallet of Infinite Receipts",
+      "type": "accessory",
+      "effect": "Can produce a receipt for any purchase, real or imagined.",
+      "description": "Useful for returns and tax purposes. Origin of receipts questionable.",
+      "value": 150
+    },
+    {
+      "name": "Fanny Pack of Holding",
+      "type": "accessory",
+      "effect": "Holds 50lbs but looks incredibly unfashionable.",
+      "description": "Maximum utility, minimum style. Your parents think it's practical.",
+      "value": 300
+    },
+    {
+      "name": "Mood Ring of Obvious Emotions",
+      "type": "accessory",
+      "effect": "Changes color based on wearer's mood. Everyone can see it.",
+      "description": "Eliminates the need for emotional intelligence.",
+      "value": 25
+    },
+    {
+      "name": "Friendship Bracelet of Binding",
+      "type": "accessory",
+      "effect": "Wearer and creator share 1 HP of damage between them.",
+      "description": "Made at summer camp. The bond is disturbingly literal.",
+      "value": 75
+    },
+    {
+      "name": "Glasses of Perfect Hindsight",
+      "type": "accessory",
+      "effect": "Can see exactly what you should have done 5 minutes ago.",
+      "description": "20/20 hindsight vision. Perpetually depressing.",
+      "value": 90
+    },
+    {
+      "name": "Belt of Tool Time",
+      "type": "accessory",
+      "effect": "Can produce any common tool, but it breaks after one use.",
+      "description": "More power! *grunts*",
+      "value": 120
+    },
+    {
+      "name": "Socks of Silent Steps",
+      "type": "accessory",
+      "effect": "+3 to stealth, but you leave no footprints for tracking.",
+      "description": "Wool blend. Machine washable. Surprisingly tactical.",
+      "value": 65
     }
   ],
   "miscellaneous": [
@@ -301,7 +616,7 @@
       "description": "Its ring carries across planes and realities."
     },
     {
-      "name": "Fool\u2019s Gold Nugget",
+      "name": "Fool's Gold Nugget",
       "type": "misc",
       "effect": "Looks like gold, fools 90% of merchants.",
       "description": "Actually worthless, but convincing."
@@ -317,6 +632,244 @@
       "type": "misc",
       "effect": "Worn during rituals, grants +2 Persuasion with islanders.",
       "description": "Brightly painted, sacred to a distant culture."
+    },
+    {
+      "name": "Rubber Duck of Debugging",
+      "type": "misc",
+      "effect": "Explains coding problems when you talk to it. Works 60% of the time, every time.",
+      "description": "A programmer's best friend. Squeaks judgmentally.",
+      "value": 15
+    },
+    {
+      "name": "USB Cable of Universal Compatibility",
+      "type": "misc",
+      "effect": "Connects to any device, but data transfer is random.",
+      "description": "Finally, one cable to rule them all. May transfer your photos to someone else's phone.",
+      "value": 45
+    },
+    {
+      "name": "Magic 8-Ball of Questionable Advice",
+      "type": "misc",
+      "effect": "Answers yes/no questions. 30% chance of being correct.",
+      "description": "Reply hazy, try again. Outlook not so good. All signs point to maybe.",
+      "value": 20
+    },
+    {
+      "name": "Lava Lamp of Hypnosis",
+      "type": "misc",
+      "effect": "Anyone staring at it for more than 1 minute must make a Will save or be mesmerized.",
+      "description": "Groovy, man. Far out. The blobs... they speak to you...",
+      "value": 35
+    },
+    {
+      "name": "IKEA Manual of Assembly",
+      "type": "misc",
+      "effect": "Can construct furniture from raw materials. Instructions make no sense.",
+      "description": "Wordless pictographs that somehow convey deep existential dread.",
+      "value": 5
+    },
+    {
+      "name": "Participation Trophy of Self-Esteem",
+      "type": "misc",
+      "effect": "Grants +1 to all rolls, but everyone knows you didn't really earn it.",
+      "description": "You showed up! That's something, right? ...Right?",
+      "value": 30
+    },
+    {
+      "name": "Snow Globe of Tiny Worlds",
+      "type": "misc",
+      "effect": "Shake to view alternate versions of current location.",
+      "description": "In one version, everyone is tiny. In another, it's always Christmas.",
+      "value": 75
+    },
+    {
+      "name": "Spam Email of Infinite Wealth",
+      "type": "misc",
+      "effect": "Promises vast riches from Nigerian princes. Never delivers.",
+      "description": "You are the chosen one! Send social security number for fortune!",
+      "value": 0
+    },
+    {
+      "name": "Kitchen Timer of Dramatic Tension",
+      "type": "misc",
+      "effect": "When started, creates suspense. Everyone acts with urgency until it goes off.",
+      "description": "*tick tick tick* The tension is killing everyone.",
+      "value": 25
+    },
+    {
+      "name": "Inspirational Poster of Motivation",
+      "type": "misc",
+      "effect": "Grants +1 to morale saves, -1 to cynicism saves.",
+      "description": "HANG IN THERE - featuring a kitten dangling from a branch.",
+      "value": 10
+    },
+    {
+      "name": "Autographed Photo of B-List Celebrity",
+      "type": "misc",
+      "effect": "Can be traded for minor favors from specific fandoms.",
+      "description": "To my biggest fan! - Someone from that show you kind of remember.",
+      "value": 25
+    },
+    {
+      "name": "Convention Program Guide",
+      "type": "misc",
+      "effect": "Navigate convention centers without getting lost.",
+      "description": "Schedule already outdated. Half the events moved rooms.",
+      "value": 5
+    },
+    {
+      "name": "Turkey Leg of Renaissance Sustenance",
+      "type": "misc",
+      "effect": "Heals 2d4 HP, grants +1 Strength for 1 hour, grease on everything.",
+      "description": "Huzzah! Nothing says medieval like oversized poultry!",
+      "value": 12
+    },
+    {
+      "name": "Mead Horn of Questionable Hygiene",
+      "type": "misc",
+      "effect": "Contains mysterious liquid, +1 to courage, -1 to judgment.",
+      "description": "Previous owner unknown. Smells like honey and regret.",
+      "value": 20
+    },
+    {
+      "name": "Chainmail Coif Tutorial Video",
+      "type": "misc",
+      "effect": "Learn to make authentic medieval armor (in 6-8 months).",
+      "description": "Dave from the forge explains ring welding for beginners.",
+      "value": 15
+    },
+    {
+      "name": "Bag of Dice (100 count)",
+      "type": "misc",
+      "effect": "Always have the right die, but spend 10 minutes finding it.",
+      "description": "Every gamer's obsession. You can never have too many dice.",
+      "value": 50
+    },
+    {
+      "name": "Cosplay Wig of Character Accuracy",
+      "type": "misc",
+      "effect": "Perfect character appearance, incredibly hot to wear.",
+      "description": "Anime hair defies physics and comfort.",
+      "value": 70
+    },
+    {
+      "name": "Booth Babe Business Card Collection",
+      "type": "misc",
+      "effect": "Social proof of convention attendance.",
+      "description": "Remember when conventions had booth babes? Pepperidge Farm remembers.",
+      "value": 5
+    },
+    {
+      "name": "Gargoyle Statue (Mall Store)",
+      "type": "misc",
+      "effect": "Intimidates delivery drivers, attracts goths.",
+      "description": "Purchased from Spencer's. Guards your dorm room with plastic menace.",
+      "value": 35
+    },
+    {
+      "name": "Handmade Scroll of Character Backstory",
+      "type": "misc",
+      "effect": "Provides detailed character history no one will read.",
+      "description": "47 pages of tragic orphan history and mysterious birthmarks.",
+      "value": 0
+    },
+    {
+      "name": "Wooden Tankard of Tavern Authenticity",
+      "type": "misc",
+      "effect": "Makes any drink taste more medieval.",
+      "description": "Splinters optional. Do not machine wash.",
+      "value": 25
+    },
+    {
+      "name": "Flashlight with Dead Batteries",
+      "type": "misc",
+      "effect": "Provides dim light for 1d4 minutes before dying.",
+      "description": "Always dies at the worst possible moment. Murphy's Law in action.",
+      "value": 15
+    },
+    {
+      "name": "Swiss Army Knife (Missing Tools)",
+      "type": "misc",
+      "effect": "Has 15 functions, 12 of them broken.",
+      "description": "The corkscrew still works. Priorities, right?",
+      "value": 30
+    },
+    {
+      "name": "Duct Tape of Universal Repair",
+      "type": "misc",
+      "effect": "Temporarily fixes anything. Emphasis on temporarily.",
+      "description": "If you can't fix it with duct tape, you're not using enough.",
+      "value": 10
+    },
+    {
+      "name": "Stress Ball of Office Therapy",
+      "type": "misc",
+      "effect": "Squeeze to reduce stress. -1 to workplace violence.",
+      "description": "Shaped like your boss's head. Purely coincidental.",
+      "value": 8
+    },
+    {
+      "name": "Expired Coupon Book",
+      "type": "misc",
+      "effect": "Great deals that no longer apply.",
+      "description": "Save $1.00 on products you don't want! (Offer expired 2019)",
+      "value": 1
+    },
+    {
+      "name": "Assembly Instructions (In Swedish)",
+      "type": "misc",
+      "effect": "Provides guidance for furniture assembly in incomprehensible language.",
+      "description": "Step 1: Öppna lådan. Step 2: Förvirring. Step 3: Profit?",
+      "value": 2
+    },
+    {
+      "name": "Remote Control (Wrong TV)",
+      "type": "misc",
+      "effect": "Controls electronic devices, but never the right ones.",
+      "description": "Works on your neighbor's TV through the wall. Chaos ensues.",
+      "value": 20
+    },
+    {
+      "name": "Junk Drawer Contents",
+      "type": "misc",
+      "effect": "Contains random useful items. Roll d20 to see what you find.",
+      "description": "Rubber bands, old batteries, mysterious keys, and regret.",
+      "value": 5
+    },
+    {
+      "name": "Garden Gnome of Passive Aggression",
+      "type": "misc",
+      "effect": "Judges your life choices silently.",
+      "description": "Ceramic disapproval in lawn ornament form.",
+      "value": 35
+    },
+    {
+      "name": "Manual for Electronic Device You No Longer Own",
+      "type": "misc",
+      "effect": "Provides perfect instructions for something you threw away.",
+      "description": "320 pages of detailed information about your old phone.",
+      "value": 1
+    },
+    {
+      "name": "Spare Change Jar",
+      "type": "misc",
+      "effect": "Contains 1d10 copper pieces and foreign coins.",
+      "description": "Emergency funds! If emergencies cost less than $3.47.",
+      "value": 3
+    },
+    {
+      "name": "Takeout Menu Collection",
+      "type": "misc",
+      "effect": "50% of restaurants no longer exist.",
+      "description": "A history of your neighborhood's dining establishments.",
+      "value": 0
+    },
+    {
+      "name": "Ball of Rubber Bands",
+      "type": "misc",
+      "effect": "Infinite rubber bands, finite patience to untangle them.",
+      "description": "Office desk archaeology at its finest.",
+      "value": 4
     }
   ]
 }
