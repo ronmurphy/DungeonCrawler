@@ -20,6 +20,20 @@ class InventoryManager {
         }
     }
 
+    /**
+     * Get current character from the new character manager
+     * @returns {Object|null} Current character or null if not found
+     */
+    getCurrentCharacter() {
+        if (!window.characterManager || !window.characterManager.currentCharacterId) {
+            return null;
+        }
+
+        return window.characterManager.characters.find(
+            char => char.id === window.characterManager.currentCharacterId
+        );
+    }
+
     async init() {
         if (this.initialized) return;
         
@@ -84,8 +98,9 @@ class InventoryManager {
      */
     updateGoldDisplay() {
         const goldElement = document.getElementById('character-gold');
-        if (goldElement && window.character) {
-            this.playerGold = window.character.gold || 0;
+        const currentChar = this.getCurrentCharacter();
+        if (goldElement && currentChar) {
+            this.playerGold = currentChar.gold || 0;
             goldElement.textContent = this.playerGold.toLocaleString();
         }
     }
@@ -156,11 +171,12 @@ class InventoryManager {
      */
     async transferGoldToCharacter(amount) {
         const playerName = window.networkPlayerName || window.playerName;
-        if (!playerName || !window.character) return;
+        const currentChar = this.getCurrentCharacter();
+        if (!playerName || !currentChar) return;
 
         try {
             // Add gold to character
-            window.character.gold = (window.character.gold || 0) + amount;
+            currentChar.gold = (currentChar.gold || 0) + amount;
             
             // Remove gold from trade area
             const tradeAreaKey = `trade_area_${playerName}`;
@@ -190,12 +206,13 @@ class InventoryManager {
      */
     async transferItemToInventory(item, itemIndex) {
         const playerName = window.networkPlayerName || window.playerName;
-        if (!playerName || !window.character) return;
+        const currentChar = this.getCurrentCharacter();
+        if (!playerName || !currentChar) return;
 
         try {
             // Add item to character inventory
-            if (!window.character.inventory) {
-                window.character.inventory = [];
+            if (!currentChar.inventory) {
+                currentChar.inventory = [];
             }
             
             // Create inventory item
@@ -208,7 +225,7 @@ class InventoryManager {
                 dateAdded: new Date().toISOString()
             };
             
-            window.character.inventory.push(inventoryItem);
+            currentChar.inventory.push(inventoryItem);
 
             // Remove item from trade area
             const tradeAreaKey = `trade_area_${playerName}`;
@@ -223,9 +240,7 @@ class InventoryManager {
             this.renderInventory();
             
             // Save character
-            if (typeof saveCharacterData === 'function') {
-                saveCharacterData();
-            }
+            await window.characterManager.saveCharacter(currentChar);
 
             console.log(`✅ Transferred ${item.name} to inventory`);
         } catch (error) {
@@ -238,9 +253,15 @@ class InventoryManager {
      */
     renderInventory() {
         const inventoryGrid = document.getElementById('inventory-grid');
-        if (!inventoryGrid || !window.character) return;
+        if (!inventoryGrid) return;
 
-        const inventory = window.character.inventory || [];
+        const currentChar = this.getCurrentCharacter();
+        if (!currentChar) {
+            inventoryGrid.innerHTML = '<div class="no-character">No character selected</div>';
+            return;
+        }
+
+        const inventory = currentChar.inventory || [];
         
         if (inventory.length === 0) {
             inventoryGrid.innerHTML = `
@@ -302,9 +323,32 @@ class InventoryManager {
      * Equip an item from inventory
      */
     equipItem(itemIndex) {
-        if (!window.character || !window.character.inventory) return;
+        // Get current character from the new character manager
+        if (!window.characterManager || !window.characterManager.currentCharacterId) {
+            console.warn('❌ No current character selected');
+            return;
+        }
+
+        const currentChar = window.characterManager.characters.find(
+            char => char.id === window.characterManager.currentCharacterId
+        );
+
+        if (!currentChar || !currentChar.inventory) {
+            console.warn('❌ Current character not found or has no inventory');
+            return;
+        }
+
+        // Ensure equipment object exists
+        if (!currentChar.equipment) {
+            currentChar.equipment = {
+                mainHand: null,
+                offHand: null,
+                armor: null,
+                accessory: null
+            };
+        }
         
-        const item = window.character.inventory[itemIndex];
+        const item = currentChar.inventory[itemIndex];
         if (!item || !this.canEquip(item)) return;
 
         // Determine equipment slot
@@ -325,25 +369,31 @@ class InventoryManager {
         }
 
         // Unequip current item if any
-        if (window.character.equipment[slot]) {
+        if (currentChar.equipment[slot]) {
             this.unequipItem(slot);
         }
 
         // Equip the new item
-        window.character.equipment[slot] = { ...item };
+        currentChar.equipment[slot] = { ...item };
         
         // Remove from inventory
-        window.character.inventory.splice(itemIndex, 1);
+        currentChar.inventory.splice(itemIndex, 1);
 
         // Update displays
         this.renderInventory();
         if (typeof updateEquipmentDisplay === 'function') {
             updateEquipmentDisplay();
         }
+        if (typeof renderCharacterWeapons === 'function') {
+            renderCharacterWeapons();
+        }
+        if (typeof renderEquipment === 'function') {
+            renderEquipment();
+        }
 
-        // Save character
-        if (typeof saveCharacterData === 'function') {
-            saveCharacterData();
+        // Save character using character manager
+        if (window.characterManager && typeof window.characterManager.saveCharacter === 'function') {
+            window.characterManager.saveCharacter(currentChar);
         }
 
         console.log(`✅ Equipped ${item.name} to ${slot}`);
@@ -353,18 +403,48 @@ class InventoryManager {
      * Unequip an item and return it to inventory
      */
     unequipItem(slot) {
-        if (!window.character || !window.character.equipment[slot]) return;
+        // Get current character from the new character manager
+        if (!window.characterManager || !window.characterManager.currentCharacterId) {
+            console.warn('❌ No current character selected');
+            return;
+        }
 
-        const item = window.character.equipment[slot];
+        const currentChar = window.characterManager.characters.find(
+            char => char.id === window.characterManager.currentCharacterId
+        );
+
+        if (!currentChar || !currentChar.equipment || !currentChar.equipment[slot]) {
+            console.warn('❌ Current character not found or slot empty');
+            return;
+        }
+
+        const item = currentChar.equipment[slot];
         
         // Add to inventory
-        if (!window.character.inventory) {
-            window.character.inventory = [];
+        if (!currentChar.inventory) {
+            currentChar.inventory = [];
         }
-        window.character.inventory.push({ ...item });
+        currentChar.inventory.push({ ...item });
 
         // Remove from equipment
-        window.character.equipment[slot] = null;
+        currentChar.equipment[slot] = null;
+
+        // Update displays
+        this.renderInventory();
+        if (typeof updateEquipmentDisplay === 'function') {
+            updateEquipmentDisplay();
+        }
+        if (typeof renderCharacterWeapons === 'function') {
+            renderCharacterWeapons();
+        }
+        if (typeof renderEquipment === 'function') {
+            renderEquipment();
+        }
+
+        // Save character using character manager
+        if (window.characterManager && typeof window.characterManager.saveCharacter === 'function') {
+            window.characterManager.saveCharacter(currentChar);
+        }
 
         console.log(`✅ Unequipped ${item.name} from ${slot}`);
     }
@@ -373,20 +453,21 @@ class InventoryManager {
      * Remove an item from inventory
      */
     removeItem(itemIndex) {
-        if (!window.character || !window.character.inventory) return;
+        const currentChar = this.getCurrentCharacter();
+        if (!currentChar || !currentChar.inventory) return;
         
-        const item = window.character.inventory[itemIndex];
+        const item = currentChar.inventory[itemIndex];
         if (!item) return;
 
         const confirmDelete = confirm(`Are you sure you want to remove "${item.name}" from your inventory?`);
         if (!confirmDelete) return;
 
-        window.character.inventory.splice(itemIndex, 1);
+        currentChar.inventory.splice(itemIndex, 1);
         this.renderInventory();
 
         // Save character
-        if (typeof saveCharacterData === 'function') {
-            saveCharacterData();
+        if (window.characterManager) {
+            window.characterManager.saveCharacter(currentChar);
         }
 
         console.log(`🗑️ Removed ${item.name} from inventory`);
@@ -580,10 +661,11 @@ class InventoryManager {
      * Add a DCC item to player inventory (updated for modal use)
      */
     addDCCItemToInventory(dccItem) {
-        if (!window.character) return;
+        const currentChar = this.getCurrentCharacter();
+        if (!currentChar) return;
 
-        if (!window.character.inventory) {
-            window.character.inventory = [];
+        if (!currentChar.inventory) {
+            currentChar.inventory = [];
         }
 
         const inventoryItem = {
@@ -599,12 +681,12 @@ class InventoryManager {
             dateAdded: new Date().toISOString()
         };
 
-        window.character.inventory.push(inventoryItem);
+        currentChar.inventory.push(inventoryItem);
         this.renderInventory();
 
         // Save character
-        if (typeof saveCharacterData === 'function') {
-            saveCharacterData();
+        if (window.characterManager) {
+            window.characterManager.saveCharacter(currentChar);
         }
 
         // Close modal after adding

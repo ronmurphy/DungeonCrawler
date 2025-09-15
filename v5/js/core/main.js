@@ -2398,15 +2398,31 @@ function renderCharacterWeapons() {
 
     weaponsContainer.innerHTML = '';
 
+    // Get current character from character manager
+    const currentChar = window.characterManager?.characters?.find(
+        char => char.id === window.characterManager.currentCharacterId
+    );
+    
+    if (!currentChar) {
+        weaponsContainer.innerHTML = `
+            <div style="text-align: center; color: #8a8a8a; padding: 40px;">
+                <i class="ra ra-sword" style="font-size: 3em; margin-bottom: 15px; display: block;"></i>
+                No character selected!
+            </div>
+        `;
+        return;
+    }
+
     const equippedWeapons = [];
-    Object.values(character.equipment).forEach(itemId => {
-        if (itemId) {
-            const item = getItemById(itemId);
+    
+    // Check new equipment system - items are stored directly as objects
+    if (currentChar.equipment) {
+        Object.values(currentChar.equipment).forEach(item => {
             if (item && item.type === 'weapon') {
                 equippedWeapons.push(item);
             }
-        }
-    });
+        });
+    }
 
     if (equippedWeapons.length === 0) {
         weaponsContainer.innerHTML = `
@@ -2420,7 +2436,7 @@ function renderCharacterWeapons() {
 
     equippedWeapons.forEach(weapon => {
         const statUsed = weapon.ranged ? 'dexterity' : 'strength';
-        const statValue = character.stats[statUsed];
+        const statValue = currentChar.stats[statUsed];
         const weaponSize = weaponSizes[weapon.size] || weaponSizes.medium;
 
         // Get intelligent icon for this weapon
@@ -3179,6 +3195,14 @@ function renderInventory() {
 }
 
 function selectItem(itemId) {
+    // Redirect to inventory manager for equipment handling
+    if (window.inventoryManager) {
+        console.log('Equipment handling delegated to inventory manager');
+        // The inventory manager handles equipment through its own UI
+        return;
+    }
+    
+    // Fallback for old system (should not be used)
     const item = getItemById(itemId);
     if (isItemEquipped(itemId)) {
         unequipItem(itemId);
@@ -3238,35 +3262,50 @@ function getItemById(itemId) {
 }
 
 function renderEquipment() {
-    Object.keys(character.equipment).forEach(slot => {
+    // Get current character from character manager
+    const currentChar = window.characterManager?.characters?.find(
+        char => char.id === window.characterManager.currentCharacterId
+    );
+    
+    if (!currentChar) {
+        console.warn('No current character found for equipment display');
+        return;
+    }
+
+    // Define the equipment slots to check
+    const equipmentSlots = ['mainHand', 'offHand', 'armor', 'accessory'];
+    
+    equipmentSlots.forEach(slot => {
         const itemElement = document.getElementById(`${slot}-item`);
         const statsElement = document.getElementById(`${slot}-stats`);
         const slotElement = document.querySelector(`[data-slot="${slot}"]`);
-        const slotIconElement = slotElement.querySelector('.slot-icon i');
+        const slotIconElement = slotElement?.querySelector('.slot-icon i');
 
-        const itemId = character.equipment[slot];
-        if (itemId) {
-            const item = getItemById(itemId);
-            if (item) {
-                itemElement.textContent = item.name;
+        if (!itemElement || !statsElement || !slotElement || !slotIconElement) {
+            return; // Skip if elements don't exist
+        }
 
-                const stats = [];
-                if (item.type === 'weapon' && item.size) {
-                    const weaponSize = weaponSizes[item.size];
-                    stats.push(`d${weaponSize.dice} damage`);
-                }
-                if (item.defense > 0) stats.push(`+${item.defense} defense`);
-                if (item.twoHanded) stats.push('Two-handed');
-                if (item.ranged) stats.push('Ranged');
+        // Get item from new equipment system (items stored directly as objects)
+        const item = currentChar.equipment?.[slot];
+        if (item) {
+            itemElement.textContent = item.name;
 
-                statsElement.textContent = stats.join(', ');
-                slotElement.classList.add('equipped');
-
-                // Update the slot icon to match the equipped item
-                const itemIcon = getItemIcon(item.name, item.type, slot);
-                slotIconElement.className = `material-icons`;
-                slotIconElement.textContent = itemIcon;
+            const stats = [];
+            if (item.type === 'weapon' && item.size) {
+                const weaponSize = weaponSizes[item.size];
+                stats.push(`d${weaponSize.dice} damage`);
             }
+            if (item.defense > 0) stats.push(`+${item.defense} defense`);
+            if (item.twoHanded) stats.push('Two-handed');
+            if (item.ranged) stats.push('Ranged');
+
+            statsElement.textContent = stats.join(', ');
+            slotElement.classList.add('equipped');
+
+            // Update the slot icon to match the equipped item
+            const itemIcon = getItemIcon(item.name, item.type, slot);
+            slotIconElement.className = `material-icons`;
+            slotIconElement.textContent = itemIcon;
         } else {
             itemElement.textContent = 'Empty';
             statsElement.textContent = '';
@@ -3297,7 +3336,17 @@ function getDefaultSlotIcon(slot) {
 }
 
 function showEquipMenu(slot) {
-    const availableItems = character.inventory.filter(item => {
+    // Get current character from character manager
+    const currentChar = window.characterManager?.characters?.find(
+        char => char.id === window.characterManager.currentCharacterId
+    );
+    
+    if (!currentChar || !currentChar.inventory) {
+        alert('No character selected or no inventory found.');
+        return;
+    }
+
+    const availableItems = currentChar.inventory.filter(item => {
         if (slot === 'mainHand' || slot === 'offHand') {
             return item.type === 'weapon';
         } else if (slot === 'armor') {

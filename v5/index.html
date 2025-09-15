@@ -221,6 +221,10 @@
             <button class="header-btn status-effects-btn" onclick="showStatusEffectsModal()" title="View Status Effects">
                 <i class="ra ra-biohazard"></i>
             </button>
+            <!-- Test Combat Button (Phase 1) -->
+            <button class="header-btn combat-test-btn" onclick="testCombatSystem()" title="Test Combat System" style="background: linear-gradient(135deg, #ff4444, #cc2222);">
+                <i class="ra ra-crossed-swords"></i>
+            </button>
             <button class="header-btn save-btn" onclick="saveCharacterToStorage()" title="Save Character">
                 <span class="material-icons">save</span>
             </button>
@@ -2339,6 +2343,27 @@
     </script>
     
     <script>
+        // Test Combat System (Phase 1)
+        function testCombatSystem() {
+            console.log('🎯 Testing Hexagonal Dungeon Gauntlet Combat System...');
+            
+            // Check if combatManager is available
+            if (window.combatManager) {
+                // Get reference to the map renderer
+                const mapRenderer = window.threeMapRenderer;
+                
+                if (mapRenderer) {
+                    console.log('🗺️ Map renderer found, starting test combat...');
+                    window.combatManager.triggerTestCombat(mapRenderer);
+                } else {
+                    console.warn('⚠️ Map renderer not found, starting combat without pause functionality');
+                    window.combatManager.triggerTestCombat(null);
+                }
+            } else {
+                console.error('❌ Combat system not loaded! Make sure the CombatManager module is imported.');
+            }
+        }
+        
         // Theme Toggle
         function toggleTheme() {
             document.body.classList.toggle('dark-theme');
@@ -2663,6 +2688,10 @@
     <script src="js/libs/stats.min.js"></script>
     <script src="js/ShaderEffectsManager.js"></script>
     <script src="js/ThreeMapRenderer.js"></script>
+    
+    <!-- Hexagonal Dungeon Gauntlet Combat System -->
+    <script type="module" src="js/combat/EnemyDataLoader.js"></script>
+    <script type="module" src="js/combat/CombatManager.js"></script>
     
     <!-- Essential modules for chat system -->
     <script src="js/modules/dccMechanics.js"></script>
