@@ -3341,24 +3341,45 @@ function showEquipMenu(slot) {
         char => char.id === window.characterManager.currentCharacterId
     );
     
-    if (!currentChar || !currentChar.inventory) {
-        alert('No character selected or no inventory found.');
+    if (!currentChar) {
+        alert('No character selected.');
+        return;
+    }
+
+    // Check if slot is already occupied
+    if (currentChar.equipment && currentChar.equipment[slot]) {
+        const equippedItem = currentChar.equipment[slot];
+        const confirmUnequip = confirm(`Unequip "${equippedItem.name}" from ${slot}?`);
+        if (confirmUnequip && window.inventoryManager) {
+            window.inventoryManager.unequipItem(slot);
+        }
+        return;
+    }
+
+    // Show available items for empty slot
+    if (!currentChar.inventory) {
+        alert('No inventory found.');
         return;
     }
 
     const availableItems = currentChar.inventory.filter(item => {
-        if (slot === 'mainHand' || slot === 'offHand') {
+        if (slot === 'mainHand') {
             return item.type === 'weapon';
+        } else if (slot === 'offHand') {
+            return item.type === 'weapon' || 
+                   (item.type === 'armor' && item.name?.toLowerCase().includes('shield')) ||
+                   item.type === 'shield';
         } else if (slot === 'armor') {
-            return item.type === 'armor';
-        } else {
+            return item.type === 'armor' && !item.name?.toLowerCase().includes('shield');
+        } else if (slot === 'accessory') {
             return item.type === 'accessory' || item.type === 'misc';
         }
+        return false;
     });
 
     if (availableItems.length > 0) {
         const itemNames = availableItems.map(item => `${item.name} (${item.type})`).join('\n');
-        alert(`Available items for ${slot}:\n${itemNames}\n\nClick on an item in the inventory below to equip it.`);
+        alert(`Available items for ${slot}:\n${itemNames}\n\nGo to the Inventory tab and click the Equip button next to the item you want to equip.`);
     } else {
         alert(`No items available for ${slot} slot.`);
     }

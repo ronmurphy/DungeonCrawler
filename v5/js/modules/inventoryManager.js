@@ -290,6 +290,7 @@ class InventoryManager {
                     </div>
                     <div class="item-actions">
                         ${this.canEquip(item) ? `<button class="item-action-btn equip-btn" onclick="window.inventoryManager.equipItem(${index})" title="Equip">⚔️</button>` : ''}
+                        ${item.value > 0 ? `<button class="item-action-btn sell-btn" onclick="window.inventoryManager.sellItem(${index})" title="Sell for ${Math.floor((item.value || 0) / 2)} GP">💰</button>` : ''}
                         <button class="item-action-btn remove-btn" onclick="window.inventoryManager.removeItem(${index})" title="Remove">🗑️</button>
                     </div>
                 </div>
@@ -315,7 +316,7 @@ class InventoryManager {
      * Check if an item can be equipped
      */
     canEquip(item) {
-        const equipableTypes = ['weapon', 'armor', 'accessory'];
+        const equipableTypes = ['weapon', 'armor', 'shield', 'accessory'];
         return equipableTypes.includes(item.type?.toLowerCase());
     }
 
@@ -353,12 +354,25 @@ class InventoryManager {
 
         // Determine equipment slot
         let slot = '';
+        console.log('🔍 Determining slot for item:', item.name, 'type:', item.type);
+        
         switch (item.type?.toLowerCase()) {
             case 'weapon':
                 slot = 'mainHand';
                 break;
             case 'armor':
-                slot = 'armor';
+                // Check if it's actually a shield based on name
+                if (item.name && item.name.toLowerCase().includes('shield')) {
+                    slot = 'offHand';
+                    console.log('🛡️ Shield detected, assigning to offHand');
+                } else {
+                    slot = 'armor';
+                    console.log('🛡️ Armor detected, assigning to armor slot');
+                }
+                break;
+            case 'shield':
+                slot = 'offHand';
+                console.log('🛡️ Shield type detected, assigning to offHand');
                 break;
             case 'accessory':
                 slot = 'accessory';
@@ -367,6 +381,8 @@ class InventoryManager {
                 console.warn('Cannot determine equipment slot for:', item);
                 return;
         }
+        
+        console.log('📍 Final slot assignment:', slot);
 
         // Unequip current item if any
         if (currentChar.equipment[slot]) {
@@ -471,6 +487,47 @@ class InventoryManager {
         }
 
         console.log(`🗑️ Removed ${item.name} from inventory`);
+    }
+
+    /**
+     * Sell an item for half its value (rounded down)
+     */
+    sellItem(itemIndex) {
+        const currentChar = this.getCurrentCharacter();
+        if (!currentChar || !currentChar.inventory) return;
+        
+        const item = currentChar.inventory[itemIndex];
+        if (!item) return;
+
+        const sellValue = Math.floor((item.value || 0) / 2);
+        
+        if (sellValue <= 0) {
+            alert(`"${item.name}" has no resale value.`);
+            return;
+        }
+
+        const confirmSell = confirm(`Sell "${item.name}" for ${sellValue} GP?`);
+        if (!confirmSell) return;
+
+        // Add gold to character
+        currentChar.gold = (currentChar.gold || 0) + sellValue;
+
+        // Remove item from inventory
+        currentChar.inventory.splice(itemIndex, 1);
+        this.renderInventory();
+        this.updateGoldDisplay();
+
+        // Save character
+        if (window.characterManager) {
+            window.characterManager.saveCharacter(currentChar);
+        }
+
+        console.log(`💰 Sold ${item.name} for ${sellValue} GP`);
+        
+        // Show success notification
+        if (window.addChatMessage) {
+            window.addChatMessage(`💰 Sold ${item.name} for ${sellValue} GP! Gold total: ${currentChar.gold} GP`, 'system');
+        }
     }
 
     /**
@@ -590,10 +647,17 @@ class InventoryManager {
             itemElement.className = 'dcc-modal-item';
             
             const icon = this.getItemIcon(item.type?.toLowerCase());
+            const currentChar = this.getCurrentCharacter();
+            const playerGold = currentChar?.gold || 0;
+            const itemCost = item.value || 0;
+            const canAfford = playerGold >= itemCost;
             
             itemElement.innerHTML = `
-                <button class="dcc-modal-item-add-btn" onclick="window.inventoryManager.addDCCItemToInventory(${JSON.stringify(item).replace(/"/g, '&quot;')})" title="Add to Inventory">
-                    <span class="material-icons">add</span>
+                <button class="dcc-modal-item-add-btn ${!canAfford ? 'disabled' : ''}" 
+                        onclick="window.inventoryManager.purchaseDCCItem(${JSON.stringify(item).replace(/"/g, '&quot;')})" 
+                        title="${canAfford ? `Purchase for ${itemCost} GP` : `Not enough gold (need ${itemCost} GP)`}"
+                        ${!canAfford ? 'disabled' : ''}>
+                    <span class="material-icons">💰</span>
                 </button>
                 
                 <div class="dcc-modal-item-header">
@@ -655,6 +719,63 @@ class InventoryManager {
     renderDCCItems() {
         // Redirect to modal
         this.renderDCCItemsModal();
+    }
+
+    /**
+     * Purchase a DCC item with gold
+     */
+    purchaseDCCItem(dccItem) {
+        const currentChar = this.getCurrentCharacter();
+        if (!currentChar) return;
+
+        const itemCost = dccItem.value || 0;
+        const playerGold = currentChar.gold || 0;
+
+        // Check if player has enough gold
+        if (playerGold < itemCost) {
+            alert(`Not enough gold! You need ${itemCost} GP but only have ${playerGold} GP.`);
+            return;
+        }
+
+        // Deduct gold
+        currentChar.gold = playerGold - itemCost;
+
+        // Add item to inventory (use existing logic)
+        if (!currentChar.inventory) {
+            currentChar.inventory = [];
+        }
+
+        const inventoryItem = {
+            id: Date.now() + Math.random(),
+            name: dccItem.name,
+            type: dccItem.type?.toLowerCase() || 'misc',
+            damage: dccItem.damage,
+            defense: dccItem.defense,
+            properties: dccItem.properties || [],
+            value: dccItem.value || 0,
+            quantity: 1,
+            source: 'dcc_shop',
+            dateAdded: new Date().toISOString()
+        };
+
+        currentChar.inventory.push(inventoryItem);
+        this.renderInventory();
+        this.updateGoldDisplay();
+
+        // Save character
+        if (window.characterManager) {
+            window.characterManager.saveCharacter(currentChar);
+        }
+
+        // Close modal after purchasing
+        this.renderDCCItemsModal(); // Refresh the modal to update gold display
+
+        console.log(`💰 Purchased ${dccItem.name} for ${itemCost} GP`);
+        
+        // Show success notification
+        if (window.addChatMessage) {
+            window.addChatMessage(`💰 Purchased ${dccItem.name} for ${itemCost} GP! Gold remaining: ${currentChar.gold} GP`, 'system');
+        }
     }
 
     /**
