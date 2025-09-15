@@ -19,10 +19,10 @@
   - Quick Connect for instant session setup
 - **Status**: ✅ **Fully functional and production-ready**
 
-#### **V4** - Player Application  
-- **Location**: `/V4/`
+#### **v5** - Player Application  
+- **Location**: `/v5/`
 - **Purpose**: Character sheet manager and player interface for DCC RPG
-- **Origin**: Clone of V3 folder, updated for modular integration
+- **Origin**: Clone of v5-network folder, updated for modular integration
 - **Features**:
   - Character creation and management
   - Skill system and progression tracking
@@ -30,20 +30,21 @@
   - QR code character sharing
   - Level progression and experience tracking
   - Equipment and inventory management
+  - Currently implementing threejs map and combat system
 - **Status**: 🔄 **Ready for chat integration via modular system**
 
-#### **V3** - Legacy Player App
-- **Location**: `/V3/` (legacy, not actively updated)
-- **Status**: ⚠️ **Archived** - V4 is the active development branch
+#### **V3, v5-network** - Legacy Player App
+- **Location**: `/v5-network/` (legacy, not actively updated)
+- **Status**: ⚠️ **Archived** - v5 is the active development branch
 
 ---
 
 ## 🏗️ Integration Strategy
 
 ### **Modular System Design**
-The StoryTeller chat system was built with **modular architecture** specifically to enable easy integration with V4:
+The StoryTeller chat system was built with **modular architecture** specifically to enable easy integration with v5:
 
-#### **Portable Modules** (Ready for V4)
+#### **Portable Modules** (Ready for v5)
 ```
 StoryTeller/js/modules/
 ├── supabaseClient.js      # Database connection & operations
@@ -51,7 +52,7 @@ StoryTeller/js/modules/
 ├── combatHandler.js       # Combat processing & loot generation
 ├── messageFormatter.js   # Message display & formatting
 ├── chatManager.js         # Main orchestrator
-└── chatAdapter.js         # Bridge to UI (customize for V4)
+└── chatAdapter.js         # Bridge to UI (customize for v5)
 ```
 
 #### **Supporting Files for Integration**
@@ -60,38 +61,6 @@ StoryTeller/css/chat.css           # Chat styling (portable)
 StoryTeller/js/supabase-chat.js    # Core chat functions
 StoryTeller/js/command-interceptor.js  # Command processing system
 ```
-
-### **Integration Plan**
-When ready to integrate chat into V4:
-
-1. **Copy Modular Files**
-   ```bash
-   cp -r StoryTeller/js/modules/ V4/js/
-   cp StoryTeller/js/supabase-chat.js V4/js/
-   cp StoryTeller/js/command-interceptor.js V4/js/
-   cp StoryTeller/css/chat.css V4/css/
-   ```
-
-2. **Customize chatAdapter.js**
-   - Modify `chatAdapter.js` to work with V4's UI structure
-   - Update DOM selectors for V4's interface
-   - Integrate with V4's character data system
-
-3. **Add to V4's index.html**
-   ```html
-   <!-- Supabase Integration -->
-   <script src="js/supabase-chat.js"></script>
-   <script src="js/command-interceptor.js"></script>
-   <script src="js/modules/supabaseClient.js"></script>
-   <script src="js/modules/chatManager.js"></script>
-   <!-- ... other modules as needed ... -->
-   ```
-
-4. **Integrate with V4's Character System**
-   - Connect chat commands to character stats
-   - Enable "distributed computing" loot system
-   - Link achievements to chat events
-
 ---
 
 ## 🚨 Cardinal Rules
@@ -103,6 +72,7 @@ When ready to integrate chat into V4:
   - **Include in index.html**: Add new script tags
   - **Wrapper functions**: Create new files that call Supabase functions
   - **Extension files**: Build on top of existing Supabase functionality
+  - **Information folder**: Always check /READMEs/ dir for updated notes
 
 ### **Why This Rule Exists**
 - Supabase files are **extremely fragile** and break easily
@@ -145,16 +115,16 @@ document.addEventListener('DOMContentLoaded', function() {
 - Auto-reconnection system active
 - Quick Connect feature working
 
-### **V4 (Player App) - INTEGRATION READY** 🔄
+### **v5 (Player App) - INTEGRATION READY** 🔄
 - Character system fully functional
 - Achievement system complete (771 achievements)
 - Skill system operational
 - QR code sharing working
-- **Ready for chat module integration**
+- **Currently working on threejs map, combat, and a better inventory**
 
 ### **Integration Pathway** 🛤️
 - Modular files designed for portability
-- chatAdapter.js ready for V4 customization
+- chatAdapter.js ready for v5 customization
 - CSS styling prepared for integration
 - Command system ready for character data connection
 
@@ -172,7 +142,7 @@ Once integrated, the system will provide:
 - NPC and quest generation
 - Map editing and sharing
 
-#### **For Players (V4 + Chat)**
+#### **For Players (v5 + Chat)**
 - Full character sheet management
 - Real-time chat with DM and party
 - Automatic combat result processing
@@ -193,7 +163,7 @@ Once integrated, the system will provide:
 
 ### **Communication Flow**
 ```
-DM (StoryTeller) ←→ Supabase Database ←→ Players (V4 + Chat)
+DM (StoryTeller) ←→ Supabase Database ←→ Players (v5 + Chat)
                        ↕
               Real-time subscriptions
               Session management
@@ -204,7 +174,7 @@ DM (StoryTeller) ←→ Supabase Database ←→ Players (V4 + Chat)
 - **Supabase**: Real-time messaging, session data
 - **LocalStorage**: Configuration, preferences, API keys
 - **JSON Files**: Game data (races, classes, skills, achievements)
-- **Character Data**: Stored locally in V4, shared via chat commands
+- **Character Data**: Stored locally in v5, shared via chat commands
 
 ### **Modular Benefits**
 - **Easy Updates**: Modify individual modules without affecting others
@@ -218,12 +188,12 @@ DM (StoryTeller) ←→ Supabase Database ←→ Players (V4 + Chat)
 
 ### **Phase 1: Current State** ✅
 - StoryTeller fully functional
-- V4 character system complete
+- v5 character system complete
 - Modular chat system ready
 
 ### **Phase 2: Integration** (Next)
-- Copy modular files to V4
-- Customize chatAdapter.js for V4 UI
+- Copy modular files to v5
+- Customize chatAdapter.js for v5 UI
 - Test chat integration with character system
 - Implement distributed loot system
 
@@ -243,10 +213,10 @@ DM (StoryTeller) ←→ Supabase Database ←→ Players (V4 + Chat)
 3. Never modify core Supabase files
 4. Test thoroughly with real sessions
 
-### **For V4 Integration**
+### **For v5 Integration**
 1. Copy modules intact, modify chatAdapter.js only
-2. Integrate with existing V4 character system
-3. Maintain V4's UI patterns and styling
+2. Integrate with existing v5 character system
+3. Maintain v5's UI patterns and styling
 4. Test chat functionality before character integration
 
 ### **For Both Apps**
@@ -260,11 +230,24 @@ DM (StoryTeller) ←→ Supabase Database ←→ Players (V4 + Chat)
 ## 🎯 Success Metrics
 
 ### **Integration Success Indicators**
-- ✅ V4 can send/receive real-time chat messages
-- ✅ DM commands (ATTACK, ROLL) process correctly in V4
+- ✅ v5 can send/receive real-time chat messages
+- ✅ DM commands (ATTACK, ROLL) process correctly in v5
 - ✅ Character data integrates with chat commands
 - ✅ Mobile devices maintain stable connections
-- ✅ No loss of existing V4 functionality
+- ✅ No loss of existing v5 functionality
 - ✅ Seamless user experience across both apps
+
+---
+
+## Current TODO:
+
+## Currently working on...
+ - Storyteller's map maker and spritesheet editor needs some updating
+ - v5 is getting a threejs map explore and combat, turnbaised system
+ - v5 needs a improved inventory.. two other code bases were managing it, not good.
+ - need to look for dead code and comment it out, if the app wrks after the comment out, we can remove it
+ - need optimizing on both apps
+ - mapgate is a 3d object dev tool made by the author, a 'web blender' app, may need improvements
+
 
 This project represents a complete tabletop RPG ecosystem with professional-grade real-time communication, all running on free infrastructure while maintaining the flexibility to customize and extend functionality as needed.

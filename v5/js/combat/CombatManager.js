@@ -1294,10 +1294,10 @@ export class CombatManager {
                 </div>
             `;
             lootContainer.appendChild(lootElement);
-            
-            // Add to trade area instead of directly to inventory
-            this.addLootToTradeArea(loot);
         });
+        
+        // CRITICAL FIX: Add all loot in a single batch operation to prevent race conditions
+        this.addAllLootToTradeArea(lootItems);
     }
     
     /**
@@ -1333,6 +1333,66 @@ export class CombatManager {
         return loot;
     }
     
+    /**
+     * Add multiple loot items to player trade area in a single batch operation
+     */
+    async addAllLootToTradeArea(lootItems) {
+        const playerName = window.networkPlayerName || window.playerName || 'Player';
+        
+        if (!window.advancedStorageManager) {
+            console.warn('No advanced storage manager available');
+            return;
+        }
+        
+        // Get existing trade area
+        const tradeAreaKey = `trade_area_${playerName}`;
+        let tradeArea = await window.advancedStorageManager.getItem(tradeAreaKey) || {
+            gold: 0,
+            items: [],
+            lastUpdated: new Date().toISOString()
+        };
+        
+        // Process all loot items in a single operation
+        lootItems.forEach(loot => {
+            if (loot.type === 'gold') {
+                // Add gold to trade area
+                tradeArea.gold = (tradeArea.gold || 0) + loot.value;
+                console.log(`💰 Added ${loot.value} gold to trade area! Total: ${tradeArea.gold}`);
+            } else if (loot.type === 'item') {
+                // Add item to trade area
+                if (!tradeArea.items) tradeArea.items = [];
+                
+                const tradeItem = {
+                    id: Date.now() + Math.random(),
+                    name: loot.name || 'Unknown Item',
+                    type: loot.itemType || 'misc',
+                    value: loot.value || 0,
+                    quantity: 1,
+                    source: 'combat_loot',
+                    dateAdded: new Date().toISOString(),
+                    // Add any specific properties from loot
+                    ...(loot.damage && { damage: loot.damage }),
+                    ...(loot.defense && { defense: loot.defense }),
+                    ...(loot.properties && { properties: loot.properties })
+                };
+                
+                tradeArea.items.push(tradeItem);
+                console.log(`📦 Added ${loot.name} to trade area`);
+            }
+        });
+        
+        // Update timestamp and save once
+        tradeArea.lastUpdated = new Date().toISOString();
+        await window.advancedStorageManager.setItem(tradeAreaKey, tradeArea); // Save to both localStorage and IndexedDB
+        
+        // Update trade area display using unified system with fresh data
+        if (window.unifiedInventory) {
+            window.unifiedInventory.updateTradeAreaDisplay(tradeArea);
+        } else if (window.inventoryManager) {
+            window.inventoryManager.updateTradeAreaDisplay();
+        }
+    }
+
     /**
      * Add loot to player trade area (not directly to inventory)
      */
@@ -1378,13 +1438,13 @@ export class CombatManager {
             console.log(`📦 Added ${loot.name} to trade area`);
         }
         
-        // Update timestamp and save
+        // Update timestamp and save to BOTH storage methods to prevent cache issues
         tradeArea.lastUpdated = new Date().toISOString();
-        await window.advancedStorageManager.setItem(tradeAreaKey, tradeArea, { forceMethod: 'indexeddb' });
+        await window.advancedStorageManager.setItem(tradeAreaKey, tradeArea); // Save to both localStorage and IndexedDB
         
-        // Update trade area display using unified system
+        // Update trade area display using unified system - CRITICAL FIX: Pass fresh data
         if (window.unifiedInventory) {
-            window.unifiedInventory.updateTradeAreaDisplay();
+            window.unifiedInventory.updateTradeAreaDisplay(tradeArea);
         } else if (window.inventoryManager) {
             window.inventoryManager.updateTradeAreaDisplay();
         }

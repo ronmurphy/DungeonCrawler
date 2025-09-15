@@ -106,16 +106,29 @@ class UnifiedInventorySystem {
      */
     async saveCharacter() {
         try {
+            const character = this.getCurrentCharacter();
+            if (character) {
+                console.log(`💾 Saving character "${character.name}" with ${character.gold || 0} gold`);
+            }
+            
             if (typeof saveCurrentCharacterToStorage === 'function') {
                 await saveCurrentCharacterToStorage();
+                console.log('💾 Used saveCurrentCharacterToStorage');
             } else if (typeof saveCharacterToStorage === 'function') {
                 await saveCharacterToStorage();
+                console.log('💾 Used saveCharacterToStorage');
+            } else if (window.characterManager && typeof window.characterManager.saveCharacter === 'function') {
+                window.characterManager.saveCharacter(character);
+                console.log('💾 Used characterManager.saveCharacter');
             } else {
                 console.warn('⚠️ No character save function available');
+                return false;
             }
-            console.log('💾 Character saved successfully');
+            console.log('✅ Character saved successfully');
+            return true;
         } catch (error) {
             console.error('❌ Failed to save character:', error);
+            return false;
         }
     }
 
@@ -207,7 +220,7 @@ class UnifiedInventorySystem {
     /**
      * Sell item for half its value
      */
-    sellItem(itemId) {
+    async sellItem(itemId) {
         const item = this.getItemById(itemId);
         if (!item) {
             console.error('❌ Item not found for selling:', itemId);
@@ -228,7 +241,7 @@ class UnifiedInventorySystem {
         this.removeItem(itemId);
         
         // Add gold to character
-        this.addGold(sellValue);
+        await this.addGold(sellValue);
         
         console.log(`💰 Sold ${item.name} for ${sellValue} GP`);
         
@@ -402,14 +415,18 @@ class UnifiedInventorySystem {
     /**
      * Add gold to character
      */
-    addGold(amount) {
+    async addGold(amount) {
         const character = this.getCurrentCharacter();
-        if (!character) return false;
+        if (!character) {
+            console.error('❌ Cannot add gold: No character found');
+            return false;
+        }
 
-        character.gold = (character.gold || 0) + amount;
-        console.log(`💰 Added ${amount} gold. Total: ${character.gold}`);
+        const oldGold = character.gold || 0;
+        character.gold = oldGold + amount;
+        console.log(`💰 Added ${amount} gold. Old: ${oldGold}, New: ${character.gold}`);
         
-        this.saveCharacter();
+        await this.saveCharacter();
         this.updateGoldDisplay();
         
         return true;
@@ -441,19 +458,26 @@ class UnifiedInventorySystem {
      * Update gold display in UI
      */
     updateGoldDisplay() {
+        const character = this.getCurrentCharacter();
         const gold = this.getGold();
         this.playerGold = gold;
+
+        console.log(`🔍 DEBUG updateGoldDisplay - Character:`, character?.name, `Gold:`, character?.gold, `getGold():`, gold);
 
         // Update main inventory gold display
         const goldElement = document.getElementById('character-gold');
         if (goldElement) {
             goldElement.textContent = gold.toLocaleString();
+            console.log(`🔍 DEBUG - Updated character-gold element to: ${gold}`);
+        } else {
+            console.warn(`⚠️ DEBUG - character-gold element not found!`);
         }
 
         // Update DCC modal gold display
         const dccGoldElement = document.getElementById('dcc-modal-player-gold');
         if (dccGoldElement) {
             dccGoldElement.textContent = gold.toLocaleString();
+            console.log(`🔍 DEBUG - Updated dcc-modal-player-gold element to: ${gold}`);
         }
 
         console.log(`💰 Updated gold displays: ${gold} GP`);
@@ -503,7 +527,8 @@ class UnifiedInventorySystem {
             tradeArea.lastUpdated = new Date().toISOString();
             await window.advancedStorageManager.setItem(tradeAreaKey, tradeArea, { forceMethod: 'indexeddb' });
 
-            this.updateTradeAreaDisplay();
+            // CRITICAL FIX: Pass the updated data directly instead of re-reading from storage
+            this.updateTradeAreaDisplay(tradeArea);
             return true;
             
         } catch (error) {
@@ -514,28 +539,58 @@ class UnifiedInventorySystem {
 
     /**
      * Update trade area display
+     * @param {Object} tradeAreaData - Optional pre-loaded trade area data to avoid race conditions
      */
-    async updateTradeAreaDisplay() {
+    async updateTradeAreaDisplay(tradeAreaData = null) {
         const playerName = window.networkPlayerName || window.playerName;
-        if (!playerName) return;
+        if (!playerName) {
+            console.warn('⚠️ Cannot update trade area: No player name found');
+            return;
+        }
+
+        console.log(`🔍 Updating trade area display for player: ${playerName}`);
 
         try {
-            const tradeAreaKey = `trade_area_${playerName}`;
-            const tradeArea = await window.advancedStorageManager.getItem(tradeAreaKey);
+            // Use provided data or fetch from storage
+            let tradeArea = tradeAreaData;
+            if (!tradeArea) {
+                const tradeAreaKey = `trade_area_${playerName}`;
+                tradeArea = await window.advancedStorageManager.getItem(tradeAreaKey);
+                console.log(`📦 Trade area data retrieved from storage (lastUpdated: ${tradeArea?.lastUpdated}):`, tradeArea);
+                
+                // DEBUGGING: Check if we're getting stale data
+                if (tradeArea?.lastUpdated) {
+                    const dataAge = new Date() - new Date(tradeArea.lastUpdated);
+                    const ageInMinutes = Math.floor(dataAge / (1000 * 60));
+                    console.log(`⏰ Trade area data age: ${ageInMinutes} minutes old`);
+                    if (ageInMinutes > 60) {
+                        console.warn("⚠️ Trade area data is very old - possible caching issue");
+                    }
+                }
+            } else {
+                console.log(`📦 Trade area data provided directly (lastUpdated: ${tradeArea?.lastUpdated}):`, tradeArea);
+            }
             
             const tradeGrid = document.getElementById('trade-grid');
             const tradeSection = document.getElementById('trade-area-section');
             
-            if (!tradeGrid || !tradeSection) return;
+            if (!tradeGrid || !tradeSection) {
+                console.warn('⚠️ Trade area DOM elements not found:', { tradeGrid: !!tradeGrid, tradeSection: !!tradeSection });
+                return;
+            }
 
+            // FIXED: Always show trade area section for visibility, but clear content if no loot
+            tradeSection.style.display = 'block';
+            
             // Hide section if no loot
             if (!tradeArea || (!tradeArea.gold && (!tradeArea.items || tradeArea.items.length === 0))) {
-                tradeSection.style.display = 'none';
+                console.log('🔸 No trade area data found, clearing content but keeping section visible');
+                tradeGrid.innerHTML = '<div class="empty-state"><i class="ra ra-gem-pendant"></i><p>No recent loot</p></div>';
                 return;
             }
 
             // Show section and populate
-            tradeSection.style.display = 'block';
+            console.log(`✅ Showing trade area with ${tradeArea.gold || 0} gold and ${tradeArea.items?.length || 0} items`);
             tradeGrid.innerHTML = '';
 
             // Add gold if present
@@ -581,17 +636,23 @@ class UnifiedInventorySystem {
         if (!playerName) return false;
 
         try {
-            this.addGold(amount);
+            await this.addGold(amount);
 
             // Remove gold from trade area
             const tradeAreaKey = `trade_area_${playerName}`;
             const tradeArea = await window.advancedStorageManager.getItem(tradeAreaKey);
             if (tradeArea) {
                 tradeArea.gold = 0;
+                tradeArea.lastUpdated = new Date().toISOString();
                 await window.advancedStorageManager.setItem(tradeAreaKey, tradeArea);
+                
+                // CRITICAL FIX: Pass the updated trade area data directly to avoid race condition
+                this.updateTradeAreaDisplay(tradeArea);
+            } else {
+                // No trade area exists, clear display
+                this.updateTradeAreaDisplay(null);
             }
 
-            this.updateTradeAreaDisplay();
             console.log(`💰 Transferred ${amount} gold from trade area to character`);
             return true;
 
@@ -617,10 +678,16 @@ class UnifiedInventorySystem {
             const tradeArea = await window.advancedStorageManager.getItem(tradeAreaKey);
             if (tradeArea && tradeArea.items) {
                 tradeArea.items.splice(index, 1);
+                tradeArea.lastUpdated = new Date().toISOString();
                 await window.advancedStorageManager.setItem(tradeAreaKey, tradeArea);
+                
+                // CRITICAL FIX: Pass the updated trade area data directly to avoid race condition
+                this.updateTradeAreaDisplay(tradeArea);
+            } else {
+                // No trade area exists, clear display
+                this.updateTradeAreaDisplay(null);
             }
 
-            this.updateTradeAreaDisplay();
             console.log(`📦 Transferred ${item.name} from trade area to inventory`);
             return true;
 
@@ -645,7 +712,7 @@ class UnifiedInventorySystem {
 
             // Transfer gold
             if (tradeArea.gold && tradeArea.gold > 0) {
-                this.addGold(tradeArea.gold);
+                await this.addGold(tradeArea.gold);
             }
 
             // Transfer items
@@ -963,6 +1030,9 @@ class UnifiedInventorySystem {
             inventoryGrid.innerHTML = '<div class="no-character">No character selected</div>';
             return;
         }
+
+        // Update trade area display when rendering inventory (now safe from cache issues)
+        this.updateTradeAreaDisplay();
 
         const inventory = this.getInventory();
         if (inventory.length === 0) {

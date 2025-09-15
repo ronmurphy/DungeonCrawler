@@ -710,6 +710,11 @@ function loadCharacterFromManager(characterId) {
         // Set network player name for chat
         if (typeof window.setNetworkPlayerName === 'function') {
             window.setNetworkPlayerName(character.name || 'Unknown Player');
+        } else {
+            // CRITICAL FIX: Set player names for trade area system
+            window.networkPlayerName = character.name || 'Unknown Player';
+            window.playerName = character.name || 'Unknown Player';
+            console.log(`👤 Set player name: ${window.playerName}`);
         }
         
         // Update UI elements
@@ -1596,3 +1601,25 @@ document.addEventListener('DOMContentLoaded', () => {
         await initializeCharacterManager();
     }, 200); // Give scripts time to load
 });
+
+// ========================================
+// MISSING FUNCTION DEFINITIONS
+// ========================================
+
+/**
+ * Set network player name for chat integration
+ * CRITICAL FIX: This function was being called but not defined
+ */
+function setNetworkPlayerName(playerName) {
+    window.networkPlayerName = playerName;
+    window.playerName = playerName; // Also set the regular playerName for compatibility
+    console.log(`🌐 Network player name set: ${playerName}`);
+    
+    // Update any chat systems that depend on player name
+    if (typeof updateChatPlayerName === 'function') {
+        updateChatPlayerName(playerName);
+    }
+}
+
+// Export to global scope
+window.setNetworkPlayerName = setNetworkPlayerName;

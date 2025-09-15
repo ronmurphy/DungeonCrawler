@@ -2759,7 +2759,11 @@
         // Set network player name (called by character manager)
         function setNetworkPlayerName(playerName) {
             networkPlayerName = playerName;
+            // CRITICAL FIX: Also set global window properties for trade area system
+            window.networkPlayerName = playerName;
+            window.playerName = playerName;
             console.log('🎭 Network player name set to:', playerName);
+            console.log('🌐 Global player names updated:', { windowPlayerName: window.playerName, windowNetworkPlayerName: window.networkPlayerName });
         }
         window.setNetworkPlayerName = setNetworkPlayerName;
 
