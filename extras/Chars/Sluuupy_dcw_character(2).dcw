@@ -1,0 +1,223 @@
+{
+  "name": "Sluuupy",
+  "level": 1,
+  "availablePoints": 0,
+  "stats": {
+    "strength": 5,
+    "dexterity": 5,
+    "constitution": 6,
+    "intelligence": 2,
+    "wisdom": 2,
+    "charisma": 2
+  },
+  "statMaximums": {
+    "strength": 5,
+    "dexterity": 20,
+    "constitution": 16,
+    "intelligence": 10,
+    "wisdom": 10,
+    "charisma": 10
+  },
+  "healthPoints": 7,
+  "currentHealthPoints": 7,
+  "magicPoints": 4,
+  "currentMagicPoints": 4,
+  "customSkills": [
+    {
+      "name": "Amorphous Body",
+      "stat": "constitution",
+      "source": "race"
+    },
+    {
+      "name": "Emergency Response",
+      "stat": "wisdom",
+      "source": "job"
+    },
+    {
+      "name": "Physical Rescue",
+      "stat": "strength",
+      "source": "job"
+    },
+    {
+      "name": "Pugilism",
+      "stat": "strength",
+      "source": "class"
+    },
+    {
+      "name": "Iron Punch",
+      "stat": "strength",
+      "source": "class"
+    },
+    {
+      "name": "Powerful Strike",
+      "stat": "strength",
+      "source": "class"
+    }
+  ],
+  "personal": {
+    "age": "",
+    "backstory": "",
+    "avatarUrl": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/race_slime_smooth.png"
+  },
+  "race": "slime",
+  "customRace": "",
+  "raceBonuses": [
+    "+2 Constitution (Slime)",
+    "Amorphous Body [CON] skill (Slime)"
+  ],
+  "customRaceData": {
+    "selectedStats": [],
+    "skills": [],
+    "maximums": {}
+  },
+  "job": "firefighter",
+  "customJob": "",
+  "class": "prizefighter",
+  "customClass": "",
+  "jobBonuses": [
+    "+1 Strength (Firefighter)",
+    "+1 Constitution (Firefighter)",
+    "Emergency Response [WIS] skill (Firefighter)",
+    "Physical Rescue [STR] skill (Firefighter)"
+  ],
+  "classBonuses": [
+    "+2 Strength (Prizefighter)",
+    "+1 Constitution (Prizefighter)",
+    "Pugilism [STR] skill (Prizefighter)",
+    "Iron Punch [STR] skill (Prizefighter)",
+    "Powerful Strike [STR] skill (Prizefighter)"
+  ],
+  "customJobData": {
+    "selectedStats": [],
+    "skills": []
+  },
+  "customClassData": {
+    "selectedStats": [],
+    "skills": []
+  },
+  "rollHistory": [
+    {
+      "type": "Attribute",
+      "name": "Constitution",
+      "diceRolls": [
+        7
+      ],
+      "diceTotal": 7,
+      "levelBonus": 1,
+      "statBonus": 6,
+      "finalTotal": 14,
+      "config": {
+        "diceCount": 1,
+        "diceType": 10,
+        "levelBonus": 1,
+        "description": "1d10 + 1 (Level 1)"
+      },
+      "timestamp": "11:04:14 PM"
+    },
+    {
+      "type": "Attribute",
+      "name": "Constitution",
+      "diceRolls": [
+        1
+      ],
+      "diceTotal": 1,
+      "levelBonus": 1,
+      "statBonus": 6,
+      "finalTotal": 8,
+      "config": {
+        "diceCount": 1,
+        "diceType": 10,
+        "levelBonus": 1,
+        "description": "1d10 + 1 (Level 1)"
+      },
+      "timestamp": "6:52:17 PM"
+    }
+  ],
+  "spells": [
+    {
+      "id": "dcc_1757899894368_itfdfejam",
+      "name": "Dragon Breath",
+      "element": "fire",
+      "damageType": "fixed",
+      "damageAmount": 4,
+      "healingType": "",
+      "healingAmount": 0,
+      "primaryEffect": "Cone of elemental damage",
+      "secondaryEffect": "",
+      "cost": 4,
+      "effects": [
+        "Breathe like a dragon"
+      ],
+      "cooldown": 90,
+      "level": 2
+    }
+  ],
+  "inventory": [
+    {
+      "id": 1757899516207.2275,
+      "name": "Rusted Meat Cleaver",
+      "type": "weapon",
+      "damage": "1d6",
+      "properties": [
+        "close",
+        "messy"
+      ],
+      "value": 5,
+      "quantity": 1,
+      "source": "dcc_catalog",
+      "dateAdded": "2025-09-15T01:25:16.207Z"
+    }
+  ],
+  "equipment": {
+    "mainHand": {
+      "id": 1757899442455.163,
+      "name": "Rusted Meat Cleaver",
+      "type": "weapon",
+      "damage": "1d6",
+      "properties": [
+        "close",
+        "messy"
+      ],
+      "value": 5,
+      "quantity": 1,
+      "source": "dcc_catalog",
+      "dateAdded": "2025-09-15T01:24:02.455Z"
+    },
+    "offHand": {
+      "id": 1757899926125.6665,
+      "name": "Ironwood Shield",
+      "type": "armor",
+      "properties": [
+        "flammable"
+      ],
+      "value": 0,
+      "quantity": 1,
+      "source": "dcc_catalog",
+      "dateAdded": "2025-09-15T01:32:06.125Z"
+    },
+    "armor": {
+      "id": 1757900516913.1282,
+      "name": "Clay Plate Harness",
+      "type": "armor",
+      "properties": [
+        "brittle"
+      ],
+      "value": 0,
+      "quantity": 1,
+      "source": "dcc_catalog",
+      "dateAdded": "2025-09-15T01:41:56.913Z"
+    },
+    "accessory": null
+  },
+  "statusEffects": [],
+  "notes": {
+    "personal": "",
+    "party": "",
+    "session": "",
+    "barter": "",
+    "world": "",
+    "combat": "",
+    "receivedNotes": []
+  },
+  "skillLevels": {}
+}

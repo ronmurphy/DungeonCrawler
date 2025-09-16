@@ -104,6 +104,9 @@ export class CombatRenderer {
         // Add to container
         this.container.appendChild(this.renderer.domElement);
         
+        // Setup HP/MP UI overlay
+        this.setupHealthBars();
+        
         // Lighting setup
         this.setupLighting();
         
@@ -123,6 +126,450 @@ export class CombatRenderer {
         this.setupBackdropControls();
         
         console.log('🎨 CombatRenderer initialized');
+    }
+
+    /**
+     * Setup HP/MP bars overlay for players and enemies
+     */
+    setupHealthBars() {
+        // Create main health bars container
+        this.healthBarsContainer = document.createElement('div');
+        this.healthBarsContainer.id = 'combat-health-bars';
+        this.healthBarsContainer.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        `;
+        this.container.appendChild(this.healthBarsContainer);
+
+        // Create player party health container (bottom-left)
+        this.partyHealthContainer = document.createElement('div');
+        this.partyHealthContainer.id = 'party-health-container';
+        this.partyHealthContainer.style.cssText = `
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: auto;
+        `;
+        this.healthBarsContainer.appendChild(this.partyHealthContainer);
+
+        // Create enemy health container (will be positioned per enemy)
+        this.enemyHealthContainer = document.createElement('div');
+        this.enemyHealthContainer.id = 'enemy-health-container';
+        this.enemyHealthContainer.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        `;
+        this.healthBarsContainer.appendChild(this.enemyHealthContainer);
+
+        console.log('💊 Health bars UI initialized');
+    }
+
+    /**
+     * Create player health bar
+     */
+    createPlayerHealthBar(characterData) {
+        const playerId = characterData.id || 'player';
+        
+        // Remove existing bar if present
+        const existing = document.getElementById(`player-health-${playerId}`);
+        if (existing) existing.remove();
+
+        // Create player health bar container
+        const playerBar = document.createElement('div');
+        playerBar.id = `player-health-${playerId}`;
+        playerBar.className = 'player-health-bar';
+        playerBar.style.cssText = `
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(100, 149, 237, 0.8);
+            border-radius: 8px;
+            padding: 8px 12px;
+            min-width: 280px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        `;
+
+        // Avatar image
+        const avatar = document.createElement('img');
+        // Match the avatar URL logic used in turn order
+        const avatarUrl = characterData.personal?.avatarUrl || characterData.avatarUrl || characterData.avatar || '/assets/avatars/default.png';
+        avatar.src = avatarUrl;
+        avatar.style.cssText = `
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 12px;
+            border: 2px solid rgba(100, 149, 237, 0.6);
+            object-fit: cover;
+        `;
+        avatar.onerror = () => avatar.src = '/assets/avatars/default.png';
+
+        // Character info container
+        const infoContainer = document.createElement('div');
+        infoContainer.style.cssText = `
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        `;
+
+        // Character name
+        const nameLabel = document.createElement('div');
+        nameLabel.textContent = characterData.name || 'Player';
+        nameLabel.style.cssText = `
+            color: #e6f3ff;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        `;
+
+        // HP Bar
+        const hpContainer = this.createBarContainer('HP', '#e74c3c', '#c0392b');
+        const hpBar = hpContainer.querySelector('.bar-fill');
+        const hpText = hpContainer.querySelector('.bar-text');
+        
+        // MP Bar (if character has MP)
+        let mpContainer = null;
+        if (characterData.maxMp && characterData.maxMp > 0) {
+            mpContainer = this.createBarContainer('MP', '#3498db', '#2980b9');
+        }
+
+        // Assemble the player bar
+        infoContainer.appendChild(nameLabel);
+        infoContainer.appendChild(hpContainer);
+        if (mpContainer) infoContainer.appendChild(mpContainer);
+        
+        playerBar.appendChild(avatar);
+        playerBar.appendChild(infoContainer);
+        
+        // Store references for updates
+        playerBar._hpBar = hpBar;
+        playerBar._hpText = hpText;
+        if (mpContainer) {
+            playerBar._mpBar = mpContainer.querySelector('.bar-fill');
+            playerBar._mpText = mpContainer.querySelector('.bar-text');
+        }
+
+        this.partyHealthContainer.appendChild(playerBar);
+        
+        // Update with current values
+        this.updatePlayerHealthBar(playerId, characterData);
+        
+        console.log(`💚 Created player health bar for ${characterData.name}`);
+        return playerBar;
+    }
+
+    /**
+     * Create a generic bar container (HP or MP)
+     */
+    createBarContainer(label, fillColor, borderColor) {
+        const container = document.createElement('div');
+        container.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        `;
+
+        // Label
+        const labelElement = document.createElement('span');
+        labelElement.textContent = label;
+        labelElement.style.cssText = `
+            color: #e6f3ff;
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 24px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        `;
+
+        // Bar background
+        const barBg = document.createElement('div');
+        barBg.style.cssText = `
+            flex: 1;
+            height: 16px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid ${borderColor};
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        `;
+
+        // Bar fill
+        const barFill = document.createElement('div');
+        barFill.className = 'bar-fill';
+        barFill.style.cssText = `
+            height: 100%;
+            background: linear-gradient(90deg, ${fillColor}, ${borderColor});
+            border-radius: 7px;
+            transition: width 0.3s ease;
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2);
+            width: 100%;
+        `;
+
+        // Bar text
+        const barText = document.createElement('span');
+        barText.className = 'bar-text';
+        barText.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            z-index: 1;
+        `;
+
+        barBg.appendChild(barFill);
+        barBg.appendChild(barText);
+        container.appendChild(labelElement);
+        container.appendChild(barBg);
+
+        return container;
+    }
+
+    /**
+     * Update player health bar values
+     */
+    updatePlayerHealthBar(playerId, characterData) {
+        const playerBar = document.getElementById(`player-health-${playerId}`);
+        if (!playerBar) return;
+
+        const currentHp = characterData.hp || characterData.currentHp || 0;
+        const maxHp = characterData.maxHp || 100;
+        const currentMp = characterData.mp || characterData.currentMp || 0;
+        const maxMp = characterData.maxMp || 0;
+
+        // Update HP
+        if (playerBar._hpBar && playerBar._hpText) {
+            const hpPercent = Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
+            playerBar._hpBar.style.width = `${hpPercent}%`;
+            playerBar._hpText.textContent = `${currentHp}/${maxHp}`;
+            
+            // Color coding for low health
+            if (hpPercent <= 25) {
+                playerBar._hpBar.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
+            } else if (hpPercent <= 50) {
+                playerBar._hpBar.style.background = 'linear-gradient(90deg, #f39c12, #e67e22)';
+            } else {
+                playerBar._hpBar.style.background = 'linear-gradient(90deg, #27ae60, #229954)';
+            }
+        }
+
+        // Update MP (if exists)
+        if (playerBar._mpBar && playerBar._mpText && maxMp > 0) {
+            const mpPercent = Math.max(0, Math.min(100, (currentMp / maxMp) * 100));
+            playerBar._mpBar.style.width = `${mpPercent}%`;
+            playerBar._mpText.textContent = `${currentMp}/${maxMp}`;
+        }
+    }
+
+    /**
+     * Create enemy health bar positioned above the enemy sprite
+     */
+    createEnemyHealthBar(enemyData, position) {
+        const enemyId = enemyData.id;
+        
+        // Remove existing bar if present
+        const existing = document.getElementById(`enemy-health-${enemyId}`);
+        if (existing) existing.remove();
+
+        // Calculate screen position for the enemy (above sprite)
+        const screenPosition = this.worldToScreen(position.x, position.y + 3, position.z);
+        
+        // Create enemy health bar container
+        const enemyBar = document.createElement('div');
+        enemyBar.id = `enemy-health-${enemyId}`;
+        enemyBar.className = 'enemy-health-bar';
+        enemyBar.style.cssText = `
+            position: absolute;
+            transform: translate(-50%, -100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            padding: 6px 8px;
+            min-width: 120px;
+            backdrop-filter: blur(3px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+            left: ${screenPosition.x}px;
+            top: ${screenPosition.y}px;
+            transition: all 0.2s ease;
+        `;
+
+        // Enemy name
+        const nameLabel = document.createElement('div');
+        nameLabel.textContent = enemyData.name;
+        nameLabel.style.cssText = `
+            color: #ff6b6b;
+            font-size: 11px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            text-align: center;
+        `;
+
+        // HP Bar
+        const hpBarContainer = document.createElement('div');
+        hpBarContainer.style.cssText = `
+            width: 100%;
+            height: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #8b0000;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+        `;
+
+        const hpBarFill = document.createElement('div');
+        hpBarFill.className = 'enemy-hp-fill';
+        hpBarFill.style.cssText = `
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+            border-radius: 5px;
+            transition: width 0.3s ease;
+            width: 100%;
+        `;
+
+        hpBarContainer.appendChild(hpBarFill);
+
+        // MP Bar (only if enemy has MP attacks)
+        let mpBarContainer = null;
+        const hasMpAttacks = enemyData.attacks && enemyData.attacks.some(attack => 
+            attack.cost && (attack.cost.mp || attack.cost.MP) > 0
+        );
+        
+        if (hasMpAttacks && enemyData.maxMp > 0) {
+            mpBarContainer = document.createElement('div');
+            mpBarContainer.style.cssText = `
+                width: 100%;
+                height: 8px;
+                background: rgba(0, 0, 0, 0.6);
+                border: 1px solid #1f4e79;
+                border-radius: 4px;
+                position: relative;
+                overflow: hidden;
+                margin-top: 2px;
+            `;
+
+            const mpBarFill = document.createElement('div');
+            mpBarFill.className = 'enemy-mp-fill';
+            mpBarFill.style.cssText = `
+                height: 100%;
+                background: linear-gradient(90deg, #3498db, #2980b9);
+                border-radius: 3px;
+                transition: width 0.3s ease;
+                width: 100%;
+            `;
+
+            mpBarContainer.appendChild(mpBarFill);
+        }
+
+        // Assemble the enemy bar
+        enemyBar.appendChild(nameLabel);
+        enemyBar.appendChild(hpBarContainer);
+        if (mpBarContainer) enemyBar.appendChild(mpBarContainer);
+        
+        // Store references for updates
+        enemyBar._hpBar = hpBarFill;
+        enemyBar._mpBar = mpBarContainer ? mpBarContainer.querySelector('.enemy-mp-fill') : null;
+        enemyBar._position = position;
+
+        this.enemyHealthContainer.appendChild(enemyBar);
+        
+        // Update with current values
+        this.updateEnemyHealthBar(enemyId, enemyData);
+        
+        console.log(`🩸 Created enemy health bar for ${enemyData.name}`);
+        return enemyBar;
+    }
+
+    /**
+     * Update enemy health bar values and position
+     */
+    updateEnemyHealthBar(enemyId, enemyData) {
+        const enemyBar = document.getElementById(`enemy-health-${enemyId}`);
+        if (!enemyBar) return;
+
+        const currentHp = enemyData.hp || 0;
+        const maxHp = enemyData.maxHp || enemyData.hp || 1;
+        const currentMp = enemyData.mp || 0;
+        const maxMp = enemyData.maxMp || 0;
+
+        // Update HP bar
+        if (enemyBar._hpBar) {
+            const hpPercent = Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
+            enemyBar._hpBar.style.width = `${hpPercent}%`;
+            
+            // Color coding for enemy health
+            if (hpPercent <= 20) {
+                enemyBar._hpBar.style.background = 'linear-gradient(90deg, #8b0000, #660000)';
+            } else if (hpPercent <= 50) {
+                enemyBar._hpBar.style.background = 'linear-gradient(90deg, #ff4500, #cc3300)';
+            } else {
+                enemyBar._hpBar.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
+            }
+        }
+
+        // Update MP bar (if exists)
+        if (enemyBar._mpBar && maxMp > 0) {
+            const mpPercent = Math.max(0, Math.min(100, (currentMp / maxMp) * 100));
+            enemyBar._mpBar.style.width = `${mpPercent}%`;
+        }
+
+        // Update position if enemy moved
+        if (enemyBar._position) {
+            const screenPosition = this.worldToScreen(
+                enemyBar._position.x, 
+                enemyBar._position.y + 3, 
+                enemyBar._position.z
+            );
+            enemyBar.style.left = `${screenPosition.x}px`;
+            enemyBar.style.top = `${screenPosition.y}px`;
+        }
+    }
+
+    /**
+     * Convert 3D world position to 2D screen coordinates
+     */
+    worldToScreen(x, y, z) {
+        const vector = new THREE.Vector3(x, y, z);
+        vector.project(this.camera);
+        
+        const widthHalf = this.container.clientWidth / 2;
+        const heightHalf = this.container.clientHeight / 2;
+        
+        return {
+            x: (vector.x * widthHalf) + widthHalf,
+            y: -(vector.y * heightHalf) + heightHalf
+        };
+    }
+
+    /**
+     * Remove enemy health bar
+     */
+    removeEnemyHealthBar(enemyId) {
+        const enemyBar = document.getElementById(`enemy-health-${enemyId}`);
+        if (enemyBar) {
+            enemyBar.remove();
+            console.log(`🗑️ Removed health bar for enemy ${enemyId}`);
+        }
     }
 
     /**
@@ -412,6 +859,9 @@ export class CombatRenderer {
         // Create attack selector
         const attackSelector = this.createAttackSelector(enemyId, position);
         this.attackSelectors.set(enemyId, attackSelector);
+        
+        // Create enemy health bar
+        this.createEnemyHealthBar(enemyData, position);
         
         console.log(`👹 Added enemy: ${enemyData.name} at position`, position);
         
@@ -902,6 +1352,9 @@ export class CombatRenderer {
             this.attackSelectors.delete(enemyId);
         }
         
+        // Remove health bar
+        this.removeEnemyHealthBar(enemyId);
+        
         console.log(`💀 Removed enemy: ${enemyId}`);
     }
 
@@ -969,6 +1422,20 @@ export class CombatRenderer {
             }
         });
         
+        // Update enemy health bar positions (in case camera moves)
+        this.enemies.forEach((enemy, enemyId) => {
+            const healthBar = document.getElementById(`enemy-health-${enemyId}`);
+            if (healthBar && healthBar._position) {
+                const screenPosition = this.worldToScreen(
+                    healthBar._position.x, 
+                    healthBar._position.y + 3, 
+                    healthBar._position.z
+                );
+                healthBar.style.left = `${screenPosition.x}px`;
+                healthBar.style.top = `${screenPosition.y}px`;
+            }
+        });
+        
         // Render
         this.renderer.render(this.scene, this.camera);
     }
@@ -982,6 +1449,89 @@ export class CombatRenderer {
         this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+    }
+
+    /**
+     * Initialize player health bars for the party
+     */
+    initializePlayerHealthBars(partyMembers) {
+        // Clear existing player bars
+        this.partyHealthContainer.innerHTML = '';
+        
+        partyMembers.forEach(member => {
+            this.createPlayerHealthBar(member);
+        });
+        
+        console.log(`💚 Initialized health bars for ${partyMembers.length} party members`);
+    }
+
+    /**
+     * Update player health bar by character ID
+     */
+    updatePlayerHealth(characterId, hp, mp = null) {
+        const playerBar = document.getElementById(`player-health-${characterId}`);
+        if (!playerBar) return;
+
+        // Update HP
+        if (playerBar._hpBar && playerBar._hpText) {
+            const hpText = playerBar._hpText.textContent;
+            const maxHp = parseInt(hpText.split('/')[1]) || 100;
+            const hpPercent = Math.max(0, Math.min(100, (hp / maxHp) * 100));
+            
+            playerBar._hpBar.style.width = `${hpPercent}%`;
+            playerBar._hpText.textContent = `${hp}/${maxHp}`;
+            
+            // Color coding for low health
+            if (hpPercent <= 25) {
+                playerBar._hpBar.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
+            } else if (hpPercent <= 50) {
+                playerBar._hpBar.style.background = 'linear-gradient(90deg, #f39c12, #e67e22)';
+            } else {
+                playerBar._hpBar.style.background = 'linear-gradient(90deg, #27ae60, #229954)';
+            }
+        }
+
+        // Update MP if provided
+        if (mp !== null && playerBar._mpBar && playerBar._mpText) {
+            const mpText = playerBar._mpText.textContent;
+            const maxMp = parseInt(mpText.split('/')[1]) || 100;
+            const mpPercent = Math.max(0, Math.min(100, (mp / maxMp) * 100));
+            
+            playerBar._mpBar.style.width = `${mpPercent}%`;
+            playerBar._mpText.textContent = `${mp}/${maxMp}`;
+        }
+    }
+
+    /**
+     * Update enemy health bar by enemy ID
+     */
+    updateEnemyHealth(enemyId, hp, mp = null) {
+        const enemyBar = document.getElementById(`enemy-health-${enemyId}`);
+        if (!enemyBar) return;
+
+        // Update HP bar
+        if (enemyBar._hpBar) {
+            // Try to get max HP from the bar or default to current HP as max
+            const enemyData = { hp: hp, maxHp: enemyBar._maxHp || hp };
+            const hpPercent = Math.max(0, Math.min(100, (hp / enemyData.maxHp) * 100));
+            enemyBar._hpBar.style.width = `${hpPercent}%`;
+            
+            // Color coding for enemy health
+            if (hpPercent <= 20) {
+                enemyBar._hpBar.style.background = 'linear-gradient(90deg, #8b0000, #660000)';
+            } else if (hpPercent <= 50) {
+                enemyBar._hpBar.style.background = 'linear-gradient(90deg, #ff4500, #cc3300)';
+            } else {
+                enemyBar._hpBar.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
+            }
+        }
+
+        // Update MP bar (if exists and provided)
+        if (mp !== null && enemyBar._mpBar) {
+            const maxMp = enemyBar._maxMp || mp;
+            const mpPercent = Math.max(0, Math.min(100, (mp / maxMp) * 100));
+            enemyBar._mpBar.style.width = `${mpPercent}%`;
+        }
     }
 
     /**

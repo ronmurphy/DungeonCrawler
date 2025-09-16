@@ -501,6 +501,130 @@ export class CombatManager {
     }
 
     /**
+     * Load fresh character data from storage before combat starts
+     */
+    async loadFreshCharacterData() {
+        console.log('📖 Loading fresh character data from storage...');
+        
+        try {
+            // Get current character name (assuming single player for now)
+            const playerName = this.currentCombat.party.players[0]?.name;
+            if (!playerName) {
+                console.warn('⚠️ No player name found in party data');
+                return;
+            }
+
+            // Load character data from storage
+            const characterData = await this.loadCharacterFromDB(playerName);
+            if (!characterData) {
+                console.warn(`⚠️ No character data found for ${playerName} in storage`);
+                return;
+            }
+
+            // Update party data with fresh character stats
+            // Map from .dcw character format to combat format
+            this.currentCombat.party.players[0] = {
+                ...this.currentCombat.party.players[0],
+                ...characterData,
+                id: characterData.id || playerName,
+                name: playerName,
+                // Map HP properties from .dcw format
+                hp: characterData.currentHealthPoints || characterData.currentHp || characterData.hp || 0,
+                maxHp: characterData.healthPoints || characterData.maxHp || characterData.hp || 100,
+                // Map MP properties from .dcw format
+                mp: characterData.currentMagicPoints || characterData.currentMp || characterData.mp || 0,
+                maxMp: characterData.magicPoints || characterData.maxMp || characterData.mp || 0,
+                spells: characterData.spells || [],
+                avatarUrl: characterData.avatarUrl || characterData.avatar
+            };
+
+            console.log(`✅ Loaded fresh data for ${playerName}:`, {
+                hp: `${this.currentCombat.party.players[0].hp}/${this.currentCombat.party.players[0].maxHp}`,
+                mp: `${this.currentCombat.party.players[0].mp}/${this.currentCombat.party.players[0].maxMp}`,
+                spells: this.currentCombat.party.players[0].spells?.length || 0
+            });
+
+        } catch (error) {
+            console.error('❌ Error loading character data:', error);
+        }
+    }
+
+    /**
+     * Load character data from the AdvancedStorageManager (IndexedDB)
+     */
+    async loadCharacterFromDB(characterName) {
+        try {
+            // Use the AdvancedStorageManager to get all characters
+            if (window.advancedStorageManager) {
+                const characters = await window.advancedStorageManager.getItem('wasteland_characters');
+                if (characters && Array.isArray(characters)) {
+                    const character = characters.find(char => char.name === characterName);
+                    return character || null;
+                }
+            }
+            
+            // Fallback to localStorage if AdvancedStorageManager not available
+            const stored = localStorage.getItem('wasteland_characters');
+            if (stored) {
+                const characters = JSON.parse(stored);
+                const character = characters.find(char => char.name === characterName);
+                return character || null;
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('Failed to load character from storage:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Save character data back to storage using AdvancedStorageManager
+     */
+    async saveCharacterToIndexedDB(character) {
+        try {
+            // Get all characters from storage
+            let characters = [];
+            
+            if (window.advancedStorageManager) {
+                characters = await window.advancedStorageManager.getItem('wasteland_characters') || [];
+            } else {
+                // Fallback to localStorage
+                const stored = localStorage.getItem('wasteland_characters');
+                if (stored) {
+                    characters = JSON.parse(stored);
+                }
+            }
+            
+            // Find and update the character
+            const charIndex = characters.findIndex(char => char.name === character.name);
+            if (charIndex !== -1) {
+                // Update HP/MP values in the stored character using .dcw format
+                characters[charIndex].currentHealthPoints = character.hp;
+                characters[charIndex].currentMagicPoints = character.mp;
+                // Also update legacy properties for compatibility
+                characters[charIndex].hp = character.hp;
+                characters[charIndex].mp = character.mp;
+                characters[charIndex].currentHp = character.hp;
+                characters[charIndex].currentMp = character.mp;
+                
+                // Save back to storage
+                if (window.advancedStorageManager) {
+                    await window.advancedStorageManager.setItem('wasteland_characters', characters);
+                } else {
+                    localStorage.setItem('wasteland_characters', JSON.stringify(characters));
+                }
+                
+                console.log(`💾 Saved ${character.name} HP/MP to storage: ${character.hp}/${character.maxHp} HP, ${character.mp}/${character.maxMp} MP`);
+            } else {
+                console.warn(`⚠️ Character ${character.name} not found in storage for HP/MP update`);
+            }
+        } catch (error) {
+            console.error('❌ Error saving character to storage:', error);
+        }
+    }
+
+    /**
      * Initialize combat subsystems
      */
     async initializeCombatSystems() {
@@ -509,7 +633,10 @@ export class CombatManager {
         const { CombatRenderer } = await import('./CombatRenderer.js');
         const { TurnManager } = await import('./TurnManager.js');
         
-        // Initialize party manager
+        // Read fresh character data from storage
+        await this.loadFreshCharacterData();
+        
+        // Initialize party manager with fresh data
         this.partyManager = new PartyManager(this.currentCombat.party);
         
         // Initialize 3D combat renderer
@@ -561,6 +688,9 @@ export class CombatManager {
         this.activeEnemies = enhancedEnemies.map((enemyData, index) => {
             return this.combatRenderer.addEnemy(enemyData, index);
         });
+        
+        // Initialize player health bars
+        this.combatRenderer.initializePlayerHealthBars(this.partyManager.getPartyMembers());
         
         // Update initiative tracker
         this.updateInitiativeDisplay();
@@ -803,34 +933,61 @@ export class CombatManager {
         
         if (player.spells && player.spells.length > 0) {
             player.spells.forEach(spell => {
-                if (player.mp >= spell.cost) {
-                    // Calculate damage display based on damage type
-                    let damageDisplay = '';
-                    if (spell.damageType === 'fixed' && spell.damageAmount > 0) {
+                // Check if player has enough MP for this spell
+                const canCast = !spell.cost || (player.mp && player.mp >= spell.cost);
+                
+                // Create damage display string
+                let damageDisplay = '';
+                if (spell.damageAmount > 0) {
+                    if (spell.damageType === '' || spell.damageType === 'fixed') {
                         damageDisplay = `${spell.damageAmount} damage`;
-                    } else if (spell.damageType === 'd6') {
-                        damageDisplay = '1d6 damage';
-                    } else if (spell.damageAmount > 0) {
-                        damageDisplay = `${spell.damageAmount} damage`;
+                    } else if (spell.damageType) {
+                        damageDisplay = `${spell.damageType} damage`;
                     }
-                    
-                    actions.push({
-                        name: spell.name,
-                        type: 'magic',
-                        description: spell.primaryEffect || 'Magic spell',
-                        cost: spell.cost,
-                        damageType: spell.damageType || 'fixed',
-                        damageAmount: spell.damageAmount || 0,
-                        damage: damageDisplay,
-                        healing: spell.healingAmount || 0,
-                        element: spell.element || 'arcane'
-                    });
                 }
+                
+                // Create healing display string
+                let healingDisplay = '';
+                if (spell.healingAmount > 0) {
+                    if (spell.healingType === '' || spell.healingType === 'fixed') {
+                        healingDisplay = `${spell.healingAmount} healing`;
+                    } else if (spell.healingType) {
+                        healingDisplay = `${spell.healingType} healing`;
+                    }
+                }
+                
+                // Create effect description
+                let description = spell.primaryEffect || 'Magic spell';
+                const effects = [];
+                if (damageDisplay) effects.push(damageDisplay);
+                if (healingDisplay) effects.push(healingDisplay);
+                if (spell.primaryEffect && spell.primaryEffect !== description) effects.push(spell.primaryEffect);
+                if (spell.secondaryEffect) effects.push(spell.secondaryEffect);
+                
+                if (effects.length > 0) {
+                    description = effects.join(', ');
+                }
+                
+                // Add spell to actions (even if can't cast, but mark it)
+                actions.push({
+                    ...spell, // Include all spell data
+                    name: spell.name,
+                    type: 'spell',
+                    description: description,
+                    cost: spell.cost || 0,
+                    canCast: canCast,
+                    mpCost: spell.cost || 0,
+                    element: spell.element || 'arcane',
+                    // For display purposes
+                    damageDisplay: damageDisplay,
+                    healingDisplay: healingDisplay
+                });
             });
         }
         
-        // Default cantrip if no spells or no MP
-        if (actions.length === 0) {
+        // Default cantrip if no spells or no MP for any spells
+        const canCastAny = actions.some(action => action.canCast);
+        if (actions.length === 0 || !canCastAny) {
             actions.push({
                 name: 'Minor Cantrip',
                 type: 'magic',
@@ -950,26 +1107,32 @@ export class CombatManager {
                     </button>
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    ${actions.map((action, index) => `
+                    ${actions.map((action, index) => {
+                        const canUse = action.canCast !== false; // Default true for non-spells
+                        const buttonStyle = canUse 
+                            ? `background: linear-gradient(135deg, ${this.getActionColor(actionType)}); cursor: pointer;`
+                            : `background: linear-gradient(135deg, #666, #444); cursor: not-allowed; opacity: 0.6;`;
+                        
+                        return `
                         <button class="action-option" style="
                             padding: 6px 12px;
-                            background: linear-gradient(135deg, ${this.getActionColor(actionType)});
+                            ${buttonStyle}
                             color: white;
                             border: none;
                             border-radius: 6px;
-                            cursor: pointer;
                             font-size: 0.85em;
                             max-width: 200px;
                             text-align: left;
-                        " onclick="window.combatManager.useSpecificAction('${actionType}', ${index})" 
-                           title="${action.description}">
+                        " ${canUse ? `onclick="window.combatManager.useSpecificAction('${actionType}', ${index})"` : 'disabled'} 
+                           title="${action.description}${!canUse ? ' (Not enough MP)' : ''}">
                             <div style="font-weight: bold;">${action.name}</div>
                             <div style="font-size: 0.8em; opacity: 0.9;">
-                                ${action.damage || action.healing || action.description}
+                                ${action.damageDisplay || action.healingDisplay || action.damage || action.healing || action.description}
                                 ${action.cost ? ` (${action.cost} MP)` : ''}
+                                ${!canUse ? ' ⚠️' : ''}
                             </div>
                         </button>
-                    `).join('')}
+                    `}).join('')}
                 </div>
             </div>
         `;
@@ -1005,6 +1168,13 @@ export class CombatManager {
             return;
         }
         
+        // Check if action can be used (for spells with MP cost)
+        if (action.canCast === false) {
+            console.warn(`⚠️ Cannot cast ${action.name} - not enough MP`);
+            // TODO: Show UI message to player
+            return;
+        }
+        
         const currentParticipant = this.turnManager.getCurrentParticipant();
         if (!currentParticipant || currentParticipant.type !== 'player') {
             console.warn('⚠️ Not player turn');
@@ -1029,10 +1199,129 @@ export class CombatManager {
             this.combatRenderer.hideEnemyAttackSelector(e.id);
         });
         
+        // Handle different action types
+        if (action.type === 'spell' || action.element) {
+            // This is a spell - use the new spell system
+            this.handleSpellCast(player, enemy, action);
+        } else {
+            // Handle weapon/melee attacks
+            this.handleWeaponAttack(player, enemy, action);
+        }
+    }
+
+    /**
+     * Handle spell casting with full spell mechanics
+     */
+    handleSpellCast(player, enemy, spell) {
+        console.log(`🪄 ${player.name} casts ${spell.name} (${spell.element})`);
+        
+        // Check MP cost
+        if (spell.cost && spell.cost > 0) {
+            if (!player.mp || player.mp < spell.cost) {
+                console.log(`❌ ${player.name} doesn't have enough MP for ${spell.name} (needs ${spell.cost}, has ${player.mp || 0})`);
+                // TODO: Show UI message and allow different action
+                return;
+            }
+            
+            // Deduct MP cost
+            player.mp = Math.max(0, player.mp - spell.cost);
+            console.log(`💙 ${player.name} MP: ${player.mp}/${player.maxMp} (-${spell.cost})`);
+            
+            // Update player health bar
+            this.combatRenderer.updatePlayerHealth(player.id || player.name, player.hp, player.mp);
+            
+            // Save MP change to storage
+            this.saveCharacterToIndexedDB(player);
+        }
+        
+        // Calculate spell damage
+        let damage = 0;
+        if (spell.damageAmount > 0) {
+            if (spell.damageType === '' || spell.damageType === 'fixed') {
+                // Fixed damage
+                damage = spell.damageAmount;
+                console.log(`⚡ Fixed spell damage: ${damage}`);
+            } else if (spell.damageType) {
+                // Dice-based damage
+                damage = this.rollDamage(spell.damageType);
+                console.log(`🎲 ${spell.damageType} spell damage: ${damage}`);
+            }
+        }
+        
+        // Apply damage to enemy
+        if (damage > 0) {
+            enemy.hp = Math.max(0, enemy.hp - damage);
+            this.combatRenderer.updateEnemyHealth(enemy.id, enemy.hp, enemy.mp);
+            this.combatStats.damageDealt += damage;
+            console.log(`💥 ${spell.name}: ${damage} ${spell.element} damage! ${enemy.name} HP: ${enemy.hp}/${enemy.maxHp}`);
+        }
+        
+        // Handle spell healing (self-heal or party heal)
+        let healing = 0;
+        if (spell.healingAmount > 0) {
+            if (spell.healingType === '' || spell.healingType === 'fixed') {
+                // Fixed healing
+                healing = spell.healingAmount;
+                console.log(`💚 Fixed spell healing: ${healing}`);
+            } else if (spell.healingType) {
+                // Dice-based healing
+                healing = this.rollDamage(spell.healingType);
+                console.log(`🎲 ${spell.healingType} spell healing: ${healing}`);
+            }
+            
+            // Apply healing to caster (for now)
+            if (healing > 0) {
+                const oldHp = player.hp;
+                player.hp = Math.min(player.maxHp, player.hp + healing);
+                const actualHealing = player.hp - oldHp;
+                
+                this.combatRenderer.updatePlayerHealth(player.id || player.name, player.hp, player.mp);
+                this.saveCharacterToIndexedDB(player);
+                
+                console.log(`💚 ${player.name} healed for ${actualHealing} HP (${oldHp} → ${player.hp})`);
+            }
+        }
+        
+        // Handle spell effects (TODO: implement visual effects and status effects)
+        if (spell.primaryEffect) {
+            console.log(`✨ Primary effect: ${spell.primaryEffect}`);
+        }
+        if (spell.secondaryEffect) {
+            console.log(`✨ Secondary effect: ${spell.secondaryEffect}`);
+        }
+        
+        // Check for rage mode (HP < 20%)
+        const hpPercent = enemy.hp / enemy.maxHp;
+        if (hpPercent > 0 && hpPercent <= 0.2 && !enemy.inRageMode) {
+            console.log(`😡 ${enemy.name} enters rage mode! (${Math.round(hpPercent * 100)}% HP)`);
+            enemy.inRageMode = true;
+            this.combatRenderer.playRageAnimation(enemy.id, 1000);
+        }
+        
+        // Check if enemy defeated
+        if (enemy.hp <= 0) {
+            console.log(`💀 ${enemy.name} defeated by ${spell.name}!`);
+            this.handleEnemyDefeat(enemy);
+            return;
+        }
+        
+        // Check for combat end
+        if (this.checkCombatEnd()) {
+            return;
+        }
+        
+        // Next turn
+        this.turnManager.nextTurn();
+    }
+
+    /**
+     * Handle weapon/melee attacks
+     */
+    handleWeaponAttack(player, enemy, action) {
         // Calculate damage based on action type and damage type
         let damage = 0;
         if (action.type === 'magic') {
-            // Handle magic damage types
+            // Handle old magic damage types
             if (action.damageType === 'fixed' && action.damageAmount > 0) {
                 damage = action.damageAmount;
                 console.log(`✨ Fixed magic damage: ${damage}`);
@@ -1040,11 +1329,9 @@ export class CombatManager {
                 damage = Math.floor(Math.random() * 6) + 1;
                 console.log(`🎲 d6 magic damage: ${damage}`);
             } else if (action.damage) {
-                // Fallback to string-based damage
                 damage = this.rollDamage(action.damage);
             }
         } else if (action.damage) {
-            // Weapon or other action damage
             damage = this.rollDamage(action.damage);
         }
         
@@ -1052,12 +1339,13 @@ export class CombatManager {
         if (action.cost && player.mp) {
             player.mp = Math.max(0, player.mp - action.cost);
             console.log(`💙 ${player.name} MP: ${player.mp}/${player.maxMp} (-${action.cost})`);
+            this.combatRenderer.updatePlayerHealth(player.id || player.name, player.hp, player.mp);
+            this.saveCharacterToIndexedDB(player);
         }
         
         // Apply damage to enemy
         enemy.hp = Math.max(0, enemy.hp - damage);
-        
-        // Track damage dealt to enemies
+        this.combatRenderer.updateEnemyHealth(enemy.id, enemy.hp, enemy.mp);
         this.combatStats.damageDealt += damage;
         
         console.log(`💥 ${action.name}: ${damage} damage! ${enemy.name} HP: ${enemy.hp}/${enemy.maxHp}`);
@@ -1166,6 +1454,12 @@ export class CombatManager {
         // Apply damage
         this.partyManager.applyDamage(target.name, damage);
         
+        // Update player health bar
+        const updatedTarget = this.partyManager.getMember(target.name);
+        if (updatedTarget) {
+            this.combatRenderer.updatePlayerHealth(updatedTarget.id || target.name, updatedTarget.hp, updatedTarget.mp);
+        }
+        
         // Check for combat end
         this.checkCombatEnd();
     }
@@ -1186,6 +1480,9 @@ export class CombatManager {
         
         // Apply damage to enemy
         enemy.hp = Math.max(0, enemy.hp - damage);
+        
+        // Update enemy health bar
+        this.combatRenderer.updateEnemyHealth(enemy.id, enemy.hp, enemy.mp);
         
         // Track damage dealt to enemies
         this.combatStats.damageDealt += damage;
@@ -1503,6 +1800,9 @@ export class CombatManager {
         // Hide combat modal
         this.combatContainer.classList.add('hidden');
         
+        // CRITICAL: Refresh character sheet with updated HP/MP from combat
+        this.refreshCharacterSheetAfterCombat();
+        
         // Resume map renderer
         if (this.mapRenderer && this.mapRenderer.resumeRendering) {
             this.mapRenderer.resumeRendering();
@@ -1525,6 +1825,58 @@ export class CombatManager {
         };
         
         console.log('✅ Returned to map');
+    }
+    
+    /**
+     * Refresh character sheet after combat to show updated HP/MP
+     */
+    async refreshCharacterSheetAfterCombat() {
+        try {
+            console.log('🔄 Refreshing character sheet after combat...');
+            
+            // Get the current player name from combat
+            const playerName = this.currentCombat?.party?.players?.[0]?.name;
+            if (!playerName) {
+                console.warn('⚠️ No player name found for character refresh');
+                return;
+            }
+            
+            // Reload character data from storage to get updated HP/MP
+            const updatedCharacterData = await this.loadCharacterFromDB(playerName);
+            if (!updatedCharacterData) {
+                console.warn('⚠️ Could not reload character data for refresh');
+                return;
+            }
+            
+            // Update the global character object with the fresh data
+            if (window.character) {
+                // Map the stored properties to the character object format
+                window.character.currentHealthPoints = updatedCharacterData.currentHealthPoints || updatedCharacterData.hp;
+                window.character.healthPoints = updatedCharacterData.healthPoints || updatedCharacterData.maxHp;
+                window.character.currentMagicPoints = updatedCharacterData.currentMagicPoints || updatedCharacterData.mp;
+                window.character.magicPoints = updatedCharacterData.magicPoints || updatedCharacterData.maxMp;
+                
+                console.log(`✅ Updated character HP/MP: ${window.character.currentHealthPoints}/${window.character.healthPoints} HP, ${window.character.currentMagicPoints}/${window.character.magicPoints} MP`);
+            }
+            
+            // Trigger character sheet refresh functions if they exist
+            if (typeof window.updateCharacterDisplay === 'function') {
+                window.updateCharacterDisplay();
+            }
+            
+            if (typeof window.refreshCharacterSheet === 'function') {
+                window.refreshCharacterSheet();
+            }
+            
+            if (typeof window.updateHealthMagicDisplay === 'function') {
+                window.updateHealthMagicDisplay();
+            }
+            
+            console.log('✅ Character sheet refreshed with post-combat HP/MP');
+            
+        } catch (error) {
+            console.error('❌ Error refreshing character sheet after combat:', error);
+        }
     }
 
     /**
