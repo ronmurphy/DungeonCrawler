@@ -136,6 +136,10 @@ export class PartyManager {
         
         console.log(`💔 ${memberName}: ${oldHp} → ${member.hp} HP (-${damage})`);
 
+        // CRITICAL FIX: Sync combat HP back to persistent character data
+        console.log(`🔄 About to sync ${memberName} with HP: ${member.hp}`);
+        this.syncMemberToPersistentCharacter(memberName, member);
+
         // Check if member is knocked out
         if (member.hp === 0 && member.status === 'alive') {
             member.status = 'unconscious';
@@ -159,6 +163,9 @@ export class PartyManager {
         member.hp = Math.min(member.maxHp, member.hp + healing);
         
         console.log(`💚 ${memberName}: ${oldHp} → ${member.hp} HP (+${healing})`);
+
+        // CRITICAL FIX: Sync combat HP back to persistent character data
+        this.syncMemberToPersistentCharacter(memberName, member);
 
         // Revive if healed from 0 HP
         if (oldHp === 0 && member.hp > 0) {
@@ -380,5 +387,39 @@ export class PartyManager {
         this.formation = state.formation;
         
         console.log('📂 Party state loaded');
+    }
+
+    /**
+     * Sync combat member data back to persistent character storage
+     * This ensures HP/MP changes in combat are saved to IndexedDB
+     */
+    async syncMemberToPersistentCharacter(memberName, member) {
+        try {
+            console.log(`🔍 Syncing ${memberName} - window.character:`, window.character);
+            console.log(`🔍 Character name check: window.character?.name = "${window.character?.name}", memberName = "${memberName}"`);
+            
+            // Update global character object if this is the active character
+            if (window.character && window.character.name === memberName) {
+                window.character.currentHealthPoints = member.hp;
+                window.character.currentMagicPoints = member.mp;
+                console.log(`🔄 Synced ${memberName} to global character: ${member.hp}/${member.maxHp} HP`);
+            } else {
+                console.log(`⚠️ Skipping global character sync - window.character=${!!window.character}, name match=${window.character?.name === memberName}`);
+            }
+
+            // Update characterManager array
+            if (window.characterManager && window.characterManager.characters) {
+                const charIndex = window.characterManager.characters.findIndex(char => char.name === memberName);
+                if (charIndex !== -1) {
+                    window.characterManager.characters[charIndex].currentHealthPoints = member.hp;
+                    window.characterManager.characters[charIndex].currentMagicPoints = member.mp;
+                    console.log(`🔄 Synced ${memberName} to characterManager array`);
+                }
+            }
+
+            console.log(`✅ Character data synced for ${memberName}: ${member.hp}/${member.maxHp} HP, ${member.mp}/${member.maxMp} MP`);
+        } catch (error) {
+            console.error(`❌ Failed to sync character data for ${memberName}:`, error);
+        }
     }
 }

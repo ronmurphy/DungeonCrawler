@@ -15,6 +15,7 @@ export class CombatManager {
         this.currentCombat = null;
         this.activeEnemies = [];
         this.combatLog = [];
+        this.isHandlingDeath = false; // Flag to prevent normal combat end during death sequence
         
         // Combat statistics tracking
         this.combatStats = {
@@ -88,6 +89,40 @@ export class CombatManager {
                         </div>
                         <div class="combat-results-footer">
                             <button class="btn-continue" id="continue-button" onclick="window.combatManager.closeCombatResults()">Continue</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Death/Revival Modal -->
+                <div class="death-modal hidden" id="death-modal">
+                    <div class="death-modal-content">
+                        <div class="death-modal-header">
+                            <h2 class="death-title">💀 You Have Died</h2>
+                            <p class="death-subtitle">Your adventure comes to an end...</p>
+                        </div>
+                        <div class="death-modal-body">
+                            <div class="death-consequences">
+                                <h3>Revival Consequences:</h3>
+                                <div class="consequence-item">
+                                    <span class="consequence-icon">💰</span>
+                                    <span class="consequence-text">Lose <span id="gold-loss">0</span> gold (half of current gold)</span>
+                                </div>
+                                <div class="consequence-item">
+                                    <span class="consequence-icon">🎒</span>
+                                    <span class="consequence-text">Lose one random item: <span id="item-loss">Unknown Item</span></span>
+                                </div>
+                            </div>
+                            <div class="death-choice">
+                                <p class="choice-question">Do you wish to be revived and return to the overworld?</p>
+                                <div class="death-buttons">
+                                    <button class="btn-revive" id="revive-yes" onclick="window.combatManager.handleRevival(true)">
+                                        ✨ Yes, Revive Me
+                                    </button>
+                                    <button class="btn-stay-dead" id="revive-no" onclick="window.combatManager.handleRevival(false)">
+                                        💀 No, Return to Character Selection
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -442,6 +477,169 @@ export class CombatManager {
                     height: 60px;
                 }
             }
+            
+            /* Death Modal Styles */
+            .death-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.95);
+                z-index: 2000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+            }
+            
+            .death-modal.hidden {
+                display: none;
+            }
+            
+            .death-modal-content {
+                background: linear-gradient(135deg, #2c1810, #1a0f0a);
+                border: 2px solid #8b0000;
+                border-radius: 15px;
+                max-width: 500px;
+                width: 90%;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 40px rgba(139, 0, 0, 0.5);
+                animation: deathModalSlide 0.5s ease-out;
+            }
+            
+            @keyframes deathModalSlide {
+                from {
+                    opacity: 0;
+                    transform: translateY(-50px) scale(0.9);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+            
+            .death-modal-header {
+                padding: 25px;
+                text-align: center;
+                background: linear-gradient(135deg, #8b0000, #660000);
+                border-radius: 13px 13px 0 0;
+            }
+            
+            .death-title {
+                color: #ffffff;
+                font-size: 1.8em;
+                margin: 0 0 10px 0;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            }
+            
+            .death-subtitle {
+                color: #cccccc;
+                margin: 0;
+                font-style: italic;
+            }
+            
+            .death-modal-body {
+                padding: 25px;
+            }
+            
+            .death-consequences {
+                margin-bottom: 25px;
+            }
+            
+            .death-consequences h3 {
+                color: #ff6b6b;
+                margin: 0 0 15px 0;
+                font-size: 1.2em;
+            }
+            
+            .consequence-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px;
+                background: rgba(139, 0, 0, 0.1);
+                border-radius: 8px;
+                margin-bottom: 10px;
+                border: 1px solid rgba(139, 0, 0, 0.3);
+            }
+            
+            .consequence-icon {
+                font-size: 1.2em;
+            }
+            
+            .consequence-text {
+                color: #cccccc;
+                flex: 1;
+            }
+            
+            .death-choice {
+                text-align: center;
+            }
+            
+            .choice-question {
+                color: #ffffff;
+                font-size: 1.1em;
+                margin: 0 0 20px 0;
+            }
+            
+            .death-buttons {
+                display: flex;
+                gap: 15px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .btn-revive {
+                background: linear-gradient(135deg, #4a9eff, #357abd);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 12px 25px;
+                font-size: 1em;
+                font-weight: bold;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                min-width: 140px;
+            }
+            
+            .btn-revive:hover {
+                background: linear-gradient(135deg, #357abd, #2e6a9e);
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(74, 158, 255, 0.4);
+            }
+            
+            .btn-stay-dead {
+                background: linear-gradient(135deg, #8b0000, #660000);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 12px 25px;
+                font-size: 1em;
+                font-weight: bold;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                min-width: 140px;
+            }
+            
+            .btn-stay-dead:hover {
+                background: linear-gradient(135deg, #660000, #4d0000);
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(139, 0, 0, 0.4);
+            }
+            
+            @media (max-width: 768px) {
+                .death-buttons {
+                    flex-direction: column;
+                    align-items: center;
+                }
+                
+                .btn-revive, .btn-stay-dead {
+                    width: 100%;
+                    max-width: 200px;
+                }
+            }
         `;
         document.head.appendChild(style);
     }
@@ -454,6 +652,17 @@ export class CombatManager {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.isActive) {
                 this.endCombat();
+            }
+        });
+        
+        // Death modal event listeners
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'revive-yes') {
+                console.log('🔘 YES button clicked');
+                this.handleRevival(true);
+            } else if (e.target.id === 'revive-no') {
+                console.log('🔘 NO button clicked');
+                this.handleRevival(false);
             }
         });
     }
@@ -476,6 +685,9 @@ export class CombatManager {
         this.isActive = true;
         this.mapRenderer = mapRenderer;
         this.currentCombat = encounter;
+        
+        // Reset death handling flag for new combat
+        this.isHandlingDeath = false;
         
         // Initialize combat statistics
         this.combatStats = {
@@ -1441,6 +1653,13 @@ export class CombatManager {
     processEnemyAttack(enemy, action) {
         // Target a random party member
         const targets = this.partyManager.getAliveMembers();
+        
+        // Safety check: if no alive members, skip this attack (death is being handled)
+        if (targets.length === 0) {
+            console.log('⚰️ No alive targets for enemy attack - party is defeated');
+            return;
+        }
+        
         const target = targets[Math.floor(Math.random() * targets.length)];
         
         // Calculate damage (simplified for now)
@@ -1537,6 +1756,23 @@ export class CombatManager {
     }
 
     /**
+     * Handle party defeat with delay for death animation/feedback
+     */
+    async handlePartyDefeat() {
+        console.log(`🎬 Starting party defeat sequence`);
+        
+        // Mark that we're handling death (prevent normal combat end)
+        this.isHandlingDeath = true;
+        
+        // Add a delay to let the final damage animation complete and give player feedback
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // After delay, show death modal
+        console.log(`💀 Defeat sequence complete, showing death modal...`);
+        this.handlePlayerDeath();
+    }
+
+    /**
      * Check if combat should end
      */
     checkCombatEnd() {
@@ -1545,12 +1781,13 @@ export class CombatManager {
         
         if (aliveParty.length === 0) {
             console.log('💀 Party defeated!');
-            this.endCombat('defeat');
+            this.handlePartyDefeat();
             return true;
         }
         
         if (aliveEnemies.length === 0) {
             console.log('🎉 Victory!');
+            console.log(`🔍 Victory check - isHandlingDeath: ${this.isHandlingDeath}`);
             this.endCombat('victory');
             return true;
         }
@@ -1562,7 +1799,15 @@ export class CombatManager {
      * End combat and show results
      */
     endCombat(result = 'retreat') {
-        console.log(`🏁 Combat ended: ${result}`);
+        console.log(`🏁 Combat ended: ${result}, isHandlingDeath: ${this.isHandlingDeath}`);
+        
+        // If we're handling death, don't do normal combat end
+        if (this.isHandlingDeath && result === 'defeat') {
+            console.log('💀 Skipping normal combat end - death sequence in progress');
+            return;
+        }
+        
+        console.log(`✅ Proceeding with normal combat end: ${result}`);
         
         // Set end time for duration calculation
         this.combatStats.endTime = Date.now();
@@ -1583,8 +1828,9 @@ export class CombatManager {
             titleElement.textContent = '🎉 Victory!';
             titleElement.className = 'combat-results-title victory';
         } else if (result === 'defeat') {
-            titleElement.textContent = '💀 Defeat!';
-            titleElement.className = 'combat-results-title defeat';
+            // Handle player death with revival system
+            this.handlePlayerDeath();
+            return; // Don't show normal combat results for death
         } else {
             titleElement.textContent = '🏃 Retreat!';
             titleElement.className = 'combat-results-title';
@@ -1828,6 +2074,103 @@ export class CombatManager {
     }
     
     /**
+     * Cleanup combat state and return to map
+     */
+    cleanup() {
+        // Don't cleanup during death handling - wait for player choice
+        if (this.isHandlingDeath) {
+            console.log('💀 Skipping cleanup - death sequence in progress');
+            return;
+        }
+        
+        console.log('🧹 Cleaning up combat state...');
+        
+        // Reset death handling flag
+        this.isHandlingDeath = false;
+        
+        // End combat state
+        this.isActive = false;
+        
+        // Hide combat modal
+        this.combatContainer.classList.add('hidden');
+        
+        // Resume map renderer
+        if (this.mapRenderer && this.mapRenderer.resumeRendering) {
+            this.mapRenderer.resumeRendering();
+        }
+        
+        // Cleanup combat systems
+        if (this.combatRenderer) {
+            this.combatRenderer.cleanup();
+        }
+        
+        // Reset state
+        this.currentCombat = null;
+        this.activeEnemies = [];
+        this.combatLog = [];
+        this.combatStats = {
+            damageDealt: 0,
+            damageTaken: 0,
+            startTime: null,
+            endTime: null
+        };
+        
+        console.log('✅ Combat cleanup complete');
+    }
+    
+    /**
+     * Force end combat completely (for revival/death situations)
+     */
+    forceEndCombat() {
+        console.log('🛑 Force ending combat...');
+        
+        // Stop turn manager completely
+        if (this.turnManager) {
+            this.turnManager.isActive = false;
+            console.log('🛑 Turn manager force stopped');
+        }
+        
+        // Reset death handling flag
+        this.isHandlingDeath = false;
+        
+        // End combat state
+        this.isActive = false;
+        
+        // Hide combat modal
+        this.combatContainer.classList.add('hidden');
+        
+        // Resume map renderer
+        if (this.mapRenderer && this.mapRenderer.resumeRendering) {
+            this.mapRenderer.resumeRendering();
+            console.log('🗺️ Map renderer resumed');
+        }
+        
+        // Cleanup combat systems
+        if (this.combatRenderer) {
+            this.combatRenderer.cleanup();
+        }
+        
+        // Reset ALL combat state
+        this.currentCombat = null;
+        this.activeEnemies = [];
+        this.combatLog = [];
+        this.combatStats = {
+            damageDealt: 0,
+            damageTaken: 0,
+            startTime: null,
+            endTime: null
+        };
+        
+        // Clear any pending timeouts or intervals that might restart combat
+        if (this.combatTimeout) {
+            clearTimeout(this.combatTimeout);
+            this.combatTimeout = null;
+        }
+        
+        console.log('✅ Combat force ended completely');
+    }
+
+    /**
      * Refresh character sheet after combat to show updated HP/MP
      */
     async refreshCharacterSheetAfterCombat() {
@@ -1841,35 +2184,117 @@ export class CombatManager {
                 return;
             }
             
-            // Reload character data from storage to get updated HP/MP
-            const updatedCharacterData = await this.loadCharacterFromDB(playerName);
+            // SAFE APPROACH: Try unified storage first, then fall back to existing system
+            let updatedCharacterData = null;
+            
+            // CRITICAL FIX: Force save the updated character data FIRST before loading
+            console.log('💾 Forcing character save before refresh...');
+            // DON'T use saveCurrentCharacterToStorage() - it overwrites with stale global character data
+            // Instead, save the characterManager array directly since PartyManager updated it correctly
+            try {
+                await saveCharactersToStorage();
+                console.log('✅ Forced character save completed');
+            } catch (error) {
+                console.warn('⚠️ Forced save failed:', error);
+            }
+            
+            // TEMPORARILY DISABLED: Try the new unified storage system
+            // (Database schema issues - will re-enable once fixed)
+            /*
+            if (window.unifiedStorage) {
+                try {
+                    const characters = await window.unifiedStorage.loadCharacters();
+                    updatedCharacterData = characters.find(char => char.name === playerName);
+                    if (updatedCharacterData) {
+                        console.log('✅ Loaded character from unified storage');
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Unified storage failed, using fallback:', error);
+                }
+            }
+            */
+            
+            // Use existing advancedStorageManager (SAFE - WORKS)
+            updatedCharacterData = await this.loadCharacterFromDB(playerName);
+            if (updatedCharacterData) {
+                console.log('✅ Loaded character from advanced storage');
+            }
+            
+            // FALLBACK: If storage has stale data, use characterManager array (where PartyManager saved the updates)
+            if (window.characterManager && window.characterManager.characters) {
+                const freshCharData = window.characterManager.characters.find(char => char.name === playerName);
+                if (freshCharData && freshCharData.currentHealthPoints !== updatedCharacterData?.currentHealthPoints) {
+                    console.log(`🔄 Storage data is stale (${updatedCharacterData?.currentHealthPoints} HP), using fresh characterManager data (${freshCharData.currentHealthPoints} HP)`);
+                    updatedCharacterData = freshCharData;
+                }
+            }
+            
             if (!updatedCharacterData) {
                 console.warn('⚠️ Could not reload character data for refresh');
                 return;
             }
             
-            // Update the global character object with the fresh data
-            if (window.character) {
-                // Map the stored properties to the character object format
-                window.character.currentHealthPoints = updatedCharacterData.currentHealthPoints || updatedCharacterData.hp;
-                window.character.healthPoints = updatedCharacterData.healthPoints || updatedCharacterData.maxHp;
-                window.character.currentMagicPoints = updatedCharacterData.currentMagicPoints || updatedCharacterData.mp;
-                window.character.magicPoints = updatedCharacterData.magicPoints || updatedCharacterData.maxMp;
-                
-                console.log(`✅ Updated character HP/MP: ${window.character.currentHealthPoints}/${window.character.healthPoints} HP, ${window.character.currentMagicPoints}/${window.character.magicPoints} MP`);
+            console.log('🔍 Updated character data:', updatedCharacterData);
+            console.log('🔍 Current window.character:', window.character);
+            
+            // ALWAYS update/create the global character object (don't rely on it existing)
+            if (updatedCharacterData) {
+                if (typeof character === 'object' && character !== null && !character.tagName) {
+                    console.log('🔍 Before Object.assign - character HP:', character.currentHealthPoints);
+                    Object.assign(character, updatedCharacterData);
+                    console.log('🔍 After Object.assign - character HP:', character.currentHealthPoints);
+                    console.log(`✅ Updated existing character object: ${character.currentHealthPoints}/${character.healthPoints} HP`);
+                } else {
+                    // Character object doesn't exist or is invalid (might be DOM element), create it
+                    window.character = { ...updatedCharacterData };
+                    // Also ensure global character variable exists
+                    if (typeof character === 'undefined' || character.tagName) {
+                        // Use eval to assign to global scope (careful approach)
+                        globalThis.character = { ...updatedCharacterData };
+                    }
+                    console.log(`✅ Created new character object: ${updatedCharacterData.currentHealthPoints}/${updatedCharacterData.healthPoints} HP`);
+                }
+            } else {
+                console.error('❌ No updated character data available');
+                return;
             }
             
-            // Trigger character sheet refresh functions if they exist
-            if (typeof window.updateCharacterDisplay === 'function') {
-                window.updateCharacterDisplay();
+            // Update the characterManager's stored data too (so it saves correctly)
+            if (window.characterManager && window.characterManager.currentCharacterId) {
+                const charIndex = window.characterManager.characters.findIndex(char => char.id === window.characterManager.currentCharacterId);
+                if (charIndex !== -1) {
+                    Object.assign(window.characterManager.characters[charIndex], updatedCharacterData);
+                    console.log('✅ Updated characterManager stored data');
+                    
+                    // CRITICAL FIX: Force save immediately to prevent auto-save from overwriting
+                    if (typeof saveCurrentCharacterToStorage === 'function') {
+                        await saveCurrentCharacterToStorage();
+                        console.log('💾 Forced immediate save to prevent auto-save conflict');
+                    }
+                }
+            }
+            
+            // Trigger character sheet refresh functions (same way as loadCharacterFromManager)
+            if (typeof window.updateCharacterSelections === 'function') {
+                window.updateCharacterSelections();
             }
             
             if (typeof window.refreshCharacterSheet === 'function') {
                 window.refreshCharacterSheet();
             }
             
+            // CRITICAL: This is what updates the HP/MP display on the character sheet!
             if (typeof window.updateHealthMagicDisplay === 'function') {
                 window.updateHealthMagicDisplay();
+                console.log('✅ Updated HP/MP display on character sheet');
+            }
+            
+            // ADDITIONAL: Update the character sheet specific HP/MP elements
+            this.updateCharacterSheetVitals();
+            
+            // Also trigger the tab switch refresh behavior
+            if (typeof window.updateCharacterDisplay === 'function') {
+                window.updateCharacterDisplay();
             }
             
             console.log('✅ Character sheet refreshed with post-combat HP/MP');
@@ -1877,6 +2302,37 @@ export class CombatManager {
         } catch (error) {
             console.error('❌ Error refreshing character sheet after combat:', error);
         }
+    }
+
+    /**
+     * Update the character sheet specific HP/MP elements
+     */
+    updateCharacterSheetVitals() {
+        if (!window.character) {
+            console.warn('⚠️ No character object available for vitals update');
+            return;
+        }
+
+        // Update character sheet HP display (char-current-hp, char-total-hp)
+        const currentHpElement = document.getElementById('char-current-hp');
+        const totalHpElement = document.getElementById('char-total-hp');
+        const currentMpElement = document.getElementById('char-current-mp');
+        const totalMpElement = document.getElementById('char-total-mp');
+
+        if (currentHpElement) {
+            currentHpElement.textContent = window.character.currentHealthPoints || 0;
+        }
+        if (totalHpElement) {
+            totalHpElement.textContent = window.character.healthPoints || 0;
+        }
+        if (currentMpElement) {
+            currentMpElement.textContent = window.character.currentMagicPoints || 0;
+        }
+        if (totalMpElement) {
+            totalMpElement.textContent = window.character.magicPoints || 0;
+        }
+
+        console.log(`✅ Updated character sheet vitals: ${window.character.currentHealthPoints}/${window.character.healthPoints} HP, ${window.character.currentMagicPoints}/${window.character.magicPoints} MP`);
     }
 
     /**
@@ -1955,6 +2411,8 @@ export class CombatManager {
                 
                 if (currentChar) {
                     console.log('✅ Found current character:', currentChar.name);
+                    console.log('🔍 Character gold property:', currentChar.gold);
+                    console.log('🔍 Full character data:', currentChar);
                     return {
                         name: currentChar.name,
                         type: 'player',
@@ -1963,6 +2421,7 @@ export class CombatManager {
                         maxHp: currentChar.healthPoints,
                         mp: currentChar.currentMagicPoints,
                         maxMp: currentChar.magicPoints,
+                        gold: currentChar.gold || 0,
                         stats: currentChar.stats,
                         equipment: currentChar.equipment,
                         inventory: currentChar.inventory,
@@ -1978,6 +2437,313 @@ export class CombatManager {
         } catch (error) {
             console.error('❌ Error getting character data:', error);
             return null;
+        }
+    }
+
+    /**
+     * Handle player death with revival mechanics
+     */
+    async handlePlayerDeath() {
+        console.log('💀 Handling player death...');
+        
+        try {
+            // Get current character data for calculating losses
+            const currentPlayer = this.getCurrentCharacterData();
+            if (!currentPlayer) {
+                console.error('❌ No player data for death handling');
+                return;
+            }
+            
+            // Calculate consequences
+            const goldLoss = Math.floor((currentPlayer.gold || 0) / 2);
+            const lostItem = this.selectRandomItemToLose(currentPlayer);
+            
+            console.log(`💰 Player current gold: ${currentPlayer.gold}, calculated loss: ${goldLoss}`);
+            
+            // Update the death modal with consequences
+            const goldLossElement = document.getElementById('gold-loss');
+            const itemLossElement = document.getElementById('item-loss');
+            
+            console.log('🔍 Gold loss element:', goldLossElement);
+            console.log('🔍 Item loss element:', itemLossElement);
+            
+            if (goldLossElement) {
+                goldLossElement.textContent = goldLoss;
+            } else {
+                console.error('❌ gold-loss element not found!');
+            }
+            
+            if (itemLossElement) {
+                itemLossElement.textContent = lostItem ? lostItem.name : 'None';
+            } else {
+                console.error('❌ item-loss element not found!');
+            }
+            
+            // Show death modal
+            const deathModal = document.getElementById('death-modal');
+            const combatModal = document.getElementById('combat-modal');
+            
+            console.log('🔍 Death modal element:', deathModal);
+            console.log('🔍 Combat modal element:', combatModal);
+            
+            if (!deathModal) {
+                console.error('❌ Death modal element not found!');
+                this.endCombat('defeat');
+                return;
+            }
+            
+            // Don't hide combat modal during death - keep it as background
+            // combatModal.classList.add('hidden'); // REMOVED - keep combat visible as background
+            deathModal.classList.remove('hidden');
+            
+            // EXTREME DEBUG: Force visibility with inline styles
+            deathModal.style.display = 'flex';
+            deathModal.style.visibility = 'visible';
+            deathModal.style.zIndex = '9999';
+            deathModal.style.position = 'fixed';
+            deathModal.style.top = '0';
+            deathModal.style.left = '0';
+            deathModal.style.width = '100vw';
+            deathModal.style.height = '100vh';
+            deathModal.style.backgroundColor = 'rgba(0, 0, 0, 0.95)'; // Dark background like other modals
+            
+            console.log(`💰 Death penalty: ${goldLoss} gold, item: ${lostItem?.name || 'none'}`);
+            console.log(`💀 Death modal should now be visible: ${!deathModal.classList.contains('hidden')}`);
+            console.log('🔍 Death modal classes:', deathModal.className);
+            console.log('🔍 Death modal computed display:', window.getComputedStyle(deathModal).display);
+            console.log('🔍 Death modal computed visibility:', window.getComputedStyle(deathModal).visibility);
+            console.log('🔍 Death modal computed z-index:', window.getComputedStyle(deathModal).zIndex);
+            console.log('🔍 Combat modal classes:', combatModal.className);
+            console.log('🔍 Combat modal computed display:', window.getComputedStyle(combatModal).display);
+            console.log('🔍 Combat modal computed visibility:', window.getComputedStyle(combatModal).visibility);
+            
+            // Force focus on death modal to ensure it stays visible
+            deathModal.focus();
+            
+            // Add a small delay and check again
+            setTimeout(() => {
+                console.log('🕐 After 100ms - Death modal still visible:', !deathModal.classList.contains('hidden'));
+                console.log('🕐 After 100ms - Death modal display:', window.getComputedStyle(deathModal).display);
+            }, 100);
+            
+        } catch (error) {
+            console.error('❌ Error handling player death:', error);
+            // Fallback: just end combat normally
+            this.endCombat('defeat');
+        }
+    }
+    
+    /**
+     * Select a random item to lose on death (including equipped items)
+     */
+    selectRandomItemToLose(playerData) {
+        const allItems = [];
+        
+        // Add inventory items
+        if (playerData.inventory && Array.isArray(playerData.inventory)) {
+            allItems.push(...playerData.inventory.filter(item => item && item.name));
+        }
+        
+        // Add equipped items
+        if (playerData.equipment) {
+            Object.entries(playerData.equipment).forEach(([slot, item]) => {
+                if (item && item.name && item.name !== 'None') {
+                    allItems.push({ ...item, slot: slot, equipped: true });
+                }
+            });
+        }
+        
+        if (allItems.length === 0) {
+            return null;
+        }
+        
+        // Select random item
+        const randomIndex = Math.floor(Math.random() * allItems.length);
+        return allItems[randomIndex];
+    }
+    
+    /**
+     * Handle revival choice
+     */
+    async handleRevival(revive) {
+        console.log(`💀 Revival choice: ${revive ? 'YES' : 'NO'}`);
+        console.log('🔘 handleRevival called - button click working!');
+        
+        try {
+            if (revive) {
+                // Apply death penalties and revive
+                await this.applyDeathPenalties();
+                
+                // Heal to 1 HP for revival
+                if (window.character) {
+                    window.character.currentHealthPoints = 1;
+                    
+                    // Update characterManager array too
+                    if (window.characterManager && window.characterManager.currentCharacterId) {
+                        const charIndex = window.characterManager.characters.findIndex(
+                            char => char.id === window.characterManager.currentCharacterId
+                        );
+                        if (charIndex !== -1) {
+                            window.characterManager.characters[charIndex].currentHealthPoints = 1;
+                        }
+                    }
+                    
+                    // Save the changes
+                    await saveCharactersToStorage();
+                }
+                
+                // Hide death modal and close combat
+                const deathModal = document.getElementById('death-modal');
+                deathModal.classList.add('hidden');
+                console.log('💀 Death modal hidden:', deathModal.classList.contains('hidden'));
+                
+                // Reset death modal inline styles
+                deathModal.style.display = '';
+                deathModal.style.visibility = '';
+                deathModal.style.zIndex = '';
+                deathModal.style.position = '';
+                deathModal.style.top = '';
+                deathModal.style.left = '';
+                deathModal.style.width = '';
+                deathModal.style.height = '';
+                deathModal.style.backgroundColor = '';
+                console.log('💀 Death modal styles reset');
+                
+                // Check if we have a map to return to
+                if (this.mapRenderer && this.mapRenderer.resumeRendering) {
+                    // Return to map
+                    this.forceEndCombat();
+                    
+                    // Show revival notification
+                    if (window.addChatMessage) {
+                        window.addChatMessage('✨ You have been revived! You return to the overworld with 1 HP.', 'system');
+                    }
+                    
+                    console.log('✨ Player revived and returned to overworld');
+                } else {
+                    // No map available - just close death modal and end combat
+                    this.forceEndCombat();
+                    
+                    // Show revival notification
+                    if (window.addChatMessage) {
+                        window.addChatMessage('✨ You have been revived with 1 HP!', 'system');
+                    }
+                    
+                    console.log('✨ Player revived - no map to return to, staying in current view');
+                }
+                
+            } else {
+                // Player chose to stay dead - return to landing screen
+                const deathModal = document.getElementById('death-modal');
+                deathModal.classList.add('hidden');
+                console.log('💀 Death modal hidden (permanent death):', deathModal.classList.contains('hidden'));
+                
+                // Reset death modal inline styles
+                deathModal.style.display = '';
+                deathModal.style.visibility = '';
+                deathModal.style.zIndex = '';
+                deathModal.style.position = '';
+                deathModal.style.top = '';
+                deathModal.style.left = '';
+                deathModal.style.width = '';
+                deathModal.style.height = '';
+                deathModal.style.backgroundColor = '';
+                console.log('💀 Death modal styles reset (permanent death)');
+                
+                this.forceEndCombat();
+                
+                // Clear character data and return to landing screen
+                if (window.characterManager) {
+                    window.characterManager.currentCharacterId = null;
+                }
+                
+                // Show landing screen
+                if (typeof showLandingScreen === 'function') {
+                    showLandingScreen();
+                } else if (typeof switchTab === 'function') {
+                    switchTab('creation');
+                }
+                
+                console.log('💀 Player chose permanent death - returned to character selection');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error handling revival:', error);
+            // Fallback: just close combat
+            this.cleanup();
+        }
+    }
+    
+    /**
+     * Apply death penalties (lose gold and item)
+     */
+    async applyDeathPenalties() {
+        try {
+            const currentPlayer = this.getCurrentCharacterData();
+            if (!currentPlayer) return;
+            
+            // Calculate gold loss (half of current gold)
+            const goldLoss = Math.floor(currentPlayer.gold / 2);
+            const newGold = currentPlayer.gold - goldLoss;
+            
+            // Select item to lose
+            const lostItem = this.selectRandomItemToLose(currentPlayer);
+            
+            // Apply gold penalty to character
+            if (window.character) {
+                window.character.gold = newGold;
+            }
+            
+            // Apply gold penalty to characterManager array
+            if (window.characterManager && window.characterManager.currentCharacterId) {
+                const charIndex = window.characterManager.characters.findIndex(
+                    char => char.id === window.characterManager.currentCharacterId
+                );
+                if (charIndex !== -1) {
+                    window.characterManager.characters[charIndex].gold = newGold;
+                    
+                    // Remove the lost item
+                    if (lostItem) {
+                        if (lostItem.equipped) {
+                            // Remove equipped item
+                            if (window.characterManager.characters[charIndex].equipment) {
+                                window.characterManager.characters[charIndex].equipment[lostItem.slot] = { name: 'None' };
+                            }
+                        } else {
+                            // Remove from inventory
+                            if (window.characterManager.characters[charIndex].inventory) {
+                                const itemIndex = window.characterManager.characters[charIndex].inventory.findIndex(
+                                    item => item.name === lostItem.name
+                                );
+                                if (itemIndex !== -1) {
+                                    window.characterManager.characters[charIndex].inventory.splice(itemIndex, 1);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Also update global character object
+            if (window.character && lostItem) {
+                if (lostItem.equipped) {
+                    if (window.character.equipment) {
+                        window.character.equipment[lostItem.slot] = { name: 'None' };
+                    }
+                } else {
+                    if (window.character.inventory) {
+                        const itemIndex = window.character.inventory.findIndex(item => item.name === lostItem.name);
+                        if (itemIndex !== -1) {
+                            window.character.inventory.splice(itemIndex, 1);
+                        }
+                    }
+                }
+            }
+            
+            console.log(`💰 Applied death penalties: -${goldLoss} gold (${newGold} remaining), lost item: ${lostItem?.name || 'none'}`);
+            
+        } catch (error) {
+            console.error('❌ Error applying death penalties:', error);
         }
     }
 }
