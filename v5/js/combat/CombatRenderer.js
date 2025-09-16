@@ -174,6 +174,20 @@ export class CombatRenderer {
         `;
         this.healthBarsContainer.appendChild(this.enemyHealthContainer);
 
+        // Create floating numbers container (for damage/healing numbers)
+        this.floatingNumbersContainer = document.createElement('div');
+        this.floatingNumbersContainer.id = 'floating-numbers-container';
+        this.floatingNumbersContainer.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 110;
+        `;
+        this.healthBarsContainer.appendChild(this.floatingNumbersContainer);
+
         console.log('💊 Health bars UI initialized');
     }
 
@@ -619,6 +633,160 @@ export class CombatRenderer {
             enemyBar.remove();
             console.log(`🗑️ Removed health bar for enemy ${enemyId}`);
         }
+    }
+
+    /**
+     * Show floating damage/healing number with progressive scaling
+     */
+    showFloatingNumber({ memberName, amount, type, damageType, isMaxDamage, isTopTier, percentile }) {
+        // Get position for the floating number
+        const position = this.getFloatingNumberPosition(memberName);
+        if (!position) return;
+
+        // Create floating number element
+        const floatingNumber = document.createElement('div');
+        floatingNumber.className = 'floating-combat-number';
+        
+        // Calculate font size based on damage percentile (12px to 32px)
+        const baseFontSize = 12;
+        const maxFontSize = 32;
+        const fontScale = (percentile / 100) * (maxFontSize - baseFontSize) + baseFontSize;
+        const fontSize = Math.max(baseFontSize, Math.min(maxFontSize, fontScale));
+
+        // Determine styling
+        const isHealing = type === 'healing';
+        const isMagical = damageType === 'magical';
+        
+        let color = isHealing ? '#22c55e' : '#ef4444'; // Green for healing, red for damage
+        let fontWeight = 'normal';
+        let textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
+        let prefix = isHealing ? '+' : '-';
+
+        // Top 10% damage gets bold styling
+        if (isTopTier && !isHealing) {
+            fontWeight = 'bold';
+        }
+
+        // Magical damage gets bold in top 10%
+        if (isMagical && isTopTier) {
+            fontWeight = 'bold';
+            textShadow = '2px 2px 6px rgba(138, 43, 226, 0.8)'; // Purple shadow for magic
+        }
+
+        // Critical hit (max damage) gets special styling
+        if (isMaxDamage) {
+            color = '#ffd700'; // Gold for critical hits
+            fontWeight = 'bold';
+            textShadow = '3px 3px 8px rgba(255, 215, 0, 0.6)';
+            prefix = 'CRIT -';
+        }
+
+        floatingNumber.style.cssText = `
+            position: absolute;
+            left: ${position.x}px;
+            top: ${position.y}px;
+            font-size: ${fontSize}px;
+            font-weight: ${fontWeight};
+            color: ${color};
+            text-shadow: ${textShadow};
+            font-family: 'Segoe UI', sans-serif;
+            pointer-events: none;
+            z-index: 200;
+            animation: floatUp 2s ease-out forwards;
+            transform-origin: center;
+        `;
+
+        floatingNumber.textContent = `${prefix}${amount}`;
+        
+        // Add animation keyframes if not already present
+        this.ensureFloatingNumberStyles();
+        
+        this.floatingNumbersContainer.appendChild(floatingNumber);
+
+        // Remove after animation
+        setTimeout(() => {
+            if (floatingNumber.parentNode) {
+                floatingNumber.remove();
+            }
+        }, 2000);
+
+        console.log(`💥 Floating ${type}: ${amount} (${fontSize.toFixed(1)}px, ${percentile.toFixed(1)}%)`);
+    }
+
+    /**
+     * Get position for floating number based on member
+     */
+    getFloatingNumberPosition(memberName) {
+        // Check if it's a player
+        const playerBar = document.getElementById(`player-health-${memberName}`);
+        if (playerBar) {
+            const rect = playerBar.getBoundingClientRect();
+            const containerRect = this.container.getBoundingClientRect();
+            return {
+                x: rect.left - containerRect.left + rect.width / 2,
+                y: rect.top - containerRect.top - 20
+            };
+        }
+
+        // Check if it's an enemy
+        const enemyBar = document.getElementById(`enemy-health-${memberName}`);
+        if (enemyBar) {
+            const rect = enemyBar.getBoundingClientRect();
+            const containerRect = this.container.getBoundingClientRect();
+            return {
+                x: rect.left - containerRect.left + rect.width / 2,
+                y: rect.top - containerRect.top - 30
+            };
+        }
+
+        // If enemy health bar not found, try to use 3D enemy position
+        const enemy = this.enemies.get(memberName);
+        if (enemy) {
+            const enemyPosition = enemy.position;
+            const screenPosition = this.worldToScreen(
+                enemyPosition.x, 
+                enemyPosition.y + 2, // Slightly above enemy
+                enemyPosition.z
+            );
+            console.log(`📍 Using 3D position for floating number: ${memberName} at (${screenPosition.x}, ${screenPosition.y})`);
+            return {
+                x: screenPosition.x,
+                y: screenPosition.y
+            };
+        }
+
+        // Final fallback to center if member not found at all
+        console.warn(`⚠️ No position found for floating number: ${memberName}, using center fallback`);
+        return {
+            x: this.container.clientWidth / 2,
+            y: this.container.clientHeight / 2
+        };
+    }
+
+    /**
+     * Ensure floating number CSS animations are available
+     */
+    ensureFloatingNumberStyles() {
+        if (document.getElementById('floating-number-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'floating-number-styles';
+        style.textContent = `
+            @keyframes floatUp {
+                0% {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+                20% {
+                    transform: translateY(-10px) scale(1.1);
+                }
+                100% {
+                    opacity: 0;
+                    transform: translateY(-80px) scale(0.8);
+                }
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     /**
@@ -1380,11 +1548,20 @@ export class CombatRenderer {
      * Remove enemy from scene
      */
     removeEnemy(enemyId) {
+        console.log(`💀 Starting removal of enemy: ${enemyId}`);
+        
+        // Remove health bar immediately to prevent confusion
+        this.removeEnemyHealthBar(enemyId);
+        
         // Remove sprite cylinder
         const enemy = this.enemies.get(enemyId);
         if (enemy) {
             this.scene.remove(enemy);
-            this.enemies.delete(enemyId);
+            // Delay removal from enemies map to allow floating numbers to find position
+            setTimeout(() => {
+                this.enemies.delete(enemyId);
+                console.log(`🗑️ Delayed removal of enemy from map: ${enemyId}`);
+            }, 3000); // 3 seconds should be enough for floating numbers
         }
         
         // Remove hex base
@@ -1401,10 +1578,7 @@ export class CombatRenderer {
             this.attackSelectors.delete(enemyId);
         }
         
-        // Remove health bar
-        this.removeEnemyHealthBar(enemyId);
-        
-        console.log(`💀 Removed enemy: ${enemyId}`);
+        console.log(`💀 Removed enemy from scene: ${enemyId}`);
     }
 
     /**

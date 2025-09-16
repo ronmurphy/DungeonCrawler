@@ -947,6 +947,9 @@ export class CombatManager {
         const sceneContainer = document.getElementById('combat-scene');
         this.combatRenderer = new CombatRenderer(sceneContainer);
         
+        // Connect PartyManager to CombatRenderer for floating damage numbers
+        this.partyManager.setCombatRenderer(this.combatRenderer);
+        
         // Store TurnManager class for later initialization (after enemy data enhancement)
         this.TurnManager = TurnManager;
         
@@ -1555,6 +1558,20 @@ export class CombatManager {
         // Apply damage to enemy
         if (damage > 0) {
             enemy.hp = Math.max(0, enemy.hp - damage);
+            
+            // Show floating damage number for spell damage
+            if (this.combatRenderer && this.combatRenderer.showFloatingNumber) {
+                this.combatRenderer.showFloatingNumber({
+                    memberName: enemy.id,
+                    amount: damage,
+                    type: 'damage',
+                    damageType: 'magical',
+                    isMaxDamage: false, // Will calculate properly with damage history in future
+                    isTopTier: damage >= 8, // Temporary: 8+ damage is top tier for magic
+                    percentile: damage >= 8 ? 90 : damage * 10 // Rough approximation
+                });
+            }
+            
             this.combatRenderer.updateEnemyHealth(enemy.id, enemy.hp, enemy.mp);
             this.combatStats.damageDealt += damage;
             console.log(`💥 ${spell.name}: ${damage} ${spell.element} damage! ${enemy.name} HP: ${enemy.hp}/${enemy.maxHp}`);
@@ -1576,7 +1593,17 @@ export class CombatManager {
             // Apply healing to caster (for now)
             if (healing > 0) {
                 const oldHp = player.hp;
-                player.hp = Math.min(player.maxHp, player.hp + healing);
+                
+                // Use PartyManager for proper healing with floating numbers
+                this.partyManager.applyHealing(player.name, healing, 'magical');
+                
+                // Update the player object from party manager
+                const updatedPlayer = this.partyManager.getMember(player.name);
+                if (updatedPlayer) {
+                    player.hp = updatedPlayer.hp;
+                    player.mp = updatedPlayer.mp;
+                }
+                
                 const actualHealing = player.hp - oldHp;
                 
                 this.combatRenderer.updatePlayerHealth(player.id || player.name, player.hp, player.mp);
@@ -1649,6 +1676,21 @@ export class CombatManager {
         
         // Apply damage to enemy
         enemy.hp = Math.max(0, enemy.hp - damage);
+        
+        // Show floating damage number for enemy
+        if (this.combatRenderer && this.combatRenderer.showFloatingNumber) {
+            const damageType = action.type === 'magic' ? 'magical' : 'physical';
+            this.combatRenderer.showFloatingNumber({
+                memberName: enemy.id,
+                amount: damage,
+                type: 'damage',
+                damageType: damageType,
+                isMaxDamage: false, // Will calculate properly with damage history in future
+                isTopTier: damage >= 8, // Temporary: 8+ damage is top tier
+                percentile: damage >= 8 ? 90 : damage * 10 // Rough approximation
+            });
+        }
+        
         this.combatRenderer.updateEnemyHealth(enemy.id, enemy.hp, enemy.mp);
         this.combatStats.damageDealt += damage;
         
@@ -1763,7 +1805,7 @@ export class CombatManager {
         this.combatStats.damageTaken += damage;
         
         // Apply damage
-        this.partyManager.applyDamage(target.name, damage);
+        this.partyManager.applyDamage(target.name, damage, 'physical'); // Most enemy attacks are physical
         
         // Update player health bar
         const updatedTarget = this.partyManager.getMember(target.name);

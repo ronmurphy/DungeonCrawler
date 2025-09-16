@@ -124,7 +124,7 @@ export class PartyManager {
     /**
      * Apply damage to a party member
      */
-    applyDamage(memberName, damage) {
+    applyDamage(memberName, damage, damageType = 'physical') {
         const member = this.members.get(memberName);
         if (!member) {
             console.warn(`Party member ${memberName} not found`);
@@ -135,6 +135,9 @@ export class PartyManager {
         member.hp = Math.max(0, member.hp - damage);
         
         console.log(`💔 ${memberName}: ${oldHp} → ${member.hp} HP (-${damage})`);
+
+        // Trigger floating damage number
+        this.triggerFloatingNumber(memberName, damage, 'damage', damageType);
 
         // CRITICAL FIX: Sync combat HP back to persistent character data
         console.log(`🔄 About to sync ${memberName} with HP: ${member.hp}`);
@@ -152,7 +155,7 @@ export class PartyManager {
     /**
      * Apply healing to a party member
      */
-    applyHealing(memberName, healing) {
+    applyHealing(memberName, healing, healingType = 'magical') {
         const member = this.members.get(memberName);
         if (!member) {
             console.warn(`Party member ${memberName} not found`);
@@ -163,6 +166,9 @@ export class PartyManager {
         member.hp = Math.min(member.maxHp, member.hp + healing);
         
         console.log(`💚 ${memberName}: ${oldHp} → ${member.hp} HP (+${healing})`);
+
+        // Trigger floating healing number
+        this.triggerFloatingNumber(memberName, healing, 'healing', healingType);
 
         // CRITICAL FIX: Sync combat HP back to persistent character data
         this.syncMemberToPersistentCharacter(memberName, member);
@@ -190,6 +196,66 @@ export class PartyManager {
         });
 
         console.log(`🌟 ${memberName} gains ${effect.name}`);
+    }
+
+    /**
+     * Set the combat renderer for floating damage numbers
+     */
+    setCombatRenderer(renderer) {
+        this.combatRenderer = renderer;
+        this.damageHistory = []; // Track damage for progressive scaling
+    }
+
+    /**
+     * Trigger floating damage/healing number with progressive scaling
+     */
+    triggerFloatingNumber(memberName, amount, type, damageType = 'physical') {
+        if (!this.combatRenderer || !this.combatRenderer.showFloatingNumber) {
+            return; // No renderer available
+        }
+
+        // Track damage amounts for scaling (keep last 50 for memory)
+        if (type === 'damage') {
+            this.damageHistory.push(amount);
+            if (this.damageHistory.length > 50) {
+                this.damageHistory.shift();
+            }
+        }
+
+        // Calculate scaling parameters
+        const maxDamage = Math.max(...this.damageHistory, amount);
+        const isMaxDamage = amount === maxDamage;
+        const damagePercentile = this.calculateDamagePercentile(amount);
+        const isTopTier = damagePercentile >= 90; // Top 10%
+
+        // Determine critical hit (max damage gets 1.5x multiplier)
+        const displayAmount = isMaxDamage && type === 'damage' ? Math.floor(amount * 1.5) : amount;
+
+        console.log(`✨ Floating ${type}: ${amount} → ${displayAmount} (${damagePercentile.toFixed(1)}% percentile, max: ${maxDamage})`);
+
+        this.combatRenderer.showFloatingNumber({
+            memberName,
+            amount: displayAmount,
+            type, // 'damage' or 'healing'
+            damageType, // 'physical' or 'magical'
+            isMaxDamage,
+            isTopTier,
+            percentile: damagePercentile
+        });
+    }
+
+    /**
+     * Calculate damage percentile for progressive scaling
+     */
+    calculateDamagePercentile(amount) {
+        if (this.damageHistory.length === 0) return 50;
+        
+        const sortedDamage = [...this.damageHistory].sort((a, b) => a - b);
+        const rank = sortedDamage.findIndex(dmg => dmg >= amount);
+        
+        if (rank === -1) return 100; // Highest damage yet
+        
+        return (rank / sortedDamage.length) * 100;
     }
 
     /**
