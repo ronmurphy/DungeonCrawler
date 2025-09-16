@@ -193,11 +193,6 @@
     <div class="app-container">
         <!-- Mobile Header -->
         <header class="app-header">
-            <!-- Disabled for Feral Gateway system
-            <button class="header-btn menu-btn" onclick="toggleSidebar()" title="Open Navigation Menu">
-                <span class="material-icons">menu</span>
-            </button>
-            -->
             <button class="header-btn theme-btn" onclick="toggleTheme()" title="Toggle Theme">
                 <span class="material-icons">brightness_6</span>
             </button>
@@ -213,11 +208,6 @@
             <button class="header-btn trophy-btn" onclick="showAchievementsModal()" title="View Achievements">
                 <span class="material-icons">emoji_events</span>
             </button>
-            <!-- Roll History moved to Chat Bottom Sheet
-            <button class="header-btn roll-history-btn" onclick="showRollHistoryModal()" title="View Roll History">
-                <i class="ra ra-perspective-dice-six"></i>
-            </button>
-            -->
             <button class="header-btn status-effects-btn" onclick="showStatusEffectsModal()" title="View Status Effects">
                 <i class="ra ra-biohazard"></i>
             </button>
@@ -465,11 +455,6 @@
             </div>
         </div>
 
-        <!-- Map Display Area (for real-time map sharing) - DEPRECATED, using overlay instead -->
-        <div id="map-display" style="display: none;">
-            <!-- Kept for compatibility -->
-        </div>
-
         <!-- Sidebar Navigation Drawer -->
         <nav class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -495,15 +480,6 @@
                     <span class="tab-icon"><i class="ra ra-fairy-wand"></i></span>
                     <span class="tab-label">Magic & Spells</span>
                 </button>
-                <!-- Chat Tab Removed - Now using FAB + Bottom Sheet -->
-                <!-- <button class="sidebar-tab" data-tab="chat">
-                    <span class="tab-icon"><i class="ra ra-conversation"></i></span>
-                    <span class="tab-label">Game Chat</span>
-                </button> -->
-                <!-- <button class="sidebar-tab" data-tab="combat">
-                    <span class="tab-icon"><i class="ra ra-crossed-swords"></i></span>
-                    <span class="tab-label">Combat & Dice</span>
-                </button> -->
                 <button class="sidebar-tab" data-tab="notes">
                     <span class="tab-icon"><i class="ra ra-scroll-unfurled"></i></span>
                     <span class="tab-label">Notes & Backstory</span>
@@ -545,11 +521,6 @@
                 </div>
             </div>
         </nav>
-
-        <!-- Sidebar Overlay for Mobile -->
-        <!-- Disabled for Feral Gateway system
-        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
-        -->
 
         <!-- Tab Contents -->
         <main class="tab-container">
@@ -1474,44 +1445,6 @@
                         </div>
 
                         <!-- Add Status Effect -->
-                        <!-- OLD DROPDOWN SYSTEM - COMMENTED OUT FOR NEW BUTTON SYSTEM IN MODAL
-                        <div class="add-status-section">
-                            <h4>Apply Status Effect</h4>
-                            <div class="status-form">
-                                <select id="status-effect-type" class="status-select">
-                                    <option value="bleeding">🩸 Bleeding</option>
-                                    <option value="poisoned">🤢 Poisoned</option>
-                                    <option value="radiation">☢️ Radiation</option>
-                                    <option value="exhausted">😴 Exhausted</option>
-                                    <option value="dehydrated">💧 Dehydrated</option>
-                                    <option value="hypothermia">🧊 Hypothermia</option>
-                                    <option value="heatstroke">🔥 Heat Exhaustion</option>
-                                    <option value="broken_bone">🦴 Broken Bone</option>
-                                    <option value="stunned">⚡ Stunned</option>
-                                    <option value="feared">😱 Feared</option>
-                                    <option value="inspired">✨ Inspired</option>
-                                    <option value="custom">⚙️ Custom</option>
-                                </select>
-
-                                <input type="text" id="custom-status-name" class="status-input"
-                                    placeholder="Custom effect name" style="display: none;">
-
-                                <div class="status-options">
-                                    <input type="number" id="status-duration" class="duration-input" value="10" min="1"
-                                        max="1440">
-                                    <span class="duration-label">minutes</span>
-                                </div>
-
-                                <input type="text" id="status-notes" class="status-notes"
-                                    placeholder="Additional notes...">
-
-                                <button class="add-status-btn" onclick="addStatusEffect()">
-                                    <i class="ra ra-flask"></i>
-                                    Apply Effect
-                                </button>
-                            </div>
-                        </div>
-                        -->
                     </div>
                 </div>
             </section>
@@ -2399,7 +2332,20 @@
                     
                     // Reload character manager to use new storage
                     if (typeof initializeCharacterManager === 'function') {
+                        console.log('🔄 Reinitializing character manager...');
                         await initializeCharacterManager();
+                        
+                        // Force refresh the character grid after a brief delay
+                        setTimeout(() => {
+                            console.log('🔄 Force refreshing character display...');
+                            if (typeof renderCharacterGrid === 'function') {
+                                renderCharacterGrid();
+                            }
+                            // If on landing screen, make sure it's visible
+                            if (typeof showLandingScreen === 'function' && window.characterManager?.isLandingScreenActive) {
+                                showLandingScreen();
+                            }
+                        }, 500);
                     }
                 } else {
                     alert('❌ Storage migration not available');
@@ -2659,8 +2605,6 @@
     <script src="../shared-modules/v4NetworkChatPickerIntegration.js"></script>
     
     <script src="js/core/supabase-chat.js"></script>
-    <!-- OLD PubNub system disabled - using Supabase instead -->
-    <!-- <script src="js/realtime-chat.js"></script> -->
     
     <!-- Network Integration Functions -->
     <script>

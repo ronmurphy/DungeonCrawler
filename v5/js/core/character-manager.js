@@ -80,29 +80,33 @@ async function loadCharactersFromStorage() {
     try {
         let characters = null;
         
-        // Try advanced storage manager first (IndexedDB primary)
+        // STEP 1: Try IndexedDB first (primary authoritative source)
         if (window.advancedStorageManager) {
             characters = await window.advancedStorageManager.getItem('wasteland_characters');
-            console.log('🔄 [STORAGE] Loaded characters from IndexedDB:', characters ? characters.length : 0);
-        }
-        
-        // CRITICAL FIX: Use advancedStorageManager for localStorage fallback too
-        // Don't bypass the compression system!
-        if (!characters && window.advancedStorageManager) {
-            // Let advancedStorageManager handle localStorage decompression
-            const localValue = window.advancedStorageManager.getLocalStorageItem('wasteland_characters');
-            if (localValue && Array.isArray(localValue)) {
-                characters = localValue;
-                console.log('🔄 [STORAGE] Loaded characters from localStorage (decompressed):', characters.length);
-                
-                // Migrate to IndexedDB since we found localStorage data
-                console.log('🔄 Migrating characters from localStorage to IndexedDB...');
-                await window.advancedStorageManager.setItem('wasteland_characters', characters);
-                console.log('✅ Characters migrated to IndexedDB');
+            if (characters && Array.isArray(characters)) {
+                console.log('🔄 [STORAGE] Loaded characters from IndexedDB (authoritative):', characters.length);
+                characterManager.characters = characters;
+                return true;
             }
         }
         
-        // Final fallback: try raw localStorage (legacy data)
+        // STEP 2: Try compressed localStorage via advancedStorageManager
+        if (!characters && window.advancedStorageManager) {
+            const localValue = window.advancedStorageManager.getLocalStorageItem('wasteland_characters');
+            if (localValue && Array.isArray(localValue)) {
+                characters = localValue;
+                console.log('🔄 [STORAGE] Loaded characters from compressed localStorage:', characters.length);
+                
+                // Migrate to IndexedDB since we found localStorage data
+                console.log('🔄 Auto-migrating characters from localStorage to IndexedDB...');
+                await window.advancedStorageManager.setItem('wasteland_characters', characters, { forceMethod: 'indexeddb' });
+                console.log('✅ Characters migrated to IndexedDB');
+                characterManager.characters = characters;
+                return true;
+            }
+        }
+        
+        // STEP 3: Try raw localStorage (legacy fallback)
         if (!characters) {
             const stored = localStorage.getItem('wasteland_characters');
             if (stored) {
@@ -114,10 +118,14 @@ async function loadCharactersFromStorage() {
                         
                         // Migrate legacy data to IndexedDB
                         if (window.advancedStorageManager) {
-                            console.log('🔄 Migrating legacy characters to IndexedDB...');
-                            await window.advancedStorageManager.setItem('wasteland_characters', characters);
-                            console.log('✅ Legacy characters migrated to IndexedDB');
+                            console.log('🔄 Auto-migrating legacy characters to IndexedDB...');
+                            await window.advancedStorageManager.setItem('wasteland_characters', characters, { forceMethod: 'indexeddb' });
+                            // Clean up old localStorage
+                            localStorage.removeItem('wasteland_characters');
+                            console.log('✅ Legacy characters migrated and old storage cleaned');
                         }
+                        characterManager.characters = characters;
+                        return true;
                     }
                 } catch (parseError) {
                     console.warn('⚠️ Failed to parse raw localStorage data:', parseError);
@@ -125,10 +133,42 @@ async function loadCharactersFromStorage() {
             }
         }
         
+        // STEP 4: Check alternative storage locations
+        if (!characters) {
+            console.log('🔍 [STORAGE] Checking alternative storage locations...');
+            const alternativeKeys = ['characterData', 'savedCharacters', 'characters'];
+            
+            for (const key of alternativeKeys) {
+                const altData = localStorage.getItem(key);
+                if (altData) {
+                    try {
+                        const parsed = JSON.parse(altData);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            characters = parsed;
+                            console.log(`🔄 [STORAGE] Found characters in localStorage.${key}:`, characters.length);
+                            
+                            // Migrate to IndexedDB
+                            if (window.advancedStorageManager) {
+                                await window.advancedStorageManager.setItem('wasteland_characters', characters, { forceMethod: 'indexeddb' });
+                                localStorage.removeItem(key);
+                                console.log(`✅ Migrated characters from ${key} to IndexedDB`);
+                            }
+                            break;
+                        }
+                    } catch (error) {
+                        console.warn(`⚠️ Failed to parse ${key}:`, error);
+                    }
+                }
+            }
+        }
+        
+        // Set final result
         if (characters && Array.isArray(characters)) {
             characterManager.characters = characters;
+            console.log(`✅ [STORAGE] Final result: ${characters.length} characters loaded`);
         } else {
             characterManager.characters = [];
+            console.log('📝 [STORAGE] No characters found - starting fresh');
         }
         
         return true;

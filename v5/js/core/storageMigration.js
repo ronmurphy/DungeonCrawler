@@ -112,15 +112,19 @@ class StorageMigration {
         
         let cleanedItems = 0;
         
-        // Define items to migrate to IndexedDB or clean up
+        // FIRST: Comprehensive character migration (regardless of size)
+        console.log('🎭 MIGRATING ALL CHARACTERS...');
+        const allCharacters = await this.migrateAllCharacters();
+        if (allCharacters.length > 0) {
+            cleanedItems++;
+        }
+        
+        // Define other items to migrate to IndexedDB or clean up
         const itemsToMigrate = [
-            'wasteland_characters',
             'storyteller_notes',
             'storyteller_roll_history',
             'storyteller_saved_npcs',
             'storyteller_saved_rolls',
-            'characterData',
-            'savedCharacters',
             'campaign_data',
             'session_notes'
         ];
@@ -187,6 +191,117 @@ class StorageMigration {
         }
 
         return cleanedItems;
+    }
+
+    // Comprehensive character migration from all storage locations
+    async migrateAllCharacters() {
+        console.log('🎭 Migrating ALL characters from all storage locations...');
+        
+        const allCharacters = [];
+        const seenIds = new Set();
+        
+        // Function to safely add character (avoid duplicates)
+        function addCharacter(char, source) {
+            if (!char || typeof char !== 'object') return;
+            
+            // Ensure character has an ID
+            if (!char.id) {
+                char.id = `char_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            }
+            
+            if (!seenIds.has(char.id)) {
+                seenIds.add(char.id);
+                allCharacters.push(char);
+                console.log(`✅ Found character: ${char.name || 'Unnamed'} (Level ${char.level || 1}) from ${source}`);
+            }
+        }
+        
+        // 1. Check current character manager state
+        if (window.characterManager && window.characterManager.characters) {
+            console.log('📋 Checking character manager...');
+            window.characterManager.characters.forEach(char => {
+                addCharacter(char, 'character manager');
+            });
+        }
+        
+        // 2. Check IndexedDB (existing migrated characters)
+        try {
+            console.log('📋 Checking IndexedDB...');
+            const indexedChars = await window.advancedStorageManager.getItem('wasteland_characters');
+            if (indexedChars && Array.isArray(indexedChars)) {
+                indexedChars.forEach(char => addCharacter(char, 'IndexedDB'));
+            }
+        } catch (error) {
+            console.error('❌ Error checking IndexedDB:', error);
+        }
+        
+        // 3. Check raw localStorage
+        console.log('📋 Checking raw localStorage...');
+        const rawData = localStorage.getItem('wasteland_characters');
+        if (rawData) {
+            try {
+                const parsedData = JSON.parse(rawData);
+                if (Array.isArray(parsedData)) {
+                    parsedData.forEach(char => addCharacter(char, 'localStorage'));
+                }
+            } catch (error) {
+                console.error('❌ Error parsing localStorage wasteland_characters:', error);
+            }
+        }
+        
+        // 4. Check compressed localStorage via advancedStorageManager
+        try {
+            console.log('📋 Checking compressed localStorage...');
+            const compressedChars = window.advancedStorageManager.getLocalStorageItem('wasteland_characters');
+            if (compressedChars && Array.isArray(compressedChars)) {
+                compressedChars.forEach(char => addCharacter(char, 'compressed localStorage'));
+            }
+        } catch (error) {
+            console.error('❌ Error checking compressed localStorage:', error);
+        }
+        
+        // 5. Check alternative character storage keys
+        console.log('📋 Checking alternative storage keys...');
+        const alternativeKeys = ['characterData', 'savedCharacters', 'characters'];
+        for (const key of alternativeKeys) {
+            const data = localStorage.getItem(key);
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach(char => addCharacter(char, `localStorage.${key}`));
+                    } else if (parsed && typeof parsed === 'object' && parsed.name) {
+                        addCharacter(parsed, `localStorage.${key} (single)`);
+                    }
+                } catch (error) {
+                    console.error(`❌ Error parsing ${key}:`, error);
+                }
+            }
+        }
+        
+        console.log(`🎭 Migration summary: Found ${allCharacters.length} unique characters`);
+        
+        // Save all characters to IndexedDB as the authoritative source
+        if (allCharacters.length > 0) {
+            console.log('💾 Saving all characters to IndexedDB...');
+            await window.advancedStorageManager.setItem('wasteland_characters', allCharacters, { forceMethod: 'indexeddb' });
+            
+            // Clean up old localStorage character data
+            localStorage.removeItem('wasteland_characters');
+            localStorage.removeItem('characterData');
+            localStorage.removeItem('savedCharacters');
+            localStorage.removeItem('characters');
+            
+            console.log('🧹 Cleaned up old character storage locations');
+            console.log('✅ All characters now stored in IndexedDB');
+            
+            // Update character manager
+            if (window.characterManager) {
+                window.characterManager.characters = allCharacters;
+            }
+        }
+        
+        return allCharacters;
     }
 
     // Get migration status
