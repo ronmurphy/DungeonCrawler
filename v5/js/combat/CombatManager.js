@@ -1049,8 +1049,24 @@ export class CombatManager {
         } else {
             // Use player's avatarUrl from character data
             const playerData = participant.combatData;
-            const avatarUrl = playerData?.personal?.avatarUrl || playerData?.avatarUrl || 'assets/enemies/rat.jpeg';
-            return avatarUrl;
+            
+            // Check for new avatarUrl system first
+            if (playerData?.personal?.avatarUrl) {
+                return playerData.personal.avatarUrl;
+            }
+            
+            // Check for legacy base64 portrait system
+            if (playerData?.personal?.portrait) {
+                return playerData.personal.portrait;
+            }
+            
+            // Check for direct avatarUrl (alternative format)
+            if (playerData?.avatarUrl) {
+                return playerData.avatarUrl;
+            }
+            
+            // Final fallback - but NOT to enemy image
+            return 'assets/avatars/default.png';
         }
     }
 

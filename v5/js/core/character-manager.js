@@ -80,30 +80,52 @@ async function loadCharactersFromStorage() {
     try {
         let characters = null;
         
-        // Try advanced storage manager first
+        // Try advanced storage manager first (IndexedDB primary)
         if (window.advancedStorageManager) {
             characters = await window.advancedStorageManager.getItem('wasteland_characters');
-            console.log('Loaded characters from advanced storage:', characters ? characters.length : 0);
+            console.log('🔄 [STORAGE] Loaded characters from IndexedDB:', characters ? characters.length : 0);
         }
         
-        // Fallback to localStorage if no data found
+        // CRITICAL FIX: Use advancedStorageManager for localStorage fallback too
+        // Don't bypass the compression system!
+        if (!characters && window.advancedStorageManager) {
+            // Let advancedStorageManager handle localStorage decompression
+            const localValue = window.advancedStorageManager.getLocalStorageItem('wasteland_characters');
+            if (localValue && Array.isArray(localValue)) {
+                characters = localValue;
+                console.log('🔄 [STORAGE] Loaded characters from localStorage (decompressed):', characters.length);
+                
+                // Migrate to IndexedDB since we found localStorage data
+                console.log('🔄 Migrating characters from localStorage to IndexedDB...');
+                await window.advancedStorageManager.setItem('wasteland_characters', characters);
+                console.log('✅ Characters migrated to IndexedDB');
+            }
+        }
+        
+        // Final fallback: try raw localStorage (legacy data)
         if (!characters) {
             const stored = localStorage.getItem('wasteland_characters');
             if (stored) {
-                characters = JSON.parse(stored);
-                console.log('Loaded characters from localStorage:', characters.length);
-                
-                // Migrate to advanced storage if available
-                if (window.advancedStorageManager && characters.length > 0) {
-                    console.log('🔄 Migrating characters to advanced storage...');
-                    await window.advancedStorageManager.setItem('wasteland_characters', characters);
-                    localStorage.removeItem('wasteland_characters');
-                    console.log('✅ Characters migrated to advanced storage');
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) {
+                        characters = parsed;
+                        console.log('🔄 [STORAGE] Loaded characters from raw localStorage (legacy):', characters.length);
+                        
+                        // Migrate legacy data to IndexedDB
+                        if (window.advancedStorageManager) {
+                            console.log('🔄 Migrating legacy characters to IndexedDB...');
+                            await window.advancedStorageManager.setItem('wasteland_characters', characters);
+                            console.log('✅ Legacy characters migrated to IndexedDB');
+                        }
+                    }
+                } catch (parseError) {
+                    console.warn('⚠️ Failed to parse raw localStorage data:', parseError);
                 }
             }
         }
         
-        if (characters) {
+        if (characters && Array.isArray(characters)) {
             characterManager.characters = characters;
         } else {
             characterManager.characters = [];
@@ -111,7 +133,7 @@ async function loadCharactersFromStorage() {
         
         return true;
     } catch (error) {
-        console.error('Failed to load characters:', error);
+        console.error('❌ Failed to load characters:', error);
         characterManager.characters = [];
         return false;
     }
