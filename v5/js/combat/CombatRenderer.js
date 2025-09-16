@@ -414,7 +414,17 @@ export class CombatRenderer {
             transition: all 0.2s ease;
         `;
 
-        // Enemy name
+        // Enemy name with revenge indicator
+        const nameContainer = document.createElement('div');
+        nameContainer.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            width: 100%;
+            justify-content: center;
+            position: relative;
+        `;
+        
         const nameLabel = document.createElement('div');
         nameLabel.textContent = enemyData.name;
         nameLabel.style.cssText = `
@@ -424,6 +434,45 @@ export class CombatRenderer {
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
             text-align: center;
         `;
+        
+        // Check if this enemy has the player's stolen loot (for THIS encounter)
+        let hasPlayerLoot = false;
+        if (window.combatManager && window.combatManager.currentRevengeEncounter) {
+            const revengeEnemy = window.combatManager.currentRevengeEncounter.enemyType;
+            hasPlayerLoot = (revengeEnemy === enemyData.name || revengeEnemy === enemyData.type);
+        }
+        
+        nameContainer.appendChild(nameLabel);
+        
+        // Add revenge indicator if this enemy has player's loot
+        if (hasPlayerLoot) {
+            const revengeIndicator = document.createElement('div');
+            revengeIndicator.innerHTML = '💰';
+            revengeIndicator.style.cssText = `
+                position: absolute;
+                top: -2px;
+                left: -2px;
+                font-size: 14px;
+                filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8));
+                animation: pulse 1.5s ease-in-out infinite;
+            `;
+            
+            // Add pulsing animation CSS if not already added
+            if (!document.getElementById('revenge-indicator-animation')) {
+                const style = document.createElement('style');
+                style.id = 'revenge-indicator-animation';
+                style.textContent = `
+                    @keyframes pulse {
+                        0%, 100% { transform: scale(1); opacity: 1; }
+                        50% { transform: scale(1.2); opacity: 0.8; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            nameContainer.appendChild(revengeIndicator);
+            console.log(`💰 Added revenge indicator to ${enemyData.name} - they have your loot!`);
+        }
 
         // HP Bar
         const hpBarContainer = document.createElement('div');
@@ -482,7 +531,7 @@ export class CombatRenderer {
         }
 
         // Assemble the enemy bar
-        enemyBar.appendChild(nameLabel);
+        enemyBar.appendChild(nameContainer);
         enemyBar.appendChild(hpBarContainer);
         if (mpBarContainer) enemyBar.appendChild(mpBarContainer);
         

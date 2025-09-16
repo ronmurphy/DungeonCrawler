@@ -14,8 +14,13 @@ export class CombatManager {
         // Combat state
         this.currentCombat = null;
         this.activeEnemies = [];
+        this.currentEnemies = []; // Store enemy data for revenge revival
         this.combatLog = [];
         this.isHandlingDeath = false; // Flag to prevent normal combat end during death sequence
+        
+        // Enemy looting system - track what enemies have taken from players
+        this.lootedByEnemies = []; // Array of: { enemyType, gold, items[], timestamp, encounterChance }
+        this.currentRevengeEncounter = null; // Set when current combat is a revenge encounter
         
         // Combat statistics tracking
         this.combatStats = {
@@ -31,6 +36,7 @@ export class CombatManager {
     init() {
         this.createCombatModal();
         this.setupEventListeners();
+        this.loadLootedEnemies(); // Load any previously looted enemy data
     }
 
     /**
@@ -101,25 +107,55 @@ export class CombatManager {
                             <p class="death-subtitle">Your adventure comes to an end...</p>
                         </div>
                         <div class="death-modal-body">
-                            <div class="death-consequences">
-                                <h3>Revival Consequences:</h3>
-                                <div class="consequence-item">
-                                    <span class="consequence-icon">💰</span>
-                                    <span class="consequence-text">Lose <span id="gold-loss">0</span> gold (half of current gold)</span>
-                                </div>
-                                <div class="consequence-item">
-                                    <span class="consequence-icon">🎒</span>
-                                    <span class="consequence-text">Lose one random item: <span id="item-loss">Unknown Item</span></span>
-                                </div>
-                            </div>
                             <div class="death-choice">
-                                <p class="choice-question">Do you wish to be revived and return to the overworld?</p>
-                                <div class="death-buttons">
-                                    <button class="btn-revive" id="revive-yes" onclick="window.combatManager.handleRevival(true)">
-                                        ✨ Yes, Revive Me
+                                <p class="choice-question">Choose your revival path:</p>
+                                
+                                <!-- Revenge Option -->
+                                <div class="revival-option">
+                                    <h3 class="option-title">⚔️ Return to Combat (Revenge)</h3>
+                                    <div class="option-description">
+                                        Face your killer again with determination! Less penalty but you must fight.
+                                    </div>
+                                    <div class="option-consequences">
+                                        <div class="consequence-item">
+                                            <span class="consequence-icon">💰</span>
+                                            <span class="consequence-text">Lose <span id="revenge-gold-loss">0</span> gold (half of current)</span>
+                                        </div>
+                                        <div class="consequence-item">
+                                            <span class="consequence-icon">🎒</span>
+                                            <span class="consequence-text">Lose: <span id="revenge-item-loss">1 random item</span></span>
+                                        </div>
+                                    </div>
+                                    <button class="btn-revive revenge-btn" onclick="window.combatManager.handleRevival('revenge')">
+                                        ⚔️ Face My Killer Again
                                     </button>
-                                    <button class="btn-stay-dead" id="revive-no" onclick="window.combatManager.handleRevival(false)">
-                                        💀 No, Return to Character Selection
+                                </div>
+                                
+                                <!-- Retreat Option -->
+                                <div class="revival-option">
+                                    <h3 class="option-title">🏃 Retreat to Map (Safe Escape)</h3>
+                                    <div class="option-description">
+                                        Return safely to the overworld. Higher penalty but guaranteed safety.
+                                    </div>
+                                    <div class="option-consequences">
+                                        <div class="consequence-item">
+                                            <span class="consequence-icon">💰</span>
+                                            <span class="consequence-text">Lose <span id="retreat-gold-loss">0</span> gold (2/3 of current)</span>
+                                        </div>
+                                        <div class="consequence-item">
+                                            <span class="consequence-icon">🎒</span>
+                                            <span class="consequence-text">Lose: <span id="retreat-item-loss">2 random items</span></span>
+                                        </div>
+                                    </div>
+                                    <button class="btn-revive retreat-btn" onclick="window.combatManager.handleRevival('retreat')">
+                                        🏃 Retreat to Safety
+                                    </button>
+                                </div>
+                                
+                                <!-- Stay Dead Option -->
+                                <div class="revival-option stay-dead-option">
+                                    <button class="btn-stay-dead" onclick="window.combatManager.handleRevival(false)">
+                                        💀 Accept Death - Return to Character Selection
                                     </button>
                                 </div>
                             </div>
@@ -335,6 +371,17 @@ export class CombatManager {
                 text-shadow: 0 0 10px rgba(78, 255, 74, 0.5);
             }
             
+            .combat-results-title.revenge-victory {
+                color: #ff6b35;
+                text-shadow: 0 0 15px rgba(255, 107, 53, 0.8);
+                animation: revengePulse 2s ease-in-out infinite;
+            }
+            
+            @keyframes revengePulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+            }
+            
             .combat-results-title.defeat {
                 color: #ff4a4a;
                 text-shadow: 0 0 10px rgba(255, 74, 74, 0.5);
@@ -544,34 +591,62 @@ export class CombatManager {
                 padding: 25px;
             }
             
-            .death-consequences {
-                margin-bottom: 25px;
+            .revival-option {
+                background: rgba(30, 30, 50, 0.8);
+                border: 2px solid #4a9eff;
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 20px;
+                transition: all 0.3s ease;
             }
             
-            .death-consequences h3 {
-                color: #ff6b6b;
-                margin: 0 0 15px 0;
-                font-size: 1.2em;
+            .revival-option:hover {
+                border-color: #6bb6ff;
+                background: rgba(35, 35, 60, 0.9);
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(74, 158, 255, 0.3);
+            }
+            
+            .option-title {
+                color: #6bb6ff;
+                margin: 0 0 10px 0;
+                font-size: 1.3em;
+                font-weight: bold;
+                text-align: center;
+            }
+            
+            .option-description {
+                color: #cccccc;
+                margin-bottom: 15px;
+                text-align: center;
+                font-style: italic;
+                line-height: 1.4;
+            }
+            
+            .option-consequences {
+                margin-bottom: 20px;
             }
             
             .consequence-item {
                 display: flex;
                 align-items: center;
                 gap: 10px;
-                padding: 10px;
+                padding: 8px 12px;
                 background: rgba(139, 0, 0, 0.1);
                 border-radius: 8px;
-                margin-bottom: 10px;
+                margin-bottom: 8px;
                 border: 1px solid rgba(139, 0, 0, 0.3);
             }
             
             .consequence-icon {
                 font-size: 1.2em;
+                min-width: 24px;
             }
             
             .consequence-text {
                 color: #cccccc;
                 flex: 1;
+                font-size: 0.95em;
             }
             
             .death-choice {
@@ -580,15 +655,9 @@ export class CombatManager {
             
             .choice-question {
                 color: #ffffff;
-                font-size: 1.1em;
-                margin: 0 0 20px 0;
-            }
-            
-            .death-buttons {
-                display: flex;
-                gap: 15px;
-                justify-content: center;
-                flex-wrap: wrap;
+                font-size: 1.2em;
+                margin: 0 0 25px 0;
+                font-weight: bold;
             }
             
             .btn-revive {
@@ -596,18 +665,49 @@ export class CombatManager {
                 color: white;
                 border: none;
                 border-radius: 8px;
-                padding: 12px 25px;
+                padding: 15px 25px;
                 font-size: 1em;
                 font-weight: bold;
                 cursor: pointer;
                 transition: all 0.2s ease;
-                min-width: 140px;
+                width: 100%;
+                margin-top: 10px;
             }
             
             .btn-revive:hover {
                 background: linear-gradient(135deg, #357abd, #2e6a9e);
                 transform: translateY(-2px);
                 box-shadow: 0 5px 15px rgba(74, 158, 255, 0.4);
+            }
+            
+            .revenge-btn {
+                background: linear-gradient(135deg, #ff6b35, #e55a2b);
+            }
+            
+            .revenge-btn:hover {
+                background: linear-gradient(135deg, #e55a2b, #cc4f24);
+                box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+            }
+            
+            .retreat-btn {
+                background: linear-gradient(135deg, #4ecdc4, #44a39e);
+            }
+            
+            .retreat-btn:hover {
+                background: linear-gradient(135deg, #44a39e, #3a8e89);
+                box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+            }
+            
+            .stay-dead-option {
+                background: rgba(50, 20, 20, 0.8);
+                border: 2px solid #8b0000;
+                text-align: center;
+            }
+            
+            .stay-dead-option:hover {
+                border-color: #b30000;
+                background: rgba(60, 25, 25, 0.9);
+                box-shadow: 0 5px 15px rgba(139, 0, 0, 0.3);
             }
             
             .btn-stay-dead {
@@ -620,25 +720,13 @@ export class CombatManager {
                 font-weight: bold;
                 cursor: pointer;
                 transition: all 0.2s ease;
-                min-width: 140px;
+                width: 100%;
             }
             
             .btn-stay-dead:hover {
                 background: linear-gradient(135deg, #660000, #4d0000);
                 transform: translateY(-2px);
                 box-shadow: 0 5px 15px rgba(139, 0, 0, 0.4);
-            }
-            
-            @media (max-width: 768px) {
-                .death-buttons {
-                    flex-direction: column;
-                    align-items: center;
-                }
-                
-                .btn-revive, .btn-stay-dead {
-                    width: 100%;
-                    max-width: 200px;
-                }
             }
         `;
         document.head.appendChild(style);
@@ -685,6 +773,7 @@ export class CombatManager {
         this.isActive = true;
         this.mapRenderer = mapRenderer;
         this.currentCombat = encounter;
+        this.currentEnemies = encounter; // Store for revenge revival
         
         // Reset death handling flag for new combat
         this.isHandlingDeath = false;
@@ -696,6 +785,9 @@ export class CombatManager {
             startTime: Date.now(),
             endTime: null
         };
+        
+        // Check if this enemy previously looted the player for a revenge encounter
+        this.checkForRevengeEncounterStart();
         
         // Pause the map renderer
         if (this.mapRenderer && this.mapRenderer.pauseRendering) {
@@ -1827,6 +1919,9 @@ export class CombatManager {
         if (result === 'victory') {
             titleElement.textContent = '🎉 Victory!';
             titleElement.className = 'combat-results-title victory';
+            
+            // Check if this was a revenge encounter (enemy that previously looted player)
+            this.checkAndHandleRevengeVictory();
         } else if (result === 'defeat') {
             // Handle player death with revival system
             this.handlePlayerDeath();
@@ -2454,29 +2549,47 @@ export class CombatManager {
                 return;
             }
             
-            // Calculate consequences
-            const goldLoss = Math.floor((currentPlayer.gold || 0) / 2);
-            const lostItem = this.selectRandomItemToLose(currentPlayer);
+            // Calculate consequences for both revival options
+            const currentGold = currentPlayer.gold || 0;
             
-            console.log(`💰 Player current gold: ${currentPlayer.gold}, calculated loss: ${goldLoss}`);
+            // Revenge penalties: 1/2 gold + 1 item
+            const revengeGoldLoss = Math.floor(currentGold / 2);
+            const revengeItems = this.selectItemsToLose(currentPlayer, 1);
+            
+            // Retreat penalties: 2/3 gold + 2 items
+            const retreatGoldLoss = Math.floor(currentGold * 2 / 3);
+            const retreatItems = this.selectItemsToLose(currentPlayer, 2);
+            
+            console.log(`💰 Player current gold: ${currentGold}`);
+            console.log(`⚔️ Revenge loss: ${revengeGoldLoss} gold + ${revengeItems.length} items`);
+            console.log(`🏃 Retreat loss: ${retreatGoldLoss} gold + ${retreatItems.length} items`);
             
             // Update the death modal with consequences
-            const goldLossElement = document.getElementById('gold-loss');
-            const itemLossElement = document.getElementById('item-loss');
+            const revengeGoldElement = document.getElementById('revenge-gold-loss');
+            const revengeItemElement = document.getElementById('revenge-item-loss');
+            const retreatGoldElement = document.getElementById('retreat-gold-loss');
+            const retreatItemElement = document.getElementById('retreat-item-loss');
             
-            console.log('🔍 Gold loss element:', goldLossElement);
-            console.log('🔍 Item loss element:', itemLossElement);
-            
-            if (goldLossElement) {
-                goldLossElement.textContent = goldLoss;
-            } else {
-                console.error('❌ gold-loss element not found!');
+            if (revengeGoldElement) {
+                revengeGoldElement.textContent = revengeGoldLoss;
             }
             
-            if (itemLossElement) {
-                itemLossElement.textContent = lostItem ? lostItem.name : 'None';
-            } else {
-                console.error('❌ item-loss element not found!');
+            if (revengeItemElement) {
+                const revengeItemText = revengeItems.length > 0 ? 
+                    revengeItems.map(item => item.name).join(', ') : 
+                    'None (no items available)';
+                revengeItemElement.textContent = revengeItemText;
+            }
+            
+            if (retreatGoldElement) {
+                retreatGoldElement.textContent = retreatGoldLoss;
+            }
+            
+            if (retreatItemElement) {
+                const retreatItemText = retreatItems.length > 0 ? 
+                    retreatItems.map(item => item.name).join(', ') : 
+                    'None (no items available)';
+                retreatItemElement.textContent = retreatItemText;
             }
             
             // Show death modal
@@ -2493,7 +2606,6 @@ export class CombatManager {
             }
             
             // Don't hide combat modal during death - keep it as background
-            // combatModal.classList.add('hidden'); // REMOVED - keep combat visible as background
             deathModal.classList.remove('hidden');
             
             // EXTREME DEBUG: Force visibility with inline styles
@@ -2505,17 +2617,12 @@ export class CombatManager {
             deathModal.style.left = '0';
             deathModal.style.width = '100vw';
             deathModal.style.height = '100vh';
-            deathModal.style.backgroundColor = 'rgba(0, 0, 0, 0.95)'; // Dark background like other modals
+            deathModal.style.backgroundColor = 'rgba(0, 0, 0, 0.95)';
             
-            console.log(`💰 Death penalty: ${goldLoss} gold, item: ${lostItem?.name || 'none'}`);
-            console.log(`💀 Death modal should now be visible: ${!deathModal.classList.contains('hidden')}`);
+            console.log(` Death modal should now be visible with dual revival options`);
             console.log('🔍 Death modal classes:', deathModal.className);
             console.log('🔍 Death modal computed display:', window.getComputedStyle(deathModal).display);
             console.log('🔍 Death modal computed visibility:', window.getComputedStyle(deathModal).visibility);
-            console.log('🔍 Death modal computed z-index:', window.getComputedStyle(deathModal).zIndex);
-            console.log('🔍 Combat modal classes:', combatModal.className);
-            console.log('🔍 Combat modal computed display:', window.getComputedStyle(combatModal).display);
-            console.log('🔍 Combat modal computed visibility:', window.getComputedStyle(combatModal).visibility);
             
             // Force focus on death modal to ensure it stays visible
             deathModal.focus();
@@ -2565,18 +2672,21 @@ export class CombatManager {
     /**
      * Handle revival choice
      */
-    async handleRevival(revive) {
-        console.log(`💀 Revival choice: ${revive ? 'YES' : 'NO'}`);
+    async handleRevival(revivalType) {
+        console.log(`💀 Revival choice: ${revivalType}`);
         console.log('🔘 handleRevival called - button click working!');
         
         try {
-            if (revive) {
-                // Apply death penalties and revive
-                await this.applyDeathPenalties();
+            if (revivalType === 'revenge' || revivalType === 'retreat') {
+                // Apply death penalties based on revival type
+                await this.applyDeathPenalties(revivalType);
                 
-                // Heal to 1 HP for revival
+                // Heal to half HP for revival (more fair than 1 HP)
+                const maxHP = window.character.maxHealthPoints || 100;
+                const revivalHP = Math.floor(maxHP / 2);
+                
                 if (window.character) {
-                    window.character.currentHealthPoints = 1;
+                    window.character.currentHealthPoints = revivalHP;
                     
                     // Update characterManager array too
                     if (window.characterManager && window.characterManager.currentCharacterId) {
@@ -2584,7 +2694,103 @@ export class CombatManager {
                             char => char.id === window.characterManager.currentCharacterId
                         );
                         if (charIndex !== -1) {
-                            window.characterManager.characters[charIndex].currentHealthPoints = 1;
+                            window.characterManager.characters[charIndex].currentHealthPoints = revivalHP;
+                        }
+                    }
+                    
+                    // Save the changes
+                    await saveCharactersToStorage();
+                }
+                
+                // Hide death modal
+                const deathModal = document.getElementById('death-modal');
+                deathModal.classList.add('hidden');
+                console.log('💀 Death modal hidden:', deathModal.classList.contains('hidden'));
+                
+                // Reset death modal inline styles
+                deathModal.style.display = '';
+                deathModal.style.visibility = '';
+                deathModal.style.zIndex = '';
+                deathModal.style.position = '';
+                deathModal.style.top = '';
+                deathModal.style.left = '';
+                deathModal.style.width = '';
+                deathModal.style.height = '';
+                deathModal.style.backgroundColor = '';
+                console.log('💀 Death modal styles reset');
+                
+                if (revivalType === 'revenge') {
+                    // Continue existing combat - player gets up from the ground!
+                    console.log('⚔️ Revenge revival - continuing current combat');
+                    if (window.addChatMessage) {
+                        window.addChatMessage('⚔️ You rise from the ground, determined for revenge! Combat continues...', 'system');
+                    }
+                    
+                    // Reset death handling flag to allow combat to continue normally
+                    this.isHandlingDeath = false;
+                    
+                    // Update party manager to reflect the player is alive again with half HP
+                    if (this.partyManager && this.partyManager.members && Array.isArray(this.partyManager.members)) {
+                        const playerMember = this.partyManager.members.find(member => member.isPlayer);
+                        if (playerMember) {
+                            const maxHP = playerMember.maxHealthPoints || 100;
+                            playerMember.currentHealthPoints = Math.floor(maxHP / 2);
+                            // Sync the revival to persistent storage
+                            this.partyManager.syncMemberToPersistentCharacter(playerMember);
+                        }
+                    } else {
+                        console.warn('⚠️ PartyManager not available for revenge revival HP update');
+                    }
+                    
+                    // Continue combat - no restart needed, enemy keeps their current state!
+                    console.log('⚔️ Combat continues with enemy at current health, player at half HP');
+                    
+                } else if (revivalType === 'retreat') {
+                    // Retreat to map - end combat and return to overworld
+                    console.log('🏃 Retreat revival - returning to map');
+                    
+                    // Check if we have a map to return to
+                    if (this.mapRenderer && this.mapRenderer.resumeRendering) {
+                        // Return to map
+                        this.forceEndCombat();
+                        
+                        // Show retreat notification
+                        if (window.addChatMessage) {
+                            window.addChatMessage('🏃 You retreat to safety! You return to the overworld with half health.', 'system');
+                        }
+                        
+                        console.log('✨ Player retreated to overworld');
+                    } else {
+                        // No map available - just close combat
+                        this.forceEndCombat();
+                        
+                        // Show retreat notification
+                        if (window.addChatMessage) {
+                            window.addChatMessage('🏃 You retreat to safety with half health!', 'system');
+                        }
+                        
+                        console.log('✨ Player retreated - no map to return to, staying in current view');
+                    }
+                }
+                
+            } else if (revivalType === true) {
+                // Legacy support for old revival system
+                await this.applyDeathPenalties('retreat');
+                
+                // Heal to half HP for revival (more fair than 1 HP)
+                const maxHP = window.character.maxHealthPoints || 100;
+                const revivalHP = Math.floor(maxHP / 2);
+                
+                if (window.character) {
+                    window.character.currentHealthPoints = revivalHP;
+                    
+                    // Update characterManager array too
+                    if (window.characterManager && window.characterManager.currentCharacterId) {
+                        const charIndex = window.characterManager.characters.findIndex(
+                            char => char.id === window.characterManager.currentCharacterId
+                        );
+                        if (charIndex !== -1) {
+                            window.characterManager.characters[charIndex].currentHealthPoints = revivalHP;
                         }
                     }
                     
@@ -2616,7 +2822,7 @@ export class CombatManager {
                     
                     // Show revival notification
                     if (window.addChatMessage) {
-                        window.addChatMessage('✨ You have been revived! You return to the overworld with 1 HP.', 'system');
+                        window.addChatMessage('✨ You have been revived! You return to the overworld with half health.', 'system');
                     }
                     
                     console.log('✨ Player revived and returned to overworld');
@@ -2626,7 +2832,7 @@ export class CombatManager {
                     
                     // Show revival notification
                     if (window.addChatMessage) {
-                        window.addChatMessage('✨ You have been revived with 1 HP!', 'system');
+                        window.addChatMessage('✨ You have been revived with half health!', 'system');
                     }
                     
                     console.log('✨ Player revived - no map to return to, staying in current view');
@@ -2675,26 +2881,36 @@ export class CombatManager {
     }
     
     /**
-     * Apply death penalties (lose gold and item)
+     * Apply death penalties (lose gold and items based on revival type)
      */
-    async applyDeathPenalties() {
+    async applyDeathPenalties(revivalType = 'retreat') {
         try {
             const currentPlayer = this.getCurrentCharacterData();
             if (!currentPlayer) return;
             
-            // Calculate gold loss (half of current gold)
-            const goldLoss = Math.floor(currentPlayer.gold / 2);
+            let goldLoss, itemsToLose;
+            
+            if (revivalType === 'revenge') {
+                // Revenge: lose 1/2 gold + 1 item
+                goldLoss = Math.floor(currentPlayer.gold / 2);
+                itemsToLose = 1;
+            } else {
+                // Retreat: lose 2/3 gold + 2 items
+                goldLoss = Math.floor(currentPlayer.gold * 2 / 3);
+                itemsToLose = 2;
+            }
+            
             const newGold = currentPlayer.gold - goldLoss;
             
-            // Select item to lose
-            const lostItem = this.selectRandomItemToLose(currentPlayer);
+            // Select items to lose based on smart priority
+            const lostItems = this.selectItemsToLose(currentPlayer, itemsToLose);
             
             // Apply gold penalty to character
             if (window.character) {
                 window.character.gold = newGold;
             }
             
-            // Apply gold penalty to characterManager array
+            // Apply penalties to characterManager array
             if (window.characterManager && window.characterManager.currentCharacterId) {
                 const charIndex = window.characterManager.characters.findIndex(
                     char => char.id === window.characterManager.currentCharacterId
@@ -2702,8 +2918,8 @@ export class CombatManager {
                 if (charIndex !== -1) {
                     window.characterManager.characters[charIndex].gold = newGold;
                     
-                    // Remove the lost item
-                    if (lostItem) {
+                    // Remove the lost items
+                    lostItems.forEach(lostItem => {
                         if (lostItem.equipped) {
                             // Remove equipped item
                             if (window.characterManager.characters[charIndex].equipment) {
@@ -2720,31 +2936,470 @@ export class CombatManager {
                                 }
                             }
                         }
-                    }
+                    });
                 }
             }
             
             // Also update global character object
-            if (window.character && lostItem) {
-                if (lostItem.equipped) {
-                    if (window.character.equipment) {
-                        window.character.equipment[lostItem.slot] = { name: 'None' };
-                    }
-                } else {
-                    if (window.character.inventory) {
-                        const itemIndex = window.character.inventory.findIndex(item => item.name === lostItem.name);
-                        if (itemIndex !== -1) {
-                            window.character.inventory.splice(itemIndex, 1);
+            if (window.character) {
+                lostItems.forEach(lostItem => {
+                    if (lostItem.equipped) {
+                        if (window.character.equipment) {
+                            window.character.equipment[lostItem.slot] = { name: 'None' };
+                        }
+                    } else {
+                        if (window.character.inventory) {
+                            const itemIndex = window.character.inventory.findIndex(item => item.name === lostItem.name);
+                            if (itemIndex !== -1) {
+                                window.character.inventory.splice(itemIndex, 1);
+                            }
                         }
                     }
-                }
+                });
             }
             
-            console.log(`💰 Applied death penalties: -${goldLoss} gold (${newGold} remaining), lost item: ${lostItem?.name || 'none'}`);
+            const lostItemNames = lostItems.map(item => item.name).join(', ') || 'none';
+            console.log(`💰 Applied ${revivalType} death penalties: -${goldLoss} gold (${newGold} remaining), lost items: ${lostItemNames}`);
+            
+            // Track what the enemy looted for potential recovery
+            if (revivalType === 'retreat') {
+                // Only track loot for retreat - revenge means fighting same enemy so no loot tracking needed
+                this.trackEnemyLoot(goldLoss, lostItems);
+            }
             
         } catch (error) {
             console.error('❌ Error applying death penalties:', error);
         }
+    }
+    
+    /**
+     * Track what an enemy has looted from the player for potential recovery
+     */
+    trackEnemyLoot(goldLoss, lostItems) {
+        try {
+            // Determine enemy type from current combat
+            let enemyType = 'Unknown Enemy';
+            if (this.currentCombat && this.currentCombat.enemies && this.currentCombat.enemies.length > 0) {
+                enemyType = this.currentCombat.enemies[0].name || this.currentCombat.enemies[0].type || 'Unknown Enemy';
+            }
+            
+            // Create loot record
+            const lootRecord = {
+                enemyType: enemyType,
+                gold: goldLoss,
+                items: lostItems.map(item => ({
+                    name: item.name,
+                    equipped: item.equipped,
+                    slot: item.slot
+                })),
+                timestamp: Date.now(),
+                encounterChance: 1.5 // Base 1.5% chance to encounter this enemy
+            };
+            
+            // Add to looted enemies list
+            this.lootedByEnemies.push(lootRecord);
+            
+            // Save to localStorage for persistence
+            this.saveLootedEnemies();
+            
+            console.log(`📦 Enemy "${enemyType}" has looted: ${goldLoss} gold + ${lostItems.length} items`);
+            console.log(`🎯 Current encounter chance: ${lootRecord.encounterChance}%`);
+            
+        } catch (error) {
+            console.error('❌ Error tracking enemy loot:', error);
+        }
+    }
+    
+    /**
+     * Save looted enemies data to localStorage
+     */
+    saveLootedEnemies() {
+        try {
+            localStorage.setItem('dungeonCrawler_lootedEnemies', JSON.stringify(this.lootedByEnemies));
+        } catch (error) {
+            console.error('❌ Error saving looted enemies:', error);
+        }
+    }
+    
+    /**
+     * Load looted enemies data from localStorage
+     */
+    loadLootedEnemies() {
+        try {
+            const saved = localStorage.getItem('dungeonCrawler_lootedEnemies');
+            if (saved) {
+                this.lootedByEnemies = JSON.parse(saved);
+                console.log(`📦 Loaded ${this.lootedByEnemies.length} looted enemy records`);
+            }
+        } catch (error) {
+            console.error('❌ Error loading looted enemies:', error);
+            this.lootedByEnemies = [];
+        }
+    }
+    
+    /**
+     * Check if current enemy encounter should be a revenge encounter
+     */
+    checkForRevengeEncounter(enemyType) {
+        try {
+            // Find any looted records for this enemy type
+            const lootRecord = this.lootedByEnemies.find(record => record.enemyType === enemyType);
+            if (!lootRecord) return false;
+            
+            // Roll for encounter chance
+            const roll = Math.random() * 100;
+            const success = roll < lootRecord.encounterChance;
+            
+            if (success) {
+                console.log(`🎯 REVENGE ENCOUNTER! Found the "${enemyType}" that looted you!`);
+                console.log(`📦 They have: ${lootRecord.gold} gold + ${lootRecord.items.length} items`);
+                return lootRecord;
+            } else {
+                // Increase encounter chance for next time
+                lootRecord.encounterChance += 1.5; // Compound by 1.5% each time
+                this.saveLootedEnemies();
+                console.log(`🎯 Missed revenge encounter. New chance: ${lootRecord.encounterChance}%`);
+            }
+            
+            return false;
+        } catch (error) {
+            console.error('❌ Error checking revenge encounter:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * Select items to lose based on smart priority system
+     */
+    selectItemsToLose(player, count) {
+        const allItems = [];
+        
+        // Collect all items with priority scores
+        // Priority: 1 = healing items (lose first), 2 = accessories, 3 = offhand, 4 = weapons/armor (lose last)
+        
+        // Check inventory for healing items and accessories
+        if (player.inventory) {
+            player.inventory.forEach(item => {
+                let priority = 2; // Default: accessories
+                
+                if (item.name && (
+                    item.name.toLowerCase().includes('potion') ||
+                    item.name.toLowerCase().includes('heal') ||
+                    item.name.toLowerCase().includes('remedy') ||
+                    item.name.toLowerCase().includes('elixir')
+                )) {
+                    priority = 1; // Healing items go first
+                }
+                
+                allItems.push({
+                    name: item.name,
+                    priority: priority,
+                    equipped: false,
+                    slot: null,
+                    source: 'inventory'
+                });
+            });
+        }
+        
+        // Check equipped items
+        if (player.equipment) {
+            Object.entries(player.equipment).forEach(([slot, item]) => {
+                if (item && item.name && item.name !== 'None') {
+                    let priority = 4; // Default: weapons/armor (protect last)
+                    
+                    if (slot === 'accessory1' || slot === 'accessory2' || slot === 'ring') {
+                        priority = 2; // Accessories
+                    } else if (slot === 'offhand' || slot === 'shield') {
+                        priority = 3; // Offhand/shield
+                    }
+                    
+                    allItems.push({
+                        name: item.name,
+                        priority: priority,
+                        equipped: true,
+                        slot: slot,
+                        source: 'equipment'
+                    });
+                }
+            });
+        }
+        
+        // If no items available, return empty array
+        if (allItems.length === 0) {
+            return [];
+        }
+        
+        // Sort by priority (lower number = lost first), then randomly
+        allItems.sort((a, b) => {
+            if (a.priority !== b.priority) {
+                return a.priority - b.priority;
+            }
+            return Math.random() - 0.5; // Random for same priority
+        });
+        
+        // Return up to 'count' items, but don't exceed available items
+        return allItems.slice(0, Math.min(count, allItems.length));
+    }
+    
+    /**
+     * Check if current enemy encounter should be a revenge encounter at combat start
+     */
+    checkForRevengeEncounterStart() {
+        console.log('🔍 checkForRevengeEncounterStart() called!');
+        try {
+            // Determine enemy type from current combat
+            let enemyType = 'Unknown Enemy';
+            if (this.currentCombat && this.currentCombat.enemies && this.currentCombat.enemies.length > 0) {
+                enemyType = this.currentCombat.enemies[0].name || this.currentCombat.enemies[0].type || 'Unknown Enemy';
+            }
+            
+            console.log(`🔍 Checking revenge encounter for enemy: "${enemyType}"`);
+            console.log(`🔍 Current looted enemies count: ${this.lootedByEnemies.length}`);
+            this.lootedByEnemies.forEach((record, index) => {
+                console.log(`   ${index + 1}. "${record.enemyType}" - ${record.encounterChance}% chance`);
+            });
+            
+            // Find if this enemy type had looted the player before
+            const lootRecord = this.lootedByEnemies.find(record => record.enemyType === enemyType);
+            
+            if (lootRecord) {
+                console.log(`📦 Found loot record for "${enemyType}" with ${lootRecord.encounterChance}% chance`);
+                
+                // Roll for encounter chance
+                const roll = Math.random() * 100;
+                const success = roll < lootRecord.encounterChance;
+                
+                console.log(`🎲 Rolling for revenge encounter: ${roll.toFixed(1)}% vs ${lootRecord.encounterChance}% threshold = ${success ? 'SUCCESS' : 'FAILED'}`);
+                
+                if (success) {
+                    // This is THE enemy that looted us! Mark as revenge encounter
+                    this.currentRevengeEncounter = lootRecord;
+                    
+                    // Show special start message
+                    if (window.addChatMessage) {
+                        window.addChatMessage(`😡 Wait... that ${enemyType} looks familiar! They have your stolen gear!`, 'system');
+                        window.addChatMessage(`💰 If you defeat them, you can recover ${lootRecord.gold} gold and ${lootRecord.items.length} items!`, 'system');
+                    }
+                    
+                    console.log(`😡 REVENGE ENCOUNTER! This ${enemyType} has our stolen loot!`);
+                    console.log(`💰 Can recover: ${lootRecord.gold} gold + ${lootRecord.items.length} items`);
+                } else {
+                    // Failed the roll, increase encounter chance for next time
+                    const oldChance = lootRecord.encounterChance;
+                    lootRecord.encounterChance += 1.5;
+                    this.saveLootedEnemies();
+                    console.log(`🎯 Missed revenge encounter. Chance increased: ${oldChance}% -> ${lootRecord.encounterChance}%`);
+                    
+                    // Not a revenge encounter
+                    this.currentRevengeEncounter = null;
+                }
+            } else {
+                console.log(`❌ No loot record found for enemy type: "${enemyType}"`);
+                // No loot record for this enemy type
+                this.currentRevengeEncounter = null;
+            }
+            
+        } catch (error) {
+            console.error('❌ Error checking revenge encounter start:', error);
+            this.currentRevengeEncounter = null;
+        }
+    }
+    
+    /**
+     * Check if the defeated enemy was one that previously looted the player
+     */
+    checkAndHandleRevengeVictory() {
+        try {
+            // Determine enemy type from current combat
+            let enemyType = 'Unknown Enemy';
+            if (this.currentCombat && this.currentCombat.enemies && this.currentCombat.enemies.length > 0) {
+                enemyType = this.currentCombat.enemies[0].name || this.currentCombat.enemies[0].type || 'Unknown Enemy';
+            }
+            
+            // Find if this enemy type had looted the player before
+            const lootRecordIndex = this.lootedByEnemies.findIndex(record => record.enemyType === enemyType);
+            
+            if (lootRecordIndex !== -1) {
+                const lootRecord = this.lootedByEnemies[lootRecordIndex];
+                
+                // REVENGE COMPLETE! Recover the stolen goods
+                this.recoverStolenGoods(lootRecord);
+                
+                // Remove the loot record since we got our stuff back
+                this.lootedByEnemies.splice(lootRecordIndex, 1);
+                this.saveLootedEnemies();
+                
+                // Show special revenge victory message
+                const titleElement = document.getElementById('combat-results-title');
+                titleElement.textContent = '⚔️ REVENGE COMPLETE! 💰';
+                titleElement.className = 'combat-results-title revenge-victory';
+                
+                // Add special message to chat
+                if (window.addChatMessage) {
+                    window.addChatMessage(`⚔️ Hey, this guy had your gear! No wonder he looked familiar...`, 'system');
+                    window.addChatMessage(`💰 You recovered ${lootRecord.gold} gold and ${lootRecord.items.length} stolen items!`, 'system');
+                }
+                
+                console.log(`⚔️ REVENGE COMPLETE! Defeated "${enemyType}" and recovered stolen goods!`);
+            }
+            
+        } catch (error) {
+            console.error('❌ Error checking revenge victory:', error);
+        }
+    }
+    
+    /**
+     * Recover stolen goods from defeated enemy
+     */
+    recoverStolenGoods(lootRecord) {
+        try {
+            const currentPlayer = this.getCurrentCharacterData();
+            if (!currentPlayer) return;
+            
+            // Recover gold
+            const newGold = (currentPlayer.gold || 0) + lootRecord.gold;
+            
+            // Update gold in all character storage locations
+            if (window.character) {
+                window.character.gold = newGold;
+            }
+            
+            if (window.characterManager && window.characterManager.currentCharacterId) {
+                const charIndex = window.characterManager.characters.findIndex(
+                    char => char.id === window.characterManager.currentCharacterId
+                );
+                if (charIndex !== -1) {
+                    window.characterManager.characters[charIndex].gold = newGold;
+                }
+            }
+            
+            // Recover items
+            lootRecord.items.forEach(stolenItem => {
+                if (stolenItem.equipped) {
+                    // Re-equip the item
+                    if (window.character && window.character.equipment) {
+                        window.character.equipment[stolenItem.slot] = { name: stolenItem.name };
+                    }
+                    
+                    if (window.characterManager && window.characterManager.currentCharacterId) {
+                        const charIndex = window.characterManager.characters.findIndex(
+                            char => char.id === window.characterManager.currentCharacterId
+                        );
+                        if (charIndex !== -1 && window.characterManager.characters[charIndex].equipment) {
+                            window.characterManager.characters[charIndex].equipment[stolenItem.slot] = { name: stolenItem.name };
+                        }
+                    }
+                } else {
+                    // Add back to inventory
+                    if (window.character && window.character.inventory) {
+                        window.character.inventory.push({ name: stolenItem.name });
+                    }
+                    
+                    if (window.characterManager && window.characterManager.currentCharacterId) {
+                        const charIndex = window.characterManager.characters.findIndex(
+                            char => char.id === window.characterManager.currentCharacterId
+                        );
+                        if (charIndex !== -1 && window.characterManager.characters[charIndex].inventory) {
+                            window.characterManager.characters[charIndex].inventory.push({ name: stolenItem.name });
+                        }
+                    }
+                }
+            });
+            
+            // Save the recovered data
+            saveCharactersToStorage();
+            
+            console.log(`💰 Recovered: ${lootRecord.gold} gold + ${lootRecord.items.length} items`);
+            
+        } catch (error) {
+            console.error('❌ Error recovering stolen goods:', error);
+        }
+    }
+    
+    /**
+     * DEBUG: Create a test revenge encounter for console testing
+     * Usage: window.combatManager.createTestRevengeEncounter()
+     */
+    createTestRevengeEncounter(enemyType = 'Goblin Grunt', gold = 100, items = ['Health Potion', 'Iron Sword'], encounterChance = 90) {
+        try {
+            // Create a test loot record
+            const testLootRecord = {
+                enemyType: enemyType,
+                gold: gold,
+                items: items.map(itemName => ({
+                    name: itemName,
+                    equipped: false,
+                    slot: null
+                })),
+                timestamp: Date.now(),
+                encounterChance: encounterChance
+            };
+            
+            // Remove any existing record for this enemy type
+            this.lootedByEnemies = this.lootedByEnemies.filter(record => record.enemyType !== enemyType);
+            
+            // Add the test record
+            this.lootedByEnemies.push(testLootRecord);
+            this.saveLootedEnemies();
+            
+            console.log(`🧪 TEST REVENGE ENCOUNTER CREATED:`);
+            console.log(`   Enemy: ${enemyType}`);
+            console.log(`   Stolen Gold: ${gold}`);
+            console.log(`   Stolen Items: ${items.join(', ')}`);
+            console.log(`   Encounter Chance: ${encounterChance}%`);
+            console.log(`📝 Next time you fight a ${enemyType}, you have a ${encounterChance}% chance for revenge!`);
+            
+            if (window.addChatMessage) {
+                window.addChatMessage(`🧪 DEBUG: Set up test revenge encounter with ${enemyType} (${encounterChance}% chance)`, 'system');
+            }
+            
+            return testLootRecord;
+            
+        } catch (error) {
+            console.error('❌ Error creating test revenge encounter:', error);
+        }
+    }
+    
+    /**
+     * DEBUG: Check current looted enemies list
+     * Usage: window.combatManager.showLootedEnemies()
+     */
+    showLootedEnemies() {
+        console.log(`📦 CURRENT LOOTED ENEMIES (${this.lootedByEnemies.length}):`);
+        this.lootedByEnemies.forEach((record, index) => {
+            console.log(`${index + 1}. ${record.enemyType}:`);
+            console.log(`   Gold: ${record.gold}`);
+            console.log(`   Items: ${record.items.map(item => item.name).join(', ')}`);
+            console.log(`   Encounter Chance: ${record.encounterChance}%`);
+            console.log(`   Date: ${new Date(record.timestamp).toLocaleString()}`);
+        });
+        
+        if (this.lootedByEnemies.length === 0) {
+            console.log('   (No enemies have looted you yet)');
+        }
+    }
+    
+    /**
+     * DEBUG: Clear all looted enemies
+     * Usage: window.combatManager.clearLootedEnemies()
+     */
+    clearLootedEnemies() {
+        this.lootedByEnemies = [];
+        this.saveLootedEnemies();
+        console.log('🧹 Cleared all looted enemies');
+        
+        if (window.addChatMessage) {
+            window.addChatMessage('🧹 DEBUG: Cleared all revenge encounters', 'system');
+        }
+    }
+    
+    /**
+     * DEBUG: Manually test revenge encounter check
+     * Usage: window.combatManager.testRevengeCheck()
+     */
+    testRevengeCheck() {
+        console.log('🧪 Manually testing revenge encounter check...');
+        this.checkForRevengeEncounterStart();
     }
 }
 
