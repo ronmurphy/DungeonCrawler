@@ -168,23 +168,12 @@ class AdvancedStorageManager {
 
     // Storage method selection
     getStorageMethod(key, dataSize = 0) {
-        // Large data (>100KB) goes to IndexedDB
-        if (dataSize > 100000 && this.isIndexedDBAvailable) {
+        // FIXED: Prefer IndexedDB as primary storage (consistent with getItem priority)
+        if (this.isIndexedDBAvailable) {
             return 'indexeddb';
         }
         
-        // Check localStorage availability and space
-        try {
-            const currentUsage = this.getLocalStorageUsage();
-            if (currentUsage.percentage > 80) {
-                if (this.isIndexedDBAvailable) {
-                    return 'indexeddb';
-                }
-            }
-        } catch (error) {
-            console.warn('⚠️ Could not check localStorage usage:', error);
-        }
-        
+        // Fallback to localStorage only if IndexedDB is not available
         return 'localstorage';
     }
 
@@ -220,15 +209,22 @@ class AdvancedStorageManager {
 
     async getItem(key) {
         try {
-            // Try localStorage first (faster)
-            const localValue = this.getLocalStorageItem(key);
-            if (localValue !== null) {
-                return localValue;
+            // FIXED: Try IndexedDB first (authoritative persistent storage)
+            if (this.isIndexedDBAvailable) {
+                const indexedDBValue = await this.getIndexedDBItem(key);
+                if (indexedDBValue !== null) {
+                    // Update localStorage cache with the authoritative IndexedDB data
+                    this.setLocalStorageItem(key, indexedDBValue);
+                    console.log(`🔄 [STORAGE] Retrieved ${key} from IndexedDB (authoritative)`);
+                    return indexedDBValue;
+                }
             }
             
-            // Try IndexedDB
-            if (this.isIndexedDBAvailable) {
-                return await this.getIndexedDBItem(key);
+            // Fallback to localStorage only if IndexedDB doesn't have the data
+            const localValue = this.getLocalStorageItem(key);
+            if (localValue !== null) {
+                console.log(`📦 [STORAGE] Retrieved ${key} from localStorage (fallback)`);
+                return localValue;
             }
             
             return null;

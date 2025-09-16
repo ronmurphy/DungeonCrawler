@@ -89,11 +89,15 @@ class UnifiedInventorySystem {
             const char = window.characterManager.characters.find(
                 c => c.id === window.characterManager.currentCharacterId
             );
-            if (char) return char;
+            if (char) {
+                console.log(`🔍 DEBUG getCurrentCharacter - Found character via manager: ${char.name}, Gold: ${char.gold}, ID: ${char.id}`);
+                return char;
+            }
         }
         
         // Fall back to global character object
         if (window.character) {
+            console.log(`🔍 DEBUG getCurrentCharacter - Using global character: ${window.character.name}, Gold: ${window.character.gold}`);
             return window.character;
         }
 
@@ -416,9 +420,17 @@ class UnifiedInventorySystem {
      * Add gold to character
      */
     async addGold(amount) {
+        // Pause auto-save during this critical operation
+        if (typeof window.pauseAutoSaveForInventory === 'function') {
+            window.pauseAutoSaveForInventory();
+        }
+        
         const character = this.getCurrentCharacter();
         if (!character) {
             console.error('❌ Cannot add gold: No character found');
+            if (typeof window.resumeAutoSaveForInventory === 'function') {
+                window.resumeAutoSaveForInventory();
+            }
             return false;
         }
 
@@ -426,8 +438,65 @@ class UnifiedInventorySystem {
         character.gold = oldGold + amount;
         console.log(`💰 Added ${amount} gold. Old: ${oldGold}, New: ${character.gold}`);
         
+        // CRITICAL FIX: Update ALL character references to prevent overwrites
+        // Update the global character object if it exists
+        if (window.character && window.character.id === character.id) {
+            window.character.gold = character.gold;
+            console.log(`🔄 Updated global character gold: ${window.character.gold}`);
+        }
+        
+        // Update the character manager array to prevent overwrites
+        if (window.characterManager && window.characterManager.characters) {
+            const charIndex = window.characterManager.characters.findIndex(c => c.id === character.id);
+            if (charIndex !== -1) {
+                window.characterManager.characters[charIndex].gold = character.gold;
+                console.log(`🔄 Updated character manager array gold: ${window.characterManager.characters[charIndex].gold}`);
+            }
+        }
+        
         await this.saveCharacter();
-        this.updateGoldDisplay();
+        
+        // CRITICAL FIX: Force a final character manager save with our updated data
+        if (window.characterManager && typeof window.characterManager.saveCharacter === 'function') {
+            console.log('🔄 Forcing character manager save with updated gold...');
+            await window.characterManager.saveCharacter(character);
+        }
+        
+        // CRITICAL FIX: Store the expected gold value and restore it if character manager overwrites it
+        const expectedGold = character.gold;
+        const characterId = character.id;
+        
+        setTimeout(() => {
+            console.log('🔄 Checking if character gold was overwritten...');
+            const currentChar = this.getCurrentCharacter();
+            if (currentChar && currentChar.id === characterId && currentChar.gold !== expectedGold) {
+                console.log(`⚠️ Character gold was overwritten! Restoring ${expectedGold} from ${currentChar.gold}`);
+                currentChar.gold = expectedGold;
+                
+                // Update all character references again
+                if (window.character && window.character.id === characterId) {
+                    window.character.gold = expectedGold;
+                }
+                if (window.characterManager && window.characterManager.characters) {
+                    const charIndex = window.characterManager.characters.findIndex(c => c.id === characterId);
+                    if (charIndex !== -1) {
+                        window.characterManager.characters[charIndex].gold = expectedGold;
+                    }
+                }
+                
+                // Force another character manager save with corrected data
+                if (window.characterManager && typeof window.characterManager.saveCharacter === 'function') {
+                    console.log('🔄 Final character manager save with corrected gold...');
+                    window.characterManager.saveCharacter(currentChar);
+                }
+            }
+            this.updateGoldDisplay();
+            
+            // Resume auto-save after operation completes
+            if (typeof window.resumeAutoSaveForInventory === 'function') {
+                window.resumeAutoSaveForInventory();
+            }
+        }, 500);
         
         return true;
     }

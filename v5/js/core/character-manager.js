@@ -129,20 +129,25 @@ function saveCurrentCharacterToStorage() {
     );
     
     if (characterIndex !== -1) {
-        // Character exists, update it
+        // Character exists, update it - use character-manager array as authoritative source
+        // This preserves modifications made directly to character-manager array (like gold updates)
+        const beforeSave = { ...characterManager.characters[characterIndex] };
         characterManager.characters[characterIndex] = {
-            ...character,
-            id: characterManager.currentCharacterId,
+            ...characterManager.characters[characterIndex],  // Use character-manager array, not global character
             lastModified: new Date().toISOString()
         };
+        console.log('🔧 [CHARACTER-MANAGER] Updated existing character in array (preserving modifications)');
+        console.log('🔧 [DEBUG] Before save gold:', beforeSave.gold);
+        console.log('🔧 [DEBUG] After save gold:', characterManager.characters[characterIndex].gold);
     } else {
         // Character doesn't exist yet, add it (new character case)
         const newChar = {
-            ...character,
+            ...character,  // For new characters, we can still use the global character as template
             id: characterManager.currentCharacterId,
             lastModified: new Date().toISOString()
         };
         characterManager.characters.push(newChar);
+        console.log('🔧 [CHARACTER-MANAGER] Added new character to array');
     }
     
     return saveCharactersToStorage();
@@ -719,6 +724,15 @@ function loadCharacterFromManager(characterId) {
         
         // Update UI elements
         updateUIElements();
+        
+        // CRITICAL FIX: Update gold display after character load
+        if (window.unifiedInventory && typeof window.unifiedInventory.updateGoldDisplay === 'function') {
+            window.unifiedInventory.updateGoldDisplay();
+            console.log('💰 Updated gold display after character load');
+        } else if (typeof updateGoldDisplay === 'function') {
+            updateGoldDisplay();
+            console.log('💰 Updated gold display after character load (fallback)');
+        }
         
         // Handle portrait - support both URL-based and base64 avatars
         const portraitDisplay = document.getElementById('portrait-display');
