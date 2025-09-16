@@ -1,0 +1,207 @@
+{
+  "name": "Beastly",
+  "level": 8,
+  "availablePoints": 0,
+  "stats": {
+    "strength": 2,
+    "dexterity": 5,
+    "constitution": 4,
+    "intelligence": 5,
+    "wisdom": 4,
+    "charisma": 3
+  },
+  "statMaximums": {
+    "strength": 13,
+    "dexterity": 17,
+    "constitution": 16,
+    "intelligence": 14,
+    "wisdom": 16,
+    "charisma": 12
+  },
+  "healthPoints": 12,
+  "currentHealthPoints": 12,
+  "magicPoints": 9,
+  "currentMagicPoints": 9,
+  "customSkills": [
+    {
+      "name": "Scavenging",
+      "stat": "wisdom",
+      "source": "race"
+    },
+    {
+      "name": "Disease Resistance",
+      "stat": "constitution",
+      "source": "race"
+    },
+    {
+      "name": "Tunnel Navigation",
+      "stat": "wisdom",
+      "source": "race"
+    },
+    {
+      "name": "Programming",
+      "stat": "intelligence",
+      "source": "job"
+    },
+    {
+      "name": "Systems Analysis",
+      "stat": "intelligence",
+      "source": "job"
+    },
+    {
+      "name": "Death Magic",
+      "stat": "intelligence",
+      "source": "class"
+    },
+    {
+      "name": "Performance",
+      "stat": "charisma",
+      "source": "class"
+    },
+    {
+      "name": "Undead Control",
+      "stat": "wisdom",
+      "source": "class"
+    }
+  ],
+  "personal": {
+    "age": "",
+    "backstory": "",
+    "avatarUrl": "https://raw.githubusercontent.com/ronmurphy/dcc-image-storage/main/avatars/beastly.png"
+  },
+  "race": "rat_kin",
+  "customRace": "",
+  "raceBonuses": [
+    "+1 Dexterity (Rat-kin)",
+    "+1 Constitution (Rat-kin)",
+    "+1 Wisdom (Rat-kin)",
+    "Scavenging [WIS] skill (Rat-kin)",
+    "Disease Resistance [CON] skill (Rat-kin)",
+    "Tunnel Navigation [WIS] skill (Rat-kin)"
+  ],
+  "customRaceData": {
+    "selectedStats": [],
+    "skills": [],
+    "maximums": {}
+  },
+  "job": "programmer",
+  "customJob": "",
+  "class": "necrobard",
+  "customClass": "",
+  "jobBonuses": [
+    "+2 Intelligence (Programmer)",
+    "Programming [INT] skill (Programmer)",
+    "Systems Analysis [INT] skill (Programmer)"
+  ],
+  "classBonuses": [
+    "+1 Charisma (NecroBard)",
+    "+1 Intelligence (NecroBard)",
+    "+1 Wisdom (NecroBard)",
+    "Death Magic [INT] skill (NecroBard)",
+    "Performance [CHA] skill (NecroBard)",
+    "Undead Control [WIS] skill (NecroBard)"
+  ],
+  "customJobData": {
+    "selectedStats": [],
+    "skills": []
+  },
+  "customClassData": {
+    "selectedStats": [],
+    "skills": []
+  },
+  "rollHistory": [],
+  "spells": [
+    {
+      "id": "dcc_1757305818884_f869cclrj",
+      "name": "Fire Bolt",
+      "element": "fire",
+      "damageType": "fixed",
+      "damageAmount": 4,
+      "healingType": "",
+      "healingAmount": 0,
+      "primaryEffect": "stun",
+      "secondaryEffect": "light_source",
+      "cost": 5,
+      "effects": [
+        "4 damage",
+        "stun",
+        "light source"
+      ]
+    },
+    {
+      "id": "dcc_1757305855971_7twpzkgzy",
+      "name": "Flame Aura",
+      "element": "fire",
+      "damageType": "",
+      "damageAmount": 0,
+      "healingType": "",
+      "healingAmount": 0,
+      "primaryEffect": "",
+      "secondaryEffect": "shield",
+      "cost": 2,
+      "effects": [
+        "shield"
+      ]
+    },
+    {
+      "id": "dcc_1757305900428_26ojvfsai",
+      "name": "Rock Hard",
+      "element": "earth",
+      "damageType": "",
+      "damageAmount": 0,
+      "healingType": "d6",
+      "healingAmount": 0,
+      "primaryEffect": "",
+      "secondaryEffect": "strength",
+      "cost": 5,
+      "effects": [
+        "d6 healing",
+        "strength"
+      ]
+    }
+  ],
+  "inventory": [
+    {
+      "id": "dcc_1757305718858_qcu94f8ag",
+      "name": "Grenade",
+      "type": "weapon",
+      "size": "light",
+      "defense": 0,
+      "twoHanded": false,
+      "ranged": true,
+      "healing": false,
+      "description": "Pull pin, throw, take cover",
+      "special": [
+        "Area Effect",
+        "Single Use"
+      ]
+    },
+    {
+      "id": "dcc_1757305750477_11k1rfooe",
+      "name": "Leather Jacket",
+      "type": "armor",
+      "size": null,
+      "defense": 2,
+      "twoHanded": false,
+      "ranged": false,
+      "healing": false
+    }
+  ],
+  "equipment": {
+    "mainHand": "dcc_1757305718858_qcu94f8ag",
+    "offHand": null,
+    "armor": "dcc_1757305750477_11k1rfooe",
+    "accessory": null
+  },
+  "statusEffects": [],
+  "notes": {
+    "personal": "",
+    "party": "",
+    "session": "",
+    "barter": "",
+    "world": "",
+    "combat": "",
+    "receivedNotes": []
+  },
+  "skillLevels": {}
+}

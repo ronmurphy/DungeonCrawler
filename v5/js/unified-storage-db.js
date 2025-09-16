@@ -4,11 +4,12 @@
 class UnifiedStorageDB {
     constructor() {
         this.dbName = 'StoryTellerData';
-        this.version = 1;
+        this.version = 2; // Increased version to handle existing databases
         this.stores = {
             maps: 'maps',
             notes: 'notes',
-            settings: 'settings'
+            settings: 'settings',
+            characters: 'characters'
         };
         this.db = null;
     }
@@ -57,6 +58,14 @@ class UnifiedStorageDB {
                     const settingsStore = db.createObjectStore(this.stores.settings, { keyPath: 'key' });
                     console.log('⚙️ Created settings object store');
                 }
+                
+                // Create characters store
+                if (!db.objectStoreNames.contains(this.stores.characters)) {
+                    const charactersStore = db.createObjectStore(this.stores.characters, { keyPath: 'id' });
+                    charactersStore.createIndex('name', 'name', { unique: false });
+                    charactersStore.createIndex('lastModified', 'lastModified', { unique: false });
+                    console.log('👤 Created characters object store');
+                }
             };
         });
     }
@@ -98,6 +107,26 @@ class UnifiedStorageDB {
 
             request.onsuccess = () => {
                 resolve(request.result);
+            };
+        });
+    }
+
+    // Generic get all method
+    async getAll(storeName) {
+        if (!this.db) await this.init();
+        
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([storeName], 'readonly');
+            const store = transaction.objectStore(storeName);
+            const request = store.getAll();
+
+            request.onerror = () => {
+                console.error(`❌ Failed to get all from ${storeName}:`, request.error);
+                reject(request.error);
+            };
+
+            request.onsuccess = () => {
+                resolve(request.result || []);
             };
         });
     }
@@ -273,7 +302,84 @@ class UnifiedStorageDB {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
+
+    // CHARACTER-SPECIFIC METHODS (SAFE - WON'T INTERFERE WITH EXISTING SYSTEM)
+    
+    /**
+     * Save all characters array (compatible with existing wasteland_characters format)
+     * This is ADDITIVE - existing advancedStorageManager still works
+     */
+    async saveCharacters(charactersArray) {
+        if (!Array.isArray(charactersArray)) {
+            throw new Error('Characters must be an array');
+        }
+        
+        try {
+            // Save each character individually to the characters store
+            for (const character of charactersArray) {
+                if (character.id) {
+                    await this.save(this.stores.characters, {
+                        ...character,
+                        lastModified: new Date().toISOString()
+                    });
+                }
+            }
+            
+            // ALSO save to settings store as 'wasteland_characters' for compatibility
+            await this.save(this.stores.settings, {
+                key: 'wasteland_characters',
+                value: charactersArray,
+                lastModified: new Date().toISOString()
+            });
+            
+            console.log(`✅ Saved ${charactersArray.length} characters to unified storage`);
+            return true;
+        } catch (error) {
+            console.error('❌ Failed to save characters to unified storage:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Load all characters array (compatible with existing wasteland_characters format)
+     * This provides a fallback/alternative to advancedStorageManager
+     */
+    async loadCharacters() {
+        try {
+            // Try to get from settings store first (wasteland_characters key)
+            const settingsData = await this.get(this.stores.settings, 'wasteland_characters');
+            if (settingsData && Array.isArray(settingsData.value)) {
+                console.log(`📥 Loaded ${settingsData.value.length} characters from unified storage (settings)`);
+                return settingsData.value;
+            }
+            
+            // Fallback: get all from characters store
+            const allCharacters = await this.getAll(this.stores.characters);
+            if (allCharacters && allCharacters.length > 0) {
+                console.log(`📥 Loaded ${allCharacters.length} characters from unified storage (characters store)`);
+                return allCharacters;
+            }
+            
+            console.log('📥 No characters found in unified storage');
+            return [];
+        } catch (error) {
+            console.error('❌ Failed to load characters from unified storage:', error);
+            return [];
+        }
+    }
 }
 
 // Export for use globally
 window.UnifiedStorageDB = UnifiedStorageDB;
+
+// Create global instance for character storage (SAFE - DOESN'T INTERFERE WITH EXISTING)
+window.unifiedStorage = new UnifiedStorageDB();
+
+// Initialize when DOM is ready (SAFE)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.unifiedStorage.init().catch(console.error);
+    });
+} else {
+    window.unifiedStorage.init().catch(console.error);
+}
