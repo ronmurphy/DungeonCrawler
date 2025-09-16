@@ -1062,11 +1062,20 @@ export class CombatManager {
         
         console.log(`💥 ${action.name}: ${damage} damage! ${enemy.name} HP: ${enemy.hp}/${enemy.maxHp}`);
         
+        // Check for rage mode (HP < 20%)
+        const hpPercent = enemy.hp / enemy.maxHp;
+        if (hpPercent > 0 && hpPercent <= 0.2 && !enemy.inRageMode) {
+            console.log(`😡 ${enemy.name} enters rage mode! (${Math.round(hpPercent * 100)}% HP)`);
+            enemy.inRageMode = true; // Flag to prevent multiple rage triggers
+            this.combatRenderer.playRageAnimation(enemy.id, 1000);
+        }
+        
         // Check if enemy defeated
         if (enemy.hp <= 0) {
             console.log(`💀 ${enemy.name} defeated!`);
-            this.combatRenderer.removeEnemy(enemy.id);
-            this.activeEnemies = this.activeEnemies.filter(e => e.id !== enemy.id);
+            // Use async defeat with animation instead of immediate removal
+            this.handleEnemyDefeat(enemy);
+            return; // Exit early - combat end check will happen after animation
         }
         
         // Check for combat end
@@ -1183,11 +1192,20 @@ export class CombatManager {
         
         console.log(`💥 ${damage} damage! ${enemy.name} HP: ${enemy.hp}/${enemy.maxHp || enemy.hp + damage}`);
         
+        // Check for rage mode (HP < 20%)
+        const hpPercent = enemy.hp / (enemy.maxHp || enemy.hp + damage);
+        if (hpPercent > 0 && hpPercent <= 0.2 && !enemy.inRageMode) {
+            console.log(`😡 ${enemy.name} enters rage mode! (${Math.round(hpPercent * 100)}% HP)`);
+            enemy.inRageMode = true; // Flag to prevent multiple rage triggers
+            this.combatRenderer.playRageAnimation(enemy.id, 1000);
+        }
+        
         // Check if enemy defeated
         if (enemy.hp <= 0) {
             console.log(`💀 ${enemy.name} defeated!`);
-            this.combatRenderer.removeEnemy(enemy.id);
-            this.activeEnemies = this.activeEnemies.filter(e => e.id !== enemy.id);
+            // Use async defeat with animation instead of immediate removal
+            this.handleEnemyDefeat(enemy);
+            return; // Exit early - combat end check will happen after animation
         }
         
         // Check for combat end
@@ -1196,6 +1214,28 @@ export class CombatManager {
         }
         
         // Next turn
+        this.turnManager.nextTurn();
+    }
+
+    /**
+     * Handle enemy defeat with animation and delayed victory check
+     */
+    async handleEnemyDefeat(enemy) {
+        console.log(`🎬 Starting defeat sequence for ${enemy.name}`);
+        
+        // Remove enemy from active list immediately (but keep visual in renderer until animation completes)
+        this.activeEnemies = this.activeEnemies.filter(e => e.id !== enemy.id);
+        
+        // Play defeat animation (2 seconds with fade to greyscale)
+        await this.combatRenderer.defeatEnemy(enemy.id, 2000);
+        
+        // After animation completes, check if combat should end
+        console.log(`✅ Defeat animation complete for ${enemy.name}, checking combat end...`);
+        if (this.checkCombatEnd()) {
+            return; // Combat ended
+        }
+        
+        // If combat continues, proceed with next turn
         this.turnManager.nextTurn();
     }
 
