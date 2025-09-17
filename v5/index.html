@@ -193,6 +193,9 @@
     <div class="app-container">
         <!-- Mobile Header -->
         <header class="app-header">
+            <button class="header-btn fullscreen-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen">
+                <span class="material-icons">fullscreen</span>
+            </button>
             <button class="header-btn theme-btn" onclick="toggleTheme()" title="Toggle Theme">
                 <span class="material-icons">brightness_6</span>
             </button>
@@ -2223,6 +2226,37 @@
             document.body.classList.toggle('dark-theme');
             localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
         }
+
+        // Fullscreen Toggle
+        function toggleFullscreen() {
+            const fullscreenBtn = document.querySelector('.fullscreen-btn .material-icons');
+            
+            if (!document.fullscreenElement) {
+                // Enter fullscreen
+                document.documentElement.requestFullscreen().then(() => {
+                    fullscreenBtn.textContent = 'fullscreen_exit';
+                }).catch((err) => {
+                    console.log('Error attempting to enable fullscreen:', err);
+                });
+            } else {
+                // Exit fullscreen
+                document.exitFullscreen().then(() => {
+                    fullscreenBtn.textContent = 'fullscreen';
+                }).catch((err) => {
+                    console.log('Error attempting to exit fullscreen:', err);
+                });
+            }
+        }
+
+        // Listen for fullscreen changes (handles ESC key or other exits)
+        document.addEventListener('fullscreenchange', () => {
+            const fullscreenBtn = document.querySelector('.fullscreen-btn .material-icons');
+            if (document.fullscreenElement) {
+                fullscreenBtn.textContent = 'fullscreen_exit';
+            } else {
+                fullscreenBtn.textContent = 'fullscreen';
+            }
+        });
 
         // Load saved theme
         if (localStorage.getItem('theme') === 'dark' ||
