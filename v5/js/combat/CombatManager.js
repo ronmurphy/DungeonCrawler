@@ -1458,65 +1458,266 @@ export class CombatManager {
                 flex-wrap: wrap;
                 justify-content: center;
             ">
-                <span style="color: #4a9eff; font-weight: bold; min-width: 120px;">
-                    ${player.name}'s Turn
-                </span>
-                
-                <button class="attack-btn weapon-btn" style="
-                    padding: 8px 16px;
-                    background: linear-gradient(135deg, #ff6b35, #cc4422);
-                    color: white;
-                    border: none;
+                <div style="
+                    display: flex;
+                    width: 100%;
+                    gap: 8px;
+                    height: 100%;
+                ">
+                    <!-- Left side: Main category buttons -->
+                    <div class="combat-main-buttons" style="
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        flex: 0 0 140px;
+                        min-width: 140px;
+                    ">
+                        <button class="attack-btn weapon-btn" style="
+                            padding: 8px 12px;
+                            background: linear-gradient(135deg, #ff6b35, #cc4422);
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: bold;
+                            font-size: 0.8em;
+                            width: 100%;
+                            text-align: left;
+                        " onclick="window.combatManager.showSubMenu('weapon', ${JSON.stringify(weaponActions).replace(/"/g, '&quot;')})">
+                            ⚔️ Weapon (${weaponActions.length})
+                        </button>
+                        
+                        <button class="attack-btn magic-btn" style="
+                            padding: 8px 12px;
+                            background: linear-gradient(135deg, #4a9eff, #2266cc);
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: bold;
+                            font-size: 0.8em;
+                            width: 100%;
+                            text-align: left;
+                        " onclick="window.combatManager.showSubMenu('magic', ${JSON.stringify(magicActions).replace(/"/g, '&quot;')})">
+                            ✨ Magic (${magicActions.length})
+                        </button>
+                        
+                        <button class="attack-btn item-btn" style="
+                            padding: 8px 12px;
+                            background: linear-gradient(135deg, #ff8040, #cc5520);
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: bold;
+                            font-size: 0.8em;
+                            width: 100%;
+                            text-align: left;
+                        " onclick="window.combatManager.showSubMenu('item', ${JSON.stringify(itemActions).replace(/"/g, '&quot;')})">
+                            🧪 Items (${itemActions.length})
+                        </button>
+                        
+                        <button class="attack-btn skill-btn" style="
+                            padding: 8px 12px;
+                            background: linear-gradient(135deg, #40ff80, #22cc44);
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: bold;
+                            font-size: 0.8em;
+                            width: 100%;
+                            text-align: left;
+                        " onclick="window.combatManager.showSubMenu('skill', ${JSON.stringify(skillActions).replace(/"/g, '&quot;')})">
+                            🎯 Skill (${skillActions.length})
+                        </button>
+                    </div>
+                    
+                    <!-- Right side: Persistent sub-menu area -->
+                    <div id="combat-submenu-area" style="
+                        flex: 1;
+                        background: rgba(0, 0, 0, 0.3);
+                        border-radius: 8px;
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        padding: 8px;
+                        overflow-y: auto;
+                        min-height: 100px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: rgba(255, 255, 255, 0.5);
+                        font-size: 0.8em;
+                        text-align: center;
+                    ">
+                        Select a category to see options
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    /**
+     * Toggle sub-menu for action categories
+     */
+    toggleSubMenu(actionType, actions) {
+        const submenu = document.getElementById('combat-submenu');
+        const isCurrentlyOpen = submenu.style.maxHeight !== '0px' && submenu.style.maxHeight !== '';
+        
+        // Store actions for executeAction method
+        this.currentSubMenuActions = actions;
+        this.currentSubMenuType = actionType;
+        
+        // If clicking the same category or a different one, show the new content
+        if (!isCurrentlyOpen || submenu.dataset.currentType !== actionType) {
+            submenu.innerHTML = `
+                <div style="
+                    background: rgba(0, 0, 0, 0.3);
                     border-radius: 8px;
-                    cursor: pointer;
+                    padding: 8px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                ">
+                    <div style="
+                        color: #4a9eff;
+                        font-weight: bold;
+                        margin-bottom: 6px;
+                        font-size: 0.85em;
+                    ">
+                        ${actionType.charAt(0).toUpperCase() + actionType.slice(1)} Options:
+                    </div>
+                    <div style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                        gap: 6px;
+                        max-height: 200px;
+                        overflow-y: auto;
+                    ">
+                        ${actions.map((action, index) => {
+                            const canUse = action.canCast !== false;
+                            const buttonStyle = canUse 
+                                ? `background: linear-gradient(135deg, ${this.getActionColor(actionType)}); cursor: pointer;`
+                                : `background: linear-gradient(135deg, #666, #444); cursor: not-allowed; opacity: 0.6;`;
+                            
+                            return `
+                                <button style="
+                                    ${buttonStyle}
+                                    color: white;
+                                    border: none;
+                                    padding: 6px 8px;
+                                    border-radius: 6px;
+                                    font-size: 0.8em;
+                                    text-align: left;
+                                    white-space: nowrap;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                " ${canUse ? `onclick="window.combatManager.executeAction('${actionType}', ${index})"` : ''}>
+                                    ${action.name}${action.cost ? ` (${action.cost})` : ''}
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+            
+            submenu.style.maxHeight = '250px';
+            submenu.dataset.currentType = actionType;
+        } else {
+            // Close if clicking the same category
+            submenu.style.maxHeight = '0px';
+            submenu.dataset.currentType = '';
+        }
+    }
+    
+    /**
+     * Execute the selected action from sub-menu
+     */
+    executeAction(actionType, actionIndex) {
+        // Close the submenu
+        const submenu = document.getElementById('combat-submenu');
+        submenu.style.maxHeight = '0px';
+        submenu.dataset.currentType = '';
+        
+        // Execute the action using existing system with stored actions
+        if (this.currentSubMenuActions && this.currentSubMenuType === actionType) {
+            this.useSpecificAction(actionType, actionIndex);
+        }
+    }
+    
+    /**
+     * Show sub-menu in the persistent right-side area
+     */
+    showSubMenu(actionType, actions) {
+        const submenuArea = document.getElementById('combat-submenu-area');
+        
+        // Store actions for useSpecificAction method (maintains compatibility)
+        this.currentActionMenu = { type: actionType, actions: actions };
+        
+        submenuArea.innerHTML = `
+            <div style="width: 100%; height: 100%;">
+                <div style="
+                    color: #4a9eff;
                     font-weight: bold;
-                    font-size: 0.9em;
-                " onclick="window.combatManager.showActionMenu('weapon', ${JSON.stringify(weaponActions).replace(/"/g, '&quot;')})">
-                    ⚔️ Weapon (${weaponActions.length})
-                </button>
-                
-                <button class="attack-btn magic-btn" style="
-                    padding: 8px 16px;
-                    background: linear-gradient(135deg, #4a9eff, #2266cc);
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-weight: bold;
-                    font-size: 0.9em;
-                " onclick="window.combatManager.showActionMenu('magic', ${JSON.stringify(magicActions).replace(/"/g, '&quot;')})">
-                    ✨ Magic (${magicActions.length})
-                </button>
-                
-                <button class="attack-btn item-btn" style="
-                    padding: 8px 16px;
-                    background: linear-gradient(135deg, #ff8040, #cc5520);
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-weight: bold;
-                    font-size: 0.9em;
-                " onclick="window.combatManager.showActionMenu('item', ${JSON.stringify(itemActions).replace(/"/g, '&quot;')})">
-                    🧪 Items (${itemActions.length})
-                </button>
-                
-                <button class="attack-btn skill-btn" style="
-                    padding: 8px 16px;
-                    background: linear-gradient(135deg, #40ff80, #22cc44);
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-weight: bold;
-                    font-size: 0.9em;
-                " onclick="window.combatManager.showActionMenu('skill', ${JSON.stringify(skillActions).replace(/"/g, '&quot;')})">
-                    🎯 Skill (${skillActions.length})
-                </button>
-                
-                <span style="color: #ffff80; font-size: 0.8em; max-width: 200px; text-align: center;">
-                    Click category to see options, or click red hexagon near enemy
-                </span>
+                    margin-bottom: 8px;
+                    font-size: 0.85em;
+                    text-align: left;
+                ">
+                    ${actionType.charAt(0).toUpperCase() + actionType.slice(1)} Options:
+                </div>
+                <div style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    height: calc(100% - 25px);
+                    overflow-y: auto;
+                ">
+                    ${actions.map((action, index) => {
+                        const canUse = action.canCast !== false;
+                        const buttonStyle = canUse 
+                            ? `background: linear-gradient(135deg, ${this.getActionColor(actionType)}); cursor: pointer;`
+                            : `background: linear-gradient(135deg, #666, #444); cursor: not-allowed; opacity: 0.6;`;
+                        
+                        return `
+                            <button style="
+                                ${buttonStyle}
+                                color: white;
+                                border: none;
+                                padding: 6px 8px;
+                                border-radius: 6px;
+                                font-size: 0.75em;
+                                text-align: left;
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                                width: 100%;
+                            " ${canUse ? `onclick="window.combatManager.executeActionAndHide('${actionType}', ${index})"` : ''}>
+                                ${action.name}${action.cost ? ` (${action.cost})` : ''}
+                            </button>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    /**
+     * Execute action and reset sub-menu area to default state
+     */
+    executeActionAndHide(actionType, actionIndex) {
+        // Execute the action using the existing system
+        this.useSpecificAction(actionType, actionIndex);
+        
+        // Reset sub-menu area to default state
+        const submenuArea = document.getElementById('combat-submenu-area');
+        submenuArea.innerHTML = `
+            <div style="
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                color: rgba(255, 255, 255, 0.5);
+                font-size: 0.8em;
+                text-align: center;
+            ">
+                Select a category to see options
             </div>
         `;
     }
@@ -1750,7 +1951,7 @@ export class CombatManager {
             });
         }
         
-        return actions.slice(0, 6); // Limit to 6 for UI space
+        return actions.slice(0, 20); // Increased limit for better item access
     }
     
     /**

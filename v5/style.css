@@ -557,9 +557,9 @@ body.sidebar-open {
     
     .combat-ui {
         flex: 0 0 auto !important; /* Don't grow/shrink */
-        height: 80px !important; /* Fixed height for controls */
-        min-height: 80px !important;
-        max-height: 120px !important; /* Allow slight expansion */
+        height: 210px !important; /* Increased to 210px for iPhone SE */
+        min-height: 210px !important;
+        max-height: 250px !important; /* Allow more expansion */
         padding: 8px !important;
         overflow-y: auto !important; /* Scroll if needed */
     }
@@ -596,9 +596,9 @@ body.sidebar-open {
     
     .combat-ui {
         flex: 0 0 auto !important;
-        height: 100px !important;
-        min-height: 100px !important;
-        max-height: 140px !important;
+        height: 130px !important; /* Increased from 100px */
+        min-height: 130px !important;
+        max-height: 170px !important; /* Increased for more space */
         padding: 12px !important;
     }
 }
@@ -644,9 +644,9 @@ body.sidebar-open {
     
     .combat-ui {
         flex: 0 0 auto !important;
-        height: 120px !important;
-        min-height: 120px !important;
-        max-height: 180px !important;
+        height: 150px !important; /* Increased from 120px */
+        min-height: 150px !important;
+        max-height: 200px !important; /* Increased for more space */
         padding: 16px !important;
     }
 }
