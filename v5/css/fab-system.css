@@ -1,7 +1,33 @@
 /* ============================================
-   FERAL GATEWAY FAB SYSTEM - DCC THEMED
+   FERAL GATEWAY FAB SYSTEM - DCC THEMED HEXAGONS
    Extracted from David's dcc_feral_gateway_final.html
+   Enhanced with hexagonal design for tactical consistency
    ============================================ */
+
+/* Hexagon utility class - creates perfect hexagon shape */
+.hexagon {
+    position: relative;
+    border-radius: 0 !important;
+    clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+}
+
+/* Hexagon hover effects need special handling */
+.hexagon:hover {
+    transform: scale(1.1) translateX(0) !important;
+    /* Keep the hexagon shape on hover */
+    clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+}
+
+/* Main FAB also becomes hexagonal */
+.feral-gateway-main.hexagon {
+    clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+}
+
+.feral-gateway-main.hexagon::before {
+    /* Pseudo-element needs same clipping */
+    clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+    border-radius: 0;
+}
 
 /* Feral Gateway Stack */
 .feral-gateway-fab {
@@ -99,7 +125,7 @@
     position: absolute;
     width: 55px;
     height: 55px;
-    border-radius: 50%;
+    border-radius: 50%; /* Default circular - overridden by hexagon class */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -114,6 +140,39 @@
     text-align: center;
     border: 2px solid rgba(255, 215, 0, 0.3);
     backdrop-filter: blur(5px);
+}
+
+/* Hexagonal FAB options - override circular styling */
+.feral-option.hexagon {
+    border-radius: 0;
+    clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+    /* Adjust size slightly for hexagon visual balance */
+    width: 58px;
+    height: 58px;
+}
+
+/* Enhanced hexagon hover effects */
+.feral-option.hexagon:hover {
+    /* Preserve hexagon shape on hover */
+    clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+    border-color: rgba(255, 215, 0, 0.8) !important;
+    box-shadow: 
+        0 0 25px rgba(255, 215, 0, 0.5) !important,
+        0 0 35px rgba(255, 215, 0, 0.3) !important;
+    transform: scale(1.15) translateX(0) !important;
+}
+
+/* Main hexagon FAB enhanced styling */
+.feral-gateway-main.hexagon {
+    /* Adjust size for hexagon */
+    width: 85px;
+    height: 85px;
+}
+
+.feral-gateway-main.hexagon:hover {
+    transform: scale(1.1);
+    /* Keep hexagon shape */
+    clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
 }
 
 .feral-gateway-fab.active .feral-option {

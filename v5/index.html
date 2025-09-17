@@ -2168,6 +2168,7 @@
 
     <!-- Scripts -->
     <script src="js/core/storageMigration.js"></script>
+    <script src="js/storage-diagnostic-helpers.js"></script>
     <script src="js/core/main.js"></script>
     <script src="js/core/character-manager.js"></script>
     <script src="js/core/v4CharacterSyncManager.js"></script>
@@ -6820,50 +6821,50 @@
     <!-- Image Upload Integration -->
     <script src="js/chatImageUploadIntegration.js"></script>
 
-    <!-- Feral Gateway FAB - DCC-Themed Navigation -->
+    <!-- Feral Gateway FAB - DCC-Themed Navigation with Hexagonal Design -->
     <div class="feral-gateway-fab" id="feralGatewayFab">
-        <div class="feral-gateway-main" onclick="toggleFeralGateway()">
+        <div class="feral-gateway-main hexagon" onclick="toggleFeralGateway()">
             <i class="las la-dungeon dungeon-icon"></i>
         </div>
         <div class="feral-stack">
             <!-- Chat - First and primary function -->
-            <div class="feral-option" onclick="openChatBottomSheet()" title="Game Chat">
+            <div class="feral-option hexagon" onclick="openChatBottomSheet()" title="Game Chat">
                 <i class="material-icons">chat_bubble</i>
             </div>
             <!-- Maps - Toggle map visibility -->
-            <div class="feral-option" onclick="toggleMapDisplay()" title="Toggle Map">
+            <div class="feral-option hexagon" onclick="toggleMapDisplay()" title="Toggle Map">
                 <i class="material-icons">map</i>
             </div>
             <!-- Character Stats -->
-            <div class="feral-option" onclick="openCharacterTab()" title="Character Stats">
+            <div class="feral-option hexagon" onclick="openCharacterTab()" title="Character Stats">
                 <i class="ra ra-player"></i>
             </div>
             <!-- Inventory & Gear -->
-            <div class="feral-option" onclick="openInventoryTab()" title="Inventory & Gear">
+            <div class="feral-option hexagon" onclick="openInventoryTab()" title="Inventory & Gear">
                 <i class="ra ra-book"></i>
             </div>
             <!-- Magic & Spells -->
-            <div class="feral-option" onclick="openMagicTab()" title="Magic & Spells">
+            <div class="feral-option hexagon" onclick="openMagicTab()" title="Magic & Spells">
                 <i class="ra ra-fairy-wand"></i>
             </div>
             <!-- Notes & Backstory -->
-            <div class="feral-option" onclick="openNotesTab()" title="Notes & Backstory">
+            <div class="feral-option hexagon" onclick="openNotesTab()" title="Notes & Backstory">
                 <i class="ra ra-scroll-unfurled"></i>
             </div>
             <!-- Storage Manager -->
-            <div class="feral-option" onclick="openStorageTab()" title="Storage Manager">
+            <div class="feral-option hexagon" onclick="openStorageTab()" title="Storage Manager">
                 🗄️
             </div>
             <!-- Reference/Help -->
-            <div class="feral-option" onclick="openReferenceTab()" title="How the Game Works">
+            <div class="feral-option hexagon" onclick="openReferenceTab()" title="How the Game Works">
                 <i class="material-icons">help_outline</i>
             </div>
             <!-- Mini-Games Module -->
-            <div class="feral-option" onclick="openMiniGamesModule()" title="Mini-Games">
+            <div class="feral-option hexagon" onclick="openMiniGamesModule()" title="Mini-Games">
                 <i class="las la-gamepad"></i>
             </div>
             <!-- Themes & Colors -->
-            <div class="feral-option" onclick="openThemesModule()" title="Themes & Colors">
+            <div class="feral-option hexagon" onclick="openThemesModule()" title="Themes & Colors">
                 <i class="las la-palette"></i>
             </div>
         </div>
