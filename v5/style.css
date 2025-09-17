@@ -598,10 +598,10 @@ body.sidebar-open {
     
     .combat-ui {
         flex: 0 0 auto !important;
-        height: 220px !important; /* Generous height for Android phones */
-        min-height: 220px !important;
-        max-height: 260px !important;
-        padding: 10px !important;
+        height: 185px !important; /* Conservative optimization for Android phones */
+        min-height: 185px !important;
+        max-height: 200px !important;
+        padding: 8px 10px !important; /* Reduced vertical padding (8px top/bottom) */
         overflow-y: auto !important;
     }
 }
