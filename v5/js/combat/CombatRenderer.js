@@ -147,32 +147,31 @@ export class CombatRenderer {
         `;
         this.container.appendChild(this.healthBarsContainer);
 
-        // Create player party health container (bottom-left)
-        this.partyHealthContainer = document.createElement('div');
-        this.partyHealthContainer.id = 'party-health-container';
-        this.partyHealthContainer.style.cssText = `
+        // Create unified combat tracker (players + enemies)
+        this.combatTrackerContainer = document.createElement('div');
+        this.combatTrackerContainer.id = 'party-health-container';
+        this.combatTrackerContainer.style.cssText = `
             position: absolute;
             bottom: 20px;
             left: 20px;
+            right: 20px;
             display: flex;
-            flex-direction: column;
+            flex-wrap: wrap;
             gap: 8px;
             pointer-events: auto;
+            max-height: 40%;
+            overflow-y: auto;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 12px;
+            border: 2px solid rgba(100, 149, 237, 0.6);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
         `;
-        this.healthBarsContainer.appendChild(this.partyHealthContainer);
+        this.healthBarsContainer.appendChild(this.combatTrackerContainer);
 
-        // Create enemy health container (will be positioned per enemy)
-        this.enemyHealthContainer = document.createElement('div');
-        this.enemyHealthContainer.id = 'enemy-health-container';
-        this.enemyHealthContainer.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        `;
-        this.healthBarsContainer.appendChild(this.enemyHealthContainer);
+        // Legacy reference for compatibility
+        this.partyHealthContainer = this.combatTrackerContainer;
 
         // Create floating numbers container (for damage/healing numbers)
         this.floatingNumbersContainer = document.createElement('div');
@@ -188,7 +187,7 @@ export class CombatRenderer {
         `;
         this.healthBarsContainer.appendChild(this.floatingNumbersContainer);
 
-        console.log('💊 Health bars UI initialized');
+        console.log('💊 Unified combat tracker initialized');
     }
 
     /**
@@ -393,7 +392,7 @@ export class CombatRenderer {
     }
 
     /**
-     * Create enemy health bar positioned above the enemy sprite
+     * Create enemy health bar in unified combat tracker
      */
     createEnemyHealthBar(enemyData, position) {
         const enemyId = enemyData.id;
@@ -402,30 +401,24 @@ export class CombatRenderer {
         const existing = document.getElementById(`enemy-health-${enemyId}`);
         if (existing) existing.remove();
 
-        // Calculate screen position for the enemy (above sprite)
-        const screenPosition = this.worldToScreen(position.x, position.y + 3, position.z);
-        
-        // Create enemy health bar container
-        const enemyBar = document.createElement('div');
-        enemyBar.id = `enemy-health-${enemyId}`;
-        enemyBar.className = 'enemy-health-bar';
-        enemyBar.style.cssText = `
-            position: absolute;
-            transform: translate(-50%, -100%);
+        // Create enemy tracker card
+        const enemyCard = document.createElement('div');
+        enemyCard.id = `enemy-health-${enemyId}`;
+        enemyCard.className = 'enemy-health-bar combat-tracker-card';
+        enemyCard.style.cssText = `
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px;
-            background: rgba(0, 0, 0, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 6px;
-            padding: 6px 8px;
+            background: rgba(139, 0, 0, 0.9);
+            border: 2px solid rgba(255, 107, 107, 0.8);
+            border-radius: 10px;
+            padding: 8px 10px;
             min-width: 120px;
-            backdrop-filter: blur(3px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-            left: ${screenPosition.x}px;
-            top: ${screenPosition.y}px;
-            transition: all 0.2s ease;
+            max-width: 160px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 12px rgba(139, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
         `;
 
         // Enemy name with revenge indicator
@@ -437,19 +430,20 @@ export class CombatRenderer {
             width: 100%;
             justify-content: center;
             position: relative;
+            margin-bottom: 6px;
         `;
         
         const nameLabel = document.createElement('div');
         nameLabel.textContent = enemyData.name;
         nameLabel.style.cssText = `
-            color: #ff6b6b;
-            font-size: 11px;
+            color: #ffdddd;
+            font-size: 12px;
             font-weight: bold;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
             text-align: center;
         `;
         
-        // Check if this enemy has the player's stolen loot (for THIS encounter)
+        // Check if this enemy has the player's stolen loot
         let hasPlayerLoot = false;
         if (window.combatManager && window.combatManager.currentRevengeEncounter) {
             const revengeEnemy = window.combatManager.currentRevengeEncounter.enemyType;
@@ -464,9 +458,9 @@ export class CombatRenderer {
             revengeIndicator.innerHTML = '💰';
             revengeIndicator.style.cssText = `
                 position: absolute;
-                top: -2px;
-                left: -2px;
-                font-size: 14px;
+                top: -6px;
+                right: -6px;
+                font-size: 16px;
                 filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8));
                 animation: pulse 1.5s ease-in-out infinite;
             `;
@@ -488,124 +482,121 @@ export class CombatRenderer {
             console.log(`💰 Added revenge indicator to ${enemyData.name} - they have your loot!`);
         }
 
-        // HP Bar
-        const hpBarContainer = document.createElement('div');
-        hpBarContainer.style.cssText = `
+        // Enemy avatar/icon (using default enemy icon for now)
+        const avatar = document.createElement('div');
+        avatar.style.cssText = `
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-bottom: 6px;
+            border: 2px solid rgba(255, 107, 107, 0.6);
+            background: linear-gradient(135deg, #8b0000, #dc143c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        `;
+        avatar.textContent = '👹'; // Default enemy icon
+
+        // HP Bar Container
+        const hpContainer = document.createElement('div');
+        hpContainer.style.cssText = `
             width: 100%;
-            height: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        `;
+
+        // HP Bar
+        const hpBarBg = document.createElement('div');
+        hpBarBg.style.cssText = `
+            width: 100%;
+            height: 14px;
             background: rgba(0, 0, 0, 0.6);
             border: 1px solid #8b0000;
-            border-radius: 6px;
+            border-radius: 7px;
             position: relative;
             overflow: hidden;
         `;
 
         const hpBarFill = document.createElement('div');
-        hpBarFill.className = 'enemy-hp-fill';
+        hpBarFill.className = 'bar-fill';
         hpBarFill.style.cssText = `
             height: 100%;
-            background: linear-gradient(90deg, #e74c3c, #c0392b);
-            border-radius: 5px;
+            background: linear-gradient(90deg, #dc143c, #8b0000);
+            border-radius: 6px;
             transition: width 0.3s ease;
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2);
             width: 100%;
         `;
 
-        hpBarContainer.appendChild(hpBarFill);
+        const hpBarText = document.createElement('span');
+        hpBarText.className = 'bar-text';
+        hpBarText.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            z-index: 1;
+        `;
 
-        // MP Bar (only if enemy has MP attacks)
-        let mpBarContainer = null;
-        const hasMpAttacks = enemyData.attacks && enemyData.attacks.some(attack => 
-            attack.cost && (attack.cost.mp || attack.cost.MP) > 0
-        );
+        // Assemble the enemy card
+        hpBarBg.appendChild(hpBarFill);
+        hpBarBg.appendChild(hpBarText);
+        hpContainer.appendChild(hpBarBg);
         
-        if (hasMpAttacks && enemyData.maxMp > 0) {
-            mpBarContainer = document.createElement('div');
-            mpBarContainer.style.cssText = `
-                width: 100%;
-                height: 8px;
-                background: rgba(0, 0, 0, 0.6);
-                border: 1px solid #1f4e79;
-                border-radius: 4px;
-                position: relative;
-                overflow: hidden;
-                margin-top: 2px;
-            `;
-
-            const mpBarFill = document.createElement('div');
-            mpBarFill.className = 'enemy-mp-fill';
-            mpBarFill.style.cssText = `
-                height: 100%;
-                background: linear-gradient(90deg, #3498db, #2980b9);
-                border-radius: 3px;
-                transition: width 0.3s ease;
-                width: 100%;
-            `;
-
-            mpBarContainer.appendChild(mpBarFill);
-        }
-
-        // Assemble the enemy bar
-        enemyBar.appendChild(nameContainer);
-        enemyBar.appendChild(hpBarContainer);
-        if (mpBarContainer) enemyBar.appendChild(mpBarContainer);
+        enemyCard.appendChild(nameContainer);
+        enemyCard.appendChild(avatar);
+        enemyCard.appendChild(hpContainer);
         
         // Store references for updates
-        enemyBar._hpBar = hpBarFill;
-        enemyBar._mpBar = mpBarContainer ? mpBarContainer.querySelector('.enemy-mp-fill') : null;
-        enemyBar._position = position;
+        enemyCard._hpBar = hpBarFill;
+        enemyCard._hpText = hpBarText;
+        enemyCard._enemyData = enemyData;
 
-        this.enemyHealthContainer.appendChild(enemyBar);
+        // Add to unified tracker
+        this.combatTrackerContainer.appendChild(enemyCard);
         
         // Update with current values
         this.updateEnemyHealthBar(enemyId, enemyData);
         
-        console.log(`🩸 Created enemy health bar for ${enemyData.name}`);
-        return enemyBar;
+        console.log(`💀 Added enemy ${enemyData.name} to unified combat tracker`);
+        return enemyCard;
     }
 
     /**
-     * Update enemy health bar values and position
+     * Update enemy health bar values
      */
     updateEnemyHealthBar(enemyId, enemyData) {
-        const enemyBar = document.getElementById(`enemy-health-${enemyId}`);
-        if (!enemyBar) return;
+        const enemyCard = document.getElementById(`enemy-health-${enemyId}`);
+        if (!enemyCard) return;
 
         const currentHp = enemyData.hp || 0;
         const maxHp = enemyData.maxHp || enemyData.hp || 1;
-        const currentMp = enemyData.mp || 0;
-        const maxMp = enemyData.maxMp || 0;
 
         // Update HP bar
-        if (enemyBar._hpBar) {
+        if (enemyCard._hpBar && enemyCard._hpText) {
             const hpPercent = Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
-            enemyBar._hpBar.style.width = `${hpPercent}%`;
+            enemyCard._hpBar.style.width = `${hpPercent}%`;
+            enemyCard._hpText.textContent = `${currentHp}/${maxHp}`;
             
             // Color coding for enemy health
             if (hpPercent <= 20) {
-                enemyBar._hpBar.style.background = 'linear-gradient(90deg, #8b0000, #660000)';
+                enemyCard._hpBar.style.background = 'linear-gradient(90deg, #8b0000, #660000)';
             } else if (hpPercent <= 50) {
-                enemyBar._hpBar.style.background = 'linear-gradient(90deg, #ff4500, #cc3300)';
+                enemyCard._hpBar.style.background = 'linear-gradient(90deg, #ff4500, #cc3300)';
             } else {
-                enemyBar._hpBar.style.background = 'linear-gradient(90deg, #e74c3c, #c0392b)';
+                enemyCard._hpBar.style.background = 'linear-gradient(90deg, #dc143c, #8b0000)';
             }
         }
 
-        // Update MP bar (if exists)
-        if (enemyBar._mpBar && maxMp > 0) {
-            const mpPercent = Math.max(0, Math.min(100, (currentMp / maxMp) * 100));
-            enemyBar._mpBar.style.width = `${mpPercent}%`;
-        }
-
-        // Update position if enemy moved
-        if (enemyBar._position) {
-            const screenPosition = this.worldToScreen(
-                enemyBar._position.x, 
-                enemyBar._position.y + 3, 
-                enemyBar._position.z
-            );
-            enemyBar.style.left = `${screenPosition.x}px`;
-            enemyBar.style.top = `${screenPosition.y}px`;
-        }
+        console.log(`🩸 Updated enemy health: ${enemyData.name} ${currentHp}/${maxHp} HP`);
     }
 
     /**

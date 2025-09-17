@@ -503,6 +503,402 @@ body.sidebar-open {
 }
 
 /* ========================================
+   MOBILE-FIRST RESPONSIVE COMBAT
+   ======================================== */
+
+/* Combat Modal Three-Section Layout System */
+/* Ensures combat-header + canvas + combat-ui all fit in viewport */
+
+/* Mobile Combat Container (Portrait Focus) */
+@media (max-width: 480px) {
+    .content-wrapper {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        /* Add bottom padding for FAB clearance */
+        padding-bottom: calc(var(--spacing-lg) + 80px);
+        max-width: 100%;
+    }
+    
+    /* Combat Card Mobile Optimization */
+    .active-combat-card {
+        margin-bottom: var(--spacing-sm);
+        padding: var(--spacing-md);
+        border-radius: var(--radius-md);
+    }
+    
+    /* Reduce card spacing on mobile */
+    .card {
+        margin-bottom: var(--spacing-sm);
+        padding: var(--spacing-md);
+    }
+
+    /* Combat Modal Viewport Division - Mobile Portrait */
+    .combat-content {
+        width: 98vw !important;
+        height: 95vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+    }
+    
+    .combat-header {
+        flex: 0 0 auto !important; /* Don't grow/shrink, use natural height */
+        height: auto !important;
+        min-height: 50px !important;
+        max-height: 80px !important; /* Limit header space */
+        padding: 8px 12px !important;
+    }
+    
+    .combat-scene {
+        flex: 1 1 auto !important; /* Take majority of space */
+        min-height: 0 !important; /* Allow shrinking */
+        position: relative !important;
+        overflow: hidden !important;
+    }
+    
+    .combat-ui {
+        flex: 0 0 auto !important; /* Don't grow/shrink */
+        height: 80px !important; /* Fixed height for controls */
+        min-height: 80px !important;
+        max-height: 120px !important; /* Allow slight expansion */
+        padding: 8px !important;
+        overflow-y: auto !important; /* Scroll if needed */
+    }
+}
+
+/* Tablet Layout (Current Desktop becomes Tablet) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .content-wrapper {
+        padding: var(--spacing-md);
+        padding-bottom: calc(var(--spacing-lg) + 60px);
+        max-width: 95%;
+    }
+    
+    /* Combat Modal Viewport Division - Tablet */
+    .combat-content {
+        width: 90vw !important;
+        height: 85vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .combat-header {
+        flex: 0 0 auto !important;
+        height: auto !important;
+        min-height: 60px !important;
+        max-height: 100px !important;
+        padding: 12px 16px !important;
+    }
+    
+    .combat-scene {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+    }
+    
+    .combat-ui {
+        flex: 0 0 auto !important;
+        height: 100px !important;
+        min-height: 100px !important;
+        max-height: 140px !important;
+        padding: 12px !important;
+    }
+}
+
+/* Desktop Enhanced Layout (80% width, top-centered) */
+@media (min-width: 769px) {
+    .content-wrapper {
+        max-width: 80%;
+        margin: var(--spacing-lg) auto;
+        padding: var(--spacing-lg);
+        /* Less bottom padding needed on desktop */
+        padding-bottom: var(--spacing-lg);
+    }
+    
+    /* Combat card can be larger on desktop */
+    .active-combat-card {
+        max-width: 1000px;
+        margin: 0 auto var(--spacing-md) auto;
+    }
+    
+    /* Combat Modal Viewport Division - Desktop */
+    .combat-content {
+        width: 80vw !important;
+        max-width: 1200px !important;
+        height: 80vh !important;
+        margin: 0 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .combat-header {
+        flex: 0 0 auto !important;
+        height: auto !important;
+        min-height: 70px !important;
+        max-height: 120px !important;
+        padding: 16px 20px !important;
+    }
+    
+    .combat-scene {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+    }
+    
+    .combat-ui {
+        flex: 0 0 auto !important;
+        height: 120px !important;
+        min-height: 120px !important;
+        max-height: 180px !important;
+        padding: 16px !important;
+    }
+}
+
+/* ========================================
+   TURN ORDER OVERLAY RESPONSIVE STYLES
+   ======================================== */
+
+/* Mobile Turn Order Overlay */
+@media (max-width: 480px) {
+    .turn-order-overlay {
+        top: 10px !important;
+        padding: 12px 10px !important; /* Increased padding for taller tracker */
+        max-width: 95% !important;
+        gap: 6px !important;
+        min-height: 80px !important; /* Increased height for mobile */
+    }
+    
+    .turn-participant-card {
+        min-width: 55px !important; /* Increased for ring system */
+        gap: 2px !important;
+    }
+    
+    .participant-name {
+        font-size: 8px !important;
+        max-width: 55px !important;
+    }
+    
+    .portrait-container {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .turn-portrait {
+        width: 28px !important;
+        height: 28px !important;
+        border-width: 2px !important;
+    }
+    
+    .ring-progress {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .health-numbers {
+        bottom: -16px !important;
+    }
+    
+    .hp-text, .mp-text {
+        font-size: 6px !important;
+        padding: 0px 2px !important;
+    }
+}
+
+/* Tablet Turn Order Overlay */
+@media (min-width: 481px) and (max-width: 768px) {
+    .turn-order-overlay {
+        top: 12px !important;
+        padding: 14px 12px !important; /* Increased padding for taller tracker */
+        max-width: 90% !important;
+        gap: 8px !important;
+        min-height: 85px !important; /* Increased height for tablet */
+    }
+    
+    .turn-participant-card {
+        min-width: 65px !important; /* Increased for ring system */
+        gap: 3px !important;
+    }
+    
+    .participant-name {
+        font-size: 9px !important;
+        max-width: 65px !important;
+    }
+    
+    .portrait-container {
+        width: 45px !important;
+        height: 45px !important;
+    }
+    
+    .turn-portrait {
+        width: 32px !important;
+        height: 32px !important;
+        border-width: 2px !important;
+    }
+    
+    .ring-progress {
+        width: 45px !important;
+        height: 45px !important;
+    }
+    
+    .health-numbers {
+        bottom: -17px !important;
+    }
+    
+    .hp-text, .mp-text {
+        font-size: 7px !important;
+        padding: 1px 2px !important;
+    }
+}
+
+/* Desktop Turn Order Overlay */
+@media (min-width: 769px) {
+    .turn-order-overlay {
+        top: 15px !important;
+        padding: 15px 20px !important; /* Increased padding for taller tracker */
+        max-width: 85% !important;
+        gap: 10px !important;
+        min-height: 90px !important; /* Increased height for desktop */
+    }
+    
+    .turn-participant-card {
+        min-width: 70px !important; /* Increased for ring system */
+        gap: 4px !important;
+    }
+    
+    .participant-name {
+        font-size: 10px !important;
+        max-width: 70px !important;
+    }
+    
+    .portrait-container {
+        width: 50px !important;
+        height: 50px !important;
+    }
+    
+    .turn-portrait {
+        width: 36px !important;
+        height: 36px !important;
+        border-width: 3px !important;
+    }
+    
+    .ring-progress {
+        width: 50px !important;
+        height: 50px !important;
+    }
+    
+    .health-numbers {
+        bottom: -18px !important;
+    }
+    
+    .hp-text, .mp-text {
+        font-size: 8px !important;
+        padding: 1px 3px !important;
+    }
+}
+
+/* ========================================
+   UNIFIED COMBAT TRACKER RESPONSIVE
+   ======================================== */
+
+/* Hide party-health-container but keep it functional */
+#party-health-container {
+    display: none !important;
+    /* Keep the element for functionality but hide it visually */
+}
+
+.combat-tracker-card {
+    /* Base card styling for both players and enemies */
+    flex: 0 0 auto;
+    transition: all 0.3s ease;
+}
+
+/* Mobile Combat Tracker */
+@media (max-width: 480px) {
+    #party-health-container {
+        /* More compact layout for mobile */
+        bottom: 8px !important;
+        left: 8px !important;
+        right: 8px !important;
+        padding: 8px !important;
+        gap: 4px !important;
+        max-height: 35% !important;
+        flex-direction: row !important; /* Horizontal scroll on mobile */
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Compact tracker cards for mobile */
+    .combat-tracker-card {
+        min-width: 100px !important;
+        max-width: 100px !important;
+        padding: 6px !important;
+        font-size: 11px !important;
+    }
+    
+    .combat-tracker-card .bar-text {
+        font-size: 9px !important;
+    }
+    
+    /* Player cards - blue theme */
+    .player-health-bar {
+        border-color: rgba(100, 149, 237, 0.8) !important;
+        background: rgba(25, 25, 112, 0.9) !important;
+    }
+    
+    /* Enemy cards - red theme */
+    .enemy-health-bar {
+        border-color: rgba(255, 107, 107, 0.8) !important;
+        background: rgba(139, 0, 0, 0.9) !important;
+    }
+}
+
+/* Tablet Combat Tracker */
+@media (min-width: 481px) and (max-width: 768px) {
+    #party-health-container {
+        bottom: 12px !important;
+        left: 12px !important;
+        right: 12px !important;
+        padding: 10px !important;
+        gap: 6px !important;
+        max-height: 38% !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .combat-tracker-card {
+        min-width: 120px !important;
+        max-width: 140px !important;
+        padding: 8px !important;
+        font-size: 12px !important;
+    }
+}
+
+/* Desktop Combat Tracker */
+@media (min-width: 769px) {
+    #party-health-container {
+        bottom: 20px !important;
+        left: 20px !important;
+        right: 20px !important;
+        padding: 12px !important;
+        gap: 8px !important;
+        max-height: 40% !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .combat-tracker-card {
+        min-width: 140px !important;
+        max-width: 180px !important;
+        padding: 10px !important;
+    }
+}
+
+/* Initiative highlighting for current turn */
+.combat-tracker-card.current-turn {
+    transform: scale(1.05) !important;
+    border-color: #ffd700 !important;
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6) !important;
+    z-index: 10 !important;
+}
+
+/* ========================================
    CARDS & COMPONENTS
    ======================================== */
 .card {

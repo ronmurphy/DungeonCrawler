@@ -241,55 +241,160 @@ export class CombatManager {
                 gap: 10px;
                 z-index: 10;
                 background: rgba(26, 26, 46, 0.8);
-                padding: 10px 15px;
+                padding: 15px 20px; /* Increased padding for taller tracker */
                 border-radius: 25px;
                 border: 2px solid #4a9eff;
                 backdrop-filter: blur(5px);
+                max-width: 90%;
+                overflow-x: auto;
+                min-height: 90px; /* Increased height by +20px */
+            }
+            
+            .turn-participant-card {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+                min-width: 70px; /* Increased width for ring system */
+                transition: all 0.3s ease;
+            }
+            
+            .turn-participant-card.active {
+                transform: scale(1.05);
+            }
+            
+            .participant-name {
+                font-size: 10px;
+                color: #e6f3ff;
+                text-align: center;
+                font-weight: bold;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+                max-width: 70px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                margin-bottom: 2px;
+            }
+            
+            .portrait-container {
+                position: relative;
+                width: 50px;
+                height: 50px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .ring-progress {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 1;
+                transition: all 0.3s ease;
+            }
+            
+            .hp-ring, .mp-ring {
+                transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            
+            .hp-ring.damage-animation {
+                animation: ringDamageFlash 0.6s ease-out;
+            }
+            
+            .mp-ring.damage-animation {
+                animation: ringDamageFlash 0.6s ease-out;
+            }
+            
+            @keyframes ringDamageFlash {
+                0% { 
+                    stroke: #ff6b6b;
+                    stroke-width: 3;
+                    filter: drop-shadow(0 0 8px #ff6b6b);
+                }
+                50% { 
+                    stroke: #ff3333;
+                    stroke-width: 4;
+                    filter: drop-shadow(0 0 12px #ff3333);
+                }
+                100% { 
+                    stroke: #e74c3c;
+                    stroke-width: 2;
+                    filter: none;
+                }
+            }
+            
+            @keyframes healthNumberFlash {
+                0% { 
+                    transform: translateX(-50%) scale(1);
+                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+                }
+                50% { 
+                    transform: translateX(-50%) scale(1.1);
+                    text-shadow: 0 0 8px rgba(255, 107, 107, 0.8);
+                }
+                100% { 
+                    transform: translateX(-50%) scale(1);
+                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+                }
             }
             
             .turn-portrait {
-                width: 50px;
-                height: 50px;
+                width: 36px;
+                height: 36px;
                 border-radius: 50%;
-                border: 3px solid #666;
                 background-size: cover;
                 background-position: center;
                 position: relative;
+                z-index: 2;
                 transition: all 0.3s ease;
                 cursor: pointer;
+                border: 2px solid rgba(255, 255, 255, 0.3);
             }
             
             .turn-portrait.active {
-                border-color: #ffff00;
                 box-shadow: 0 0 15px rgba(255, 255, 0, 0.8);
-                transform: scale(1.1);
+                border-color: #ffff00;
             }
             
             .turn-portrait.enemy {
-                border-color: #ff4444;
+                border-color: rgba(255, 68, 68, 0.5);
             }
             
             .turn-portrait.player {
-                border-color: #4a9eff;
+                border-color: rgba(74, 158, 255, 0.5);
             }
             
-            .turn-portrait::after {
-                content: '';
+            .health-numbers {
                 position: absolute;
-                bottom: -5px;
-                right: -5px;
-                width: 16px;
-                height: 16px;
-                border-radius: 50%;
-                border: 2px solid #1a1a2e;
+                bottom: -18px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 1px;
+                z-index: 3;
             }
             
-            .turn-portrait.enemy::after {
-                background: #ff4444;
+            .hp-text, .mp-text {
+                font-size: 8px;
+                color: white;
+                font-weight: bold;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+                background: rgba(0, 0, 0, 0.5);
+                padding: 1px 3px;
+                border-radius: 3px;
+                white-space: nowrap;
             }
             
-            .turn-portrait.player::after {
-                background: #4a9eff;
+            .hp-text {
+                color: #ff6b6b;
+            }
+            
+            .mp-text {
+                color: #74c0fc;
             }
             
             .combat-ui {
@@ -976,14 +1081,24 @@ export class CombatManager {
             if (enemy.data) {
                 // If enemy already has data field, ensure spriteType is available
                 enemy.data.spriteType = enemy.data.spriteType || enemy.spriteType || enemy.id || 'goblin';
+                // Ensure proper HP values for ring system
+                if (!enemy.data.maxHp && enemy.data.hp) {
+                    enemy.data.maxHp = enemy.data.hp;
+                    enemy.data.currentHp = enemy.data.hp;
+                }
             } else {
-                // Create data field from enemy properties
+                // Create data field from enemy properties with proper HP handling
+                const enemyHp = enemy.hp || 10; // Default HP if none specified
                 enemy.data = {
                     id: enemy.id,
                     name: enemy.name,
                     spriteType: enemy.spriteType || enemy.id || 'goblin',
-                    hp: enemy.hp,
-                    maxHp: enemy.maxHp,
+                    hp: enemyHp,
+                    maxHp: enemy.maxHp || enemyHp, // Use maxHp if available, otherwise use hp
+                    currentHp: enemy.currentHp !== undefined ? enemy.currentHp : enemyHp,
+                    mp: enemy.mp || 0,
+                    maxMp: enemy.maxMp || enemy.mp || 0,
+                    currentMp: enemy.currentMp !== undefined ? enemy.currentMp : (enemy.mp || 0),
                     level: enemy.level,
                     attacks: enemy.attacks
                 };
@@ -1020,7 +1135,7 @@ export class CombatManager {
     }
 
     /**
-     * Update initiative tracker display with portraits
+     * Update initiative tracker display with portraits, names, and ring progress bars
      */
     updateInitiativeDisplay() {
         const tracker = document.getElementById('turn-order-overlay');
@@ -1031,14 +1146,194 @@ export class CombatManager {
             const activeClass = participant.isActive ? 'active' : '';
             const typeClass = participant.type === 'enemy' ? 'enemy' : 'player';
             
-            return `
-                <div class="turn-portrait ${activeClass} ${typeClass}" 
-                     style="background-image: url('${portraitUrl}')"
-                     title="${participant.name} (${participant.type})"
-                     data-participant="${participant.name}">
-                </div>
-            `;
+            // Get current HP/MP data with proper fallbacks for enemy JSON data
+            const combatData = participant.combatData || {};
+            let currentHp, maxHp, currentMp, maxMp;
+            
+            if (participant.type === 'enemy') {
+                // For enemies, use data from enemies.json
+                const enemyData = combatData.data || combatData;
+                currentHp = enemyData.currentHp !== undefined ? enemyData.currentHp : enemyData.hp || 0;
+                maxHp = enemyData.maxHp || enemyData.hp || 1;
+                currentMp = enemyData.currentMp !== undefined ? enemyData.currentMp : enemyData.mp || 0;
+                maxMp = enemyData.maxMp || enemyData.mp || 0;
+            } else {
+                // For players, use existing logic
+                currentHp = combatData.hp || combatData.currentHp || 0;
+                maxHp = combatData.maxHp || combatData.hp || 1;
+                currentMp = combatData.mp || combatData.currentMp || 0;
+                maxMp = combatData.maxMp || 0;
+            }
+            
+            const hpPercent = Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
+            const mpPercent = maxMp > 0 ? Math.max(0, Math.min(100, (currentMp / maxMp) * 100)) : 0;
+            
+            // Calculate ring stroke dasharray for circular progress
+            const circumference = 2 * Math.PI * 18; // radius 18 for outer ring
+            const hpOffset = circumference - (hpPercent / 100 * circumference);
+            const mpOffset = circumference - (mpPercent / 100 * circumference);
+            
+            // Check if player has item/achievement/skill to see enemy numbers
+            const canSeeEnemyNumbers = this.canPlayerSeeEnemyStats(participant);
+            
+            // Different layouts for enemies vs players
+            if (participant.type === 'enemy') {
+                return `
+                    <div class="turn-participant-card ${activeClass} ${typeClass}" 
+                         data-participant="${participant.name}">
+                        <div class="participant-name">${participant.name}</div>
+                        <div class="portrait-container">
+                            <svg class="ring-progress" viewBox="0 0 40 40">
+                                <!-- HP Ring (outer) -->
+                                <circle cx="20" cy="20" r="18" fill="none" stroke="rgba(231, 76, 60, 0.2)" stroke-width="2"/>
+                                <circle cx="20" cy="20" r="18" fill="none" stroke="#e74c3c" stroke-width="2"
+                                        stroke-dasharray="${circumference}" stroke-dashoffset="${hpOffset}"
+                                        stroke-linecap="round" transform="rotate(-90 20 20)"
+                                        class="hp-ring" data-participant="${participant.name}"/>
+                                ${maxMp > 0 ? `
+                                    <!-- MP Ring (inner) -->
+                                    <circle cx="20" cy="20" r="14" fill="none" stroke="rgba(52, 152, 219, 0.2)" stroke-width="2"/>
+                                    <circle cx="20" cy="20" r="14" fill="none" stroke="#3498db" stroke-width="2"
+                                            stroke-dasharray="${2 * Math.PI * 14}" stroke-dashoffset="${2 * Math.PI * 14 - (mpPercent / 100 * 2 * Math.PI * 14)}"
+                                            stroke-linecap="round" transform="rotate(-90 20 20)"
+                                            class="mp-ring" data-participant="${participant.name}"/>
+                                ` : ''}
+                            </svg>
+                            <div class="turn-portrait ${activeClass} ${typeClass}" 
+                                 style="background-image: url('${portraitUrl}')"
+                                 title="${participant.name} (${participant.type})">
+                            </div>
+                            ${canSeeEnemyNumbers ? `
+                                <div class="health-numbers">
+                                    <span class="hp-text">${currentHp}/${maxHp}</span>
+                                    ${maxMp > 0 ? `<span class="mp-text">${currentMp}/${maxMp}</span>` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Players get ring system with names too for visual consistency
+                return `
+                    <div class="turn-participant-card ${activeClass} ${typeClass}" 
+                         data-participant="${participant.name}">
+                        <div class="participant-name">${participant.name}</div>
+                        <div class="portrait-container">
+                            <svg class="ring-progress" viewBox="0 0 40 40">
+                                <!-- HP Ring (outer) -->
+                                <circle cx="20" cy="20" r="18" fill="none" stroke="rgba(231, 76, 60, 0.2)" stroke-width="2"/>
+                                <circle cx="20" cy="20" r="18" fill="none" stroke="#e74c3c" stroke-width="2"
+                                        stroke-dasharray="${circumference}" stroke-dashoffset="${hpOffset}"
+                                        stroke-linecap="round" transform="rotate(-90 20 20)"
+                                        class="hp-ring" data-participant="${participant.name}"/>
+                                ${maxMp > 0 ? `
+                                    <!-- MP Ring (inner) -->
+                                    <circle cx="20" cy="20" r="14" fill="none" stroke="rgba(52, 152, 219, 0.2)" stroke-width="2"/>
+                                    <circle cx="20" cy="20" r="14" fill="none" stroke="#3498db" stroke-width="2"
+                                            stroke-dasharray="${2 * Math.PI * 14}" stroke-dashoffset="${2 * Math.PI * 14 - (mpPercent / 100 * 2 * Math.PI * 14)}"
+                                            stroke-linecap="round" transform="rotate(-90 20 20)"
+                                            class="mp-ring" data-participant="${participant.name}"/>
+                                ` : ''}
+                            </svg>
+                            <div class="turn-portrait ${activeClass} ${typeClass}" 
+                                 style="background-image: url('${portraitUrl}')"
+                                 title="${participant.name} (${participant.type})">
+                            </div>
+                            <div class="health-numbers">
+                                <span class="hp-text">${currentHp}/${maxHp}</span>
+                                ${maxMp > 0 ? `<span class="mp-text">${currentMp}/${maxMp}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
         }).join('');
+    }
+    
+    /**
+     * Check if player has item/achievement/skill to see enemy stats numbers
+     */
+    canPlayerSeeEnemyStats(participant) {
+        // TODO: Implement checking for specific items, achievements, or skills
+        // For now, return false to hide enemy numbers until player has proper ability
+        return false;
+    }
+    
+    /**
+     * Animate ring progress when participant takes damage or loses MP
+     * @param {string} participantName - Name of the participant
+     * @param {string} statType - 'hp' or 'mp'
+     * @param {number} newPercent - New percentage value (0-100)
+     * @param {number} oldPercent - Previous percentage value (0-100)
+     */
+    animateRingDamage(participantName, statType, newPercent, oldPercent) {
+        const ring = document.querySelector(`.${statType}-ring[data-participant="${participantName}"]`);
+        if (!ring) return;
+        
+        // Only animate if the value decreased (damage taken)
+        if (newPercent >= oldPercent) return;
+        
+        // Calculate new offset
+        const radius = statType === 'hp' ? 18 : 14;
+        const circumference = 2 * Math.PI * radius;
+        const newOffset = circumference - (newPercent / 100 * circumference);
+        
+        // Add damage animation class
+        ring.classList.add('damage-animation');
+        
+        // Animate the ring shrinking
+        ring.style.strokeDashoffset = newOffset;
+        
+        // Remove animation class after animation completes
+        setTimeout(() => {
+            ring.classList.remove('damage-animation');
+        }, 600);
+        
+        // Also update the health numbers with a brief flash
+        const healthNumbers = document.querySelector(`[data-participant="${participantName}"] .health-numbers`);
+        if (healthNumbers) {
+            healthNumbers.style.animation = 'healthNumberFlash 0.4s ease-out';
+            setTimeout(() => {
+                healthNumbers.style.animation = '';
+            }, 400);
+        }
+    }
+    
+    /**
+     * Update participant health/mana and animate the change
+     * @param {string} participantName - Name of the participant
+     * @param {number} newHp - New HP value
+     * @param {number} maxHp - Maximum HP value
+     * @param {number} newMp - New MP value (optional)
+     * @param {number} maxMp - Maximum MP value (optional)
+     */
+    updateParticipantRings(participantName, newHp, maxHp, newMp = 0, maxMp = 0) {
+        // Get current ring values to detect changes
+        const hpRing = document.querySelector(`.hp-ring[data-participant="${participantName}"]`);
+        const mpRing = document.querySelector(`.mp-ring[data-participant="${participantName}"]`);
+        
+        if (hpRing) {
+            const currentOffset = parseFloat(hpRing.style.strokeDashoffset) || 0;
+            const circumference = 2 * Math.PI * 18;
+            const oldPercent = ((circumference - currentOffset) / circumference) * 100;
+            const newPercent = Math.max(0, Math.min(100, (newHp / maxHp) * 100));
+            
+            this.animateRingDamage(participantName, 'hp', newPercent, oldPercent);
+        }
+        
+        if (mpRing && maxMp > 0) {
+            const currentOffset = parseFloat(mpRing.style.strokeDashoffset) || 0;
+            const circumference = 2 * Math.PI * 14;
+            const oldPercent = ((circumference - currentOffset) / circumference) * 100;
+            const newPercent = Math.max(0, Math.min(100, (newMp / maxMp) * 100));
+            
+            this.animateRingDamage(participantName, 'mp', newPercent, oldPercent);
+        }
+        
+        // Update the initiative display after a brief delay to show new numbers
+        setTimeout(() => {
+            this.updateInitiativeDisplay();
+        }, 200);
     }
     
     /**
@@ -1786,6 +2081,10 @@ export class CombatManager {
             }
             
             this.combatRenderer.updateEnemyHealth(enemy.id, enemy.hp, enemy.mp);
+            
+            // Animate the ring damage for enemies
+            this.updateParticipantRings(enemy.name, enemy.hp, enemy.maxHp, enemy.mp || 0, enemy.maxMp || 0);
+            
             this.combatStats.damageDealt += damage;
             console.log(`💥 ${spell.name}: ${damage} ${spell.element} damage! ${enemy.name} HP: ${enemy.hp}/${enemy.maxHp}`);
         }
@@ -2039,6 +2338,10 @@ export class CombatManager {
         }
         
         this.combatRenderer.updateEnemyHealth(enemy.id, enemy.hp, enemy.mp);
+        
+        // Animate the ring damage for enemies
+        this.updateParticipantRings(enemy.name, enemy.hp, enemy.maxHp, enemy.mp || 0, enemy.maxMp || 0);
+        
         this.combatStats.damageDealt += damage;
         
         console.log(`💥 ${action.name}: ${damage} damage! ${enemy.name} HP: ${enemy.hp}/${enemy.maxHp}`);
@@ -2158,6 +2461,9 @@ export class CombatManager {
         const updatedTarget = this.partyManager.getMember(target.name);
         if (updatedTarget) {
             this.combatRenderer.updatePlayerHealth(updatedTarget.id || target.name, updatedTarget.hp, updatedTarget.mp);
+            
+            // Animate the ring damage for players
+            this.updateParticipantRings(updatedTarget.name, updatedTarget.hp, updatedTarget.maxHp, updatedTarget.mp || 0, updatedTarget.maxMp || 0);
         }
         
         // Check for combat end
@@ -2183,6 +2489,9 @@ export class CombatManager {
         
         // Update enemy health bar
         this.combatRenderer.updateEnemyHealth(enemy.id, enemy.hp, enemy.mp);
+        
+        // Animate the ring damage for enemies
+        this.updateParticipantRings(enemy.name, enemy.hp, enemy.maxHp || (enemy.hp + damage), enemy.mp || 0, enemy.maxMp || 0);
         
         // Track damage dealt to enemies
         this.combatStats.damageDealt += damage;
