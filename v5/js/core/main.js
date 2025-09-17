@@ -748,6 +748,74 @@ function debounce(func, wait) {
     };
 }
 
+// CRITICAL ADDITION: Sync rest changes to all storage systems
+function saveRestChangesToAllStorageSystems() {
+    try {
+        // CORRECT: Use the established save function that saves to IndexedDB
+        saveCharactersToStorage();
+        
+        // CRITICAL: Save to IndexedDB which combat system uses
+        saveCharacterToIndexedDB();
+        
+        // Save to localStorage as backup
+        localStorage.setItem('character', JSON.stringify(character));
+        
+        console.log('Rest changes saved to all storage systems:', {
+            hp: `${character.currentHealthPoints}/${character.healthPoints}`,
+            mp: `${character.currentMagicPoints}/${character.magicPoints}`
+        });
+        
+    } catch (error) {
+        console.error('Error saving rest changes to storage systems:', error);
+    }
+}
+
+// CRITICAL ADDITION: Save current character to IndexedDB (same method combat uses)
+async function saveCharacterToIndexedDB() {
+    try {
+        // Get all characters from IndexedDB
+        let characters = [];
+        
+        if (window.advancedStorageManager) {
+            characters = await window.advancedStorageManager.getItem('wasteland_characters') || [];
+        } else {
+            // Fallback to localStorage
+            const stored = localStorage.getItem('wasteland_characters');
+            if (stored) {
+                characters = JSON.parse(stored);
+            }
+        }
+        
+        // Find and update the current character in the array
+        const charIndex = characters.findIndex(char => char.name === character.name);
+        if (charIndex !== -1) {
+            // Update HP/MP values (using .dcw format that combat expects)
+            characters[charIndex].currentHealthPoints = character.currentHealthPoints;
+            characters[charIndex].currentMagicPoints = character.currentMagicPoints;
+            
+            // Also update legacy properties for compatibility
+            characters[charIndex].hp = character.currentHealthPoints;
+            characters[charIndex].mp = character.currentMagicPoints;
+            characters[charIndex].currentHp = character.currentHealthPoints;
+            characters[charIndex].currentMp = character.currentMagicPoints;
+            
+            // Save back to IndexedDB
+            if (window.advancedStorageManager) {
+                await window.advancedStorageManager.setItem('wasteland_characters', characters);
+            } else {
+                localStorage.setItem('wasteland_characters', JSON.stringify(characters));
+            }
+            
+            console.log(`💾 REST: Saved ${character.name} to IndexedDB: ${character.currentHealthPoints}/${character.healthPoints} HP, ${character.currentMagicPoints}/${character.magicPoints} MP`);
+        } else {
+            console.warn(`⚠️ REST: Character ${character.name} not found in characters array for IndexedDB update`);
+        }
+        
+    } catch (error) {
+        console.error('❌ REST: Error saving character to IndexedDB:', error);
+    }
+}
+
 // ========================================
 // CHARACTER STATS SYSTEM
 // ========================================
@@ -3501,6 +3569,9 @@ function quickRest() {
 
     updateHealthMagicDisplay();
     updateCharacterDisplay();
+    
+    // CRITICAL FIX: Save to modern storage systems that combat uses
+    saveRestChangesToAllStorageSystems();
 
     showNotification('rest', 'Quick Rest',
         `Recovered ${actualHPRecovered} HP and ${actualMPRecovered} MP`,
@@ -3519,6 +3590,9 @@ function longRest() {
 
     updateHealthMagicDisplay();
     updateCharacterDisplay();
+    
+    // CRITICAL FIX: Save to modern storage systems that combat uses
+    saveRestChangesToAllStorageSystems();
 
     showNotification('rest', 'Long Rest',
         `Fully recovered! +${actualHPRecovered} HP and +${actualMPRecovered} MP`,

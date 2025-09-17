@@ -1254,10 +1254,16 @@ export class CombatManager {
     getCharacterMagicActions(player) {
         const actions = [];
         
+        // CRITICAL FIX: Get the actual character data with proper MP values
+        const actualPlayerData = this.currentCombat.party.players.find(p => p.name === player.name);
+        const currentMp = actualPlayerData?.mp || player.mp || 0;
+        
+        console.log(`🔍 Magic actions - player.mp=${player.mp}, actualPlayerData.mp=${actualPlayerData?.mp}, using currentMp=${currentMp}`);
+        
         if (player.spells && player.spells.length > 0) {
             player.spells.forEach(spell => {
-                // Check if player has enough MP for this spell
-                const canCast = !spell.cost || (player.mp && player.mp >= spell.cost);
+                // Check if player has enough MP for this spell using actual MP values
+                const canCast = !spell.cost || (currentMp >= spell.cost);
                 
                 // Create damage display string
                 let damageDisplay = '';
@@ -1538,23 +1544,41 @@ export class CombatManager {
     handleSpellCast(player, enemy, spell) {
         console.log(`🪄 ${player.name} casts ${spell.name} (${spell.element})`);
         
+        // CRITICAL FIX: Get the actual character data with proper MP values
+        const actualPlayerData = this.currentCombat.party.players.find(p => p.name === player.name);
+        if (!actualPlayerData) {
+            console.error(`❌ Could not find player data for ${player.name}`);
+            return;
+        }
+        
+        console.log(`🔍 Player MP check: player.mp=${player.mp}, actualPlayerData.mp=${actualPlayerData.mp}`);
+        console.log(`🔍 Player object:`, player);
+        console.log(`🔍 Actual player data:`, actualPlayerData);
+        
+        // Use the actual player data for MP calculations
+        const currentMp = actualPlayerData.mp || 0;
+        const maxMp = actualPlayerData.maxMp || 0;
+        
         // Check MP cost
         if (spell.cost && spell.cost > 0) {
-            if (!player.mp || player.mp < spell.cost) {
-                console.log(`❌ ${player.name} doesn't have enough MP for ${spell.name} (needs ${spell.cost}, has ${player.mp || 0})`);
+            if (currentMp < spell.cost) {
+                console.log(`❌ ${player.name} doesn't have enough MP for ${spell.name} (needs ${spell.cost}, has ${currentMp})`);
                 // TODO: Show UI message and allow different action
                 return;
             }
             
-            // Deduct MP cost
-            player.mp = Math.max(0, player.mp - spell.cost);
-            console.log(`💙 ${player.name} MP: ${player.mp}/${player.maxMp} (-${spell.cost})`);
+            // Deduct MP cost from the actual player data
+            actualPlayerData.mp = Math.max(0, currentMp - spell.cost);
+            // Also update the player object for consistency
+            player.mp = actualPlayerData.mp;
+            
+            console.log(`💙 ${player.name} MP: ${actualPlayerData.mp}/${maxMp} (-${spell.cost})`);
             
             // Update player health bar
-            this.combatRenderer.updatePlayerHealth(player.id || player.name, player.hp, player.mp);
+            this.combatRenderer.updatePlayerHealth(player.id || player.name, actualPlayerData.hp, actualPlayerData.mp);
             
-            // Save MP change to storage
-            this.saveCharacterToIndexedDB(player);
+            // Save MP change to storage using actual player data
+            this.saveCharacterToIndexedDB(actualPlayerData);
         }
         
         // Calculate spell damage
@@ -1608,7 +1632,7 @@ export class CombatManager {
             
             // Apply healing to caster (for now)
             if (healing > 0) {
-                const oldHp = player.hp;
+                const oldHp = actualPlayerData.hp;
                 
                 // Use PartyManager for proper healing with floating numbers
                 this.partyManager.applyHealing(player.name, healing, 'magical');
@@ -1616,16 +1640,19 @@ export class CombatManager {
                 // Update the player object from party manager
                 const updatedPlayer = this.partyManager.getMember(player.name);
                 if (updatedPlayer) {
+                    actualPlayerData.hp = updatedPlayer.hp;
+                    actualPlayerData.mp = updatedPlayer.mp;
+                    // Update player object for consistency
                     player.hp = updatedPlayer.hp;
                     player.mp = updatedPlayer.mp;
                 }
                 
-                const actualHealing = player.hp - oldHp;
+                const actualHealing = actualPlayerData.hp - oldHp;
                 
-                this.combatRenderer.updatePlayerHealth(player.id || player.name, player.hp, player.mp);
-                this.saveCharacterToIndexedDB(player);
+                this.combatRenderer.updatePlayerHealth(player.id || player.name, actualPlayerData.hp, actualPlayerData.mp);
+                this.saveCharacterToIndexedDB(actualPlayerData);
                 
-                console.log(`💚 ${player.name} healed for ${actualHealing} HP (${oldHp} → ${player.hp})`);
+                console.log(`💚 ${player.name} healed for ${actualHealing} HP (${oldHp} → ${actualPlayerData.hp})`);
             }
         }
         
