@@ -54,7 +54,7 @@
         inset 0 0 20px rgba(0,0,0,0.3);
     transition: all 0.4s ease;
     animation: feralPulse 3s ease-in-out infinite;
-    border: 2px solid #ffd700;
+    /* border: 2px solid #ffd700; */
 }
 
 .feral-gateway-main::before {
@@ -151,16 +151,7 @@
     height: 58px;
 }
 
-/* Enhanced hexagon hover effects */
-.feral-option.hexagon:hover {
-    /* Preserve hexagon shape on hover */
-    clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
-    border-color: rgba(255, 215, 0, 0.8) !important;
-    box-shadow: 
-        0 0 25px rgba(255, 215, 0, 0.5) !important,
-        0 0 35px rgba(255, 215, 0, 0.3) !important;
-    transform: scale(1.15) translateX(0) !important;
-}
+
 
 /* Main hexagon FAB enhanced styling */
 .feral-gateway-main.hexagon {
@@ -250,6 +241,16 @@
     border-color: rgba(255, 215, 0, 0.8) !important;
     box-shadow: 0 0 25px rgba(255, 215, 0, 0.5) !important;
     transform: scale(1.1) translateX(0) !important;
+}
+
+/* Enhanced hexagon hover effects - overrides general hover for hexagonal FABs */
+.feral-option.hexagon:hover {
+    clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%) !important;
+    border-color: rgba(255, 215, 0, 0.8) !important;
+    box-shadow: 
+        0 0 25px rgba(255, 215, 0, 0.5), 
+        0 0 35px rgba(255, 215, 0, 0.3) !important;
+    transform: scale(1.15) translateX(0) !important;
 }
 
 /* ============================================
