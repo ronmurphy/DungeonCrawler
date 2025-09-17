@@ -565,8 +565,49 @@ body.sidebar-open {
     }
 }
 
+/* Android Phone Optimization (360-540px - Common Android sizes) */
+@media (min-width: 361px) and (max-width: 540px) {
+    .content-wrapper {
+        padding: var(--spacing-sm);
+        padding-bottom: calc(var(--spacing-lg) + 50px);
+        max-width: 98%;
+    }
+    
+    /* Combat Modal Viewport Division - Android Phones */
+    .combat-content {
+        width: 95vw !important;
+        height: 90vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .combat-header {
+        flex: 0 0 auto !important;
+        height: auto !important;
+        min-height: 50px !important;
+        max-height: 80px !important;
+        padding: 10px 12px !important;
+    }
+    
+    .combat-scene {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+    
+    .combat-ui {
+        flex: 0 0 auto !important;
+        height: 220px !important; /* Generous height for Android phones */
+        min-height: 220px !important;
+        max-height: 260px !important;
+        padding: 10px !important;
+        overflow-y: auto !important;
+    }
+}
+
 /* Tablet Layout (Current Desktop becomes Tablet) */
-@media (min-width: 481px) and (max-width: 768px) {
+@media (min-width: 541px) and (max-width: 768px) {
     .content-wrapper {
         padding: var(--spacing-md);
         padding-bottom: calc(var(--spacing-lg) + 60px);
@@ -596,9 +637,9 @@ body.sidebar-open {
     
     .combat-ui {
         flex: 0 0 auto !important;
-        height: 130px !important; /* Increased from 100px */
-        min-height: 130px !important;
-        max-height: 170px !important; /* Increased for more space */
+        height: 180px !important; /* Increased from 130px for Android compatibility */
+        min-height: 180px !important;
+        max-height: 220px !important; /* Increased for more space */
         padding: 12px !important;
     }
 }
