@@ -799,6 +799,22 @@ async function saveCharacterToIndexedDB() {
             characters[charIndex].currentHp = character.currentHealthPoints;
             characters[charIndex].currentMp = character.currentMagicPoints;
             
+            // CRITICAL FIX: Also update the character-manager array to prevent auto-save overwrite
+            if (window.characterManager && window.characterManager.currentCharacterId) {
+                const managerCharIndex = window.characterManager.characters.findIndex(
+                    char => char.id === window.characterManager.currentCharacterId
+                );
+                if (managerCharIndex !== -1) {
+                    window.characterManager.characters[managerCharIndex].currentHealthPoints = character.currentHealthPoints;
+                    window.characterManager.characters[managerCharIndex].currentMagicPoints = character.currentMagicPoints;
+                    window.characterManager.characters[managerCharIndex].hp = character.currentHealthPoints;
+                    window.characterManager.characters[managerCharIndex].mp = character.currentMagicPoints;
+                    window.characterManager.characters[managerCharIndex].currentHp = character.currentHealthPoints;
+                    window.characterManager.characters[managerCharIndex].currentMp = character.currentMagicPoints;
+                    console.log(`🔄 REST: Updated character-manager array for ${character.name} to prevent auto-save overwrite`);
+                }
+            }
+            
             // Save back to IndexedDB
             if (window.advancedStorageManager) {
                 await window.advancedStorageManager.setItem('wasteland_characters', characters);

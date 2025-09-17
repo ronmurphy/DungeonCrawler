@@ -825,6 +825,16 @@ export class CombatManager {
                 return;
             }
 
+            // DEBUG: Check what HP values we're getting from storage
+            console.log(`🔍 DEBUG: Character data from storage for ${playerName}:`, {
+                currentHealthPoints: characterData.currentHealthPoints,
+                healthPoints: characterData.healthPoints,
+                currentHp: characterData.currentHp,
+                hp: characterData.hp,
+                currentMagicPoints: characterData.currentMagicPoints,
+                magicPoints: characterData.magicPoints
+            });
+
             // Update party data with fresh character stats
             // Map from .dcw character format to combat format
             this.currentCombat.party.players[0] = {
@@ -1141,6 +1151,7 @@ export class CombatManager {
         const weaponActions = this.getCharacterWeaponActions(characterData);
         const magicActions = this.getCharacterMagicActions(characterData);
         const skillActions = this.getCharacterSkillActions(characterData);
+        const itemActions = this.getCharacterItemActions(characterData);
         
         controlsContainer.innerHTML = `
             <div class="player-turn-menu" style="
@@ -1180,6 +1191,19 @@ export class CombatManager {
                     font-size: 0.9em;
                 " onclick="window.combatManager.showActionMenu('magic', ${JSON.stringify(magicActions).replace(/"/g, '&quot;')})">
                     ✨ Magic (${magicActions.length})
+                </button>
+                
+                <button class="attack-btn item-btn" style="
+                    padding: 8px 16px;
+                    background: linear-gradient(135deg, #ff8040, #cc5520);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    font-size: 0.9em;
+                " onclick="window.combatManager.showActionMenu('item', ${JSON.stringify(itemActions).replace(/"/g, '&quot;')})">
+                    🧪 Items (${itemActions.length})
                 </button>
                 
                 <button class="attack-btn skill-btn" style="
@@ -1412,6 +1436,151 @@ export class CombatManager {
     }
     
     /**
+     * Get character's usable items for combat
+     */
+    getCharacterItemActions(player) {
+        const actions = [];
+        
+        // Get character's inventory - try multiple sources
+        const inventory = player.inventory || 
+                         player.combatData?.inventory || 
+                         (window.unifiedInventory ? window.unifiedInventory.getInventory() : []);
+        
+        if (inventory && inventory.length > 0) {
+            inventory.forEach(item => {
+                const itemAction = this.convertItemToCombatAction(item);
+                if (itemAction) {
+                    actions.push(itemAction);
+                }
+            });
+        }
+        
+        return actions.slice(0, 6); // Limit to 6 for UI space
+    }
+    
+    /**
+     * Convert inventory item to combat action
+     */
+    convertItemToCombatAction(item) {
+        if (!item) return null;
+        
+        // Only include consumable items in combat
+        if (item.type !== 'consumable') return null;
+        
+        const action = {
+            id: String(item.id), // Ensure ID is a string for consistency
+            name: item.name,
+            type: 'item',
+            originalItem: item
+        };
+        
+        // Determine effect based on item properties and effects
+        if (this.isHealingItem(item)) {
+            const healAmount = this.calculateHealingAmount(item);
+            action.healing = healAmount;
+            action.description = `Heal ${healAmount} HP`;
+            action.target = 'self';
+        } else if (this.isDamageItem(item)) {
+            const damageAmount = this.calculateItemDamage(item);
+            action.damage = damageAmount;
+            action.description = item.effect || `Deal ${damageAmount} damage`;
+            action.target = 'enemy';
+        } else if (this.isMagicScroll(item)) {
+            // Magic scrolls get random spell effect
+            action.damage = '1d6+2';
+            action.description = 'Random magical effect';
+            action.target = 'enemy';
+            action.special = 'random_magic';
+        } else if (item.effect) {
+            // Generic consumable with an effect
+            action.description = item.effect;
+            action.target = 'self';
+        } else {
+            // Unknown consumable - skip
+            return null;
+        }
+        
+        return action;
+    }
+    
+    /**
+     * Check if item provides healing
+     */
+    isHealingItem(item) {
+        const name = (item.name || '').toLowerCase();
+        const effect = (item.effect || '').toLowerCase();
+        const properties = item.properties || [];
+        
+        return name.includes('potion') || 
+               name.includes('heal') || 
+               effect.includes('heal') ||
+               properties.includes('Healing') ||
+               item.healing === true;
+    }
+    
+    /**
+     * Check if item deals damage
+     */
+    isDamageItem(item) {
+        const name = (item.name || '').toLowerCase();
+        const effect = (item.effect || '').toLowerCase();
+        
+        return name.includes('bomb') || 
+               name.includes('grenade') ||
+               name.includes('poison') ||
+               effect.includes('damage') ||
+               effect.includes('deal');
+    }
+    
+    /**
+     * Check if item is a magic scroll
+     */
+    isMagicScroll(item) {
+        const name = (item.name || '').toLowerCase();
+        const properties = item.properties || [];
+        
+        return name.includes('scroll') || 
+               name.includes('magic scroll') ||
+               properties.includes('Magic');
+    }
+    
+    /**
+     * Calculate healing amount for item
+     */
+    calculateHealingAmount(item) {
+        const effect = (item.effect || '').toLowerCase();
+        
+        // Try to parse healing from effect text like "Heal 1d4+1 HP"
+        const healMatch = effect.match(/heal\s*(\d*d?\d+(?:\+\d+)?)/i);
+        if (healMatch) {
+            return healMatch[1];
+        }
+        
+        // Default healing based on item rarity/name
+        const name = (item.name || '').toLowerCase();
+        if (name.includes('greater')) return '2d4+2';
+        if (name.includes('major')) return '3d4+3';
+        if (name.includes('elixir')) return '4d4+4';
+        
+        return '1d4+1'; // Default small healing
+    }
+    
+    /**
+     * Calculate damage amount for item
+     */
+    calculateItemDamage(item) {
+        const effect = (item.effect || '').toLowerCase();
+        
+        // Try to parse damage from effect text
+        const damageMatch = effect.match(/(\d*d?\d+(?:\+\d+)?)\s*damage/i);
+        if (damageMatch) {
+            return damageMatch[1];
+        }
+        
+        return '1d6'; // Default damage
+    }
+    
+    /**
      * Show detailed action menu
      */
     showActionMenu(actionType, actions) {
@@ -1478,6 +1647,7 @@ export class CombatManager {
             case 'weapon': return '#ff6b35, #cc4422';
             case 'magic': return '#4a9eff, #2266cc';
             case 'skill': return '#40ff80, #22cc44';
+            case 'item': return '#ff8040, #cc5520';
             default: return '#666, #444';
         }
     }
@@ -1532,6 +1702,9 @@ export class CombatManager {
         if (action.type === 'spell' || action.element) {
             // This is a spell - use the new spell system
             this.handleSpellCast(player, enemy, action);
+        } else if (action.type === 'item') {
+            // This is an item - use the new item system
+            this.handleItemUse(player, enemy, action);
         } else {
             // Handle weapon/melee attacks
             this.handleWeaponAttack(player, enemy, action);
@@ -1675,6 +1848,137 @@ export class CombatManager {
         // Check if enemy defeated
         if (enemy.hp <= 0) {
             console.log(`💀 ${enemy.name} defeated by ${spell.name}!`);
+            this.handleEnemyDefeat(enemy);
+            return;
+        }
+        
+        // Check for combat end
+        if (this.checkCombatEnd()) {
+            return;
+        }
+        
+        // Next turn
+        this.turnManager.nextTurn();
+    }
+    
+    /**
+     * Handle item use with full item mechanics
+     */
+    handleItemUse(player, enemy, itemAction) {
+        console.log(`🧪 ${player.name} uses ${itemAction.name}`);
+        
+        // Get the actual character data for item removal
+        const actualPlayerData = this.currentCombat.party.players.find(p => p.name === player.name);
+        if (!actualPlayerData) {
+            console.error(`❌ Could not find player data for ${player.name}`);
+            return;
+        }
+        
+        // Remove item from inventory after use
+        const itemId = itemAction.id;
+        if (actualPlayerData.inventory) {
+            // Handle both string and number IDs for compatibility
+            actualPlayerData.inventory = actualPlayerData.inventory.filter(item => 
+                String(item.id) !== String(itemId)
+            );
+            console.log(`📦 Removed ${itemAction.name} from inventory (ID: ${itemId})`);
+        }
+        
+        // Also remove from unified inventory if available
+        if (window.unifiedInventory) {
+            window.unifiedInventory.removeItem(itemId);
+        }
+        
+        let floatingText = itemAction.name;
+        let damageDealt = 0;
+        let healingDone = 0;
+        
+        // Handle item effects based on target
+        if (itemAction.target === 'self' || itemAction.healing) {
+            // Healing/self-buff items
+            if (itemAction.healing) {
+                const healAmount = this.rollDamage(itemAction.healing);
+                const oldHp = actualPlayerData.hp;
+                actualPlayerData.hp = Math.min(actualPlayerData.maxHp, actualPlayerData.hp + healAmount);
+                healingDone = actualPlayerData.hp - oldHp;
+                
+                floatingText = `+${healingDone} HP`;
+                console.log(`❤️ ${player.name} healed for ${healingDone} HP`);
+                
+                // Show floating healing number using PartyManager
+                if (this.partyManager) {
+                    this.partyManager.triggerFloatingNumber(player.name, healingDone, 'healing', 'magical');
+                }
+                
+                // Update player health display
+                this.combatRenderer.updatePlayerHealth(player.name, actualPlayerData.hp, actualPlayerData.mp);
+            } else {
+                // Generic self-effect
+                floatingText = itemAction.description;
+                console.log(`✨ ${player.name}: ${itemAction.description}`);
+            }
+        } else {
+            // Damage/attack items targeting enemy
+            if (itemAction.damage) {
+                damageDealt = this.rollDamage(itemAction.damage);
+                
+                // Apply damage to enemy
+                enemy.hp = Math.max(0, enemy.hp - damageDealt);
+                floatingText = `-${damageDealt}`;
+                
+                console.log(`💥 ${itemAction.name} deals ${damageDealt} damage to ${enemy.name}`);
+                
+                // Show floating damage number using PartyManager
+                if (this.partyManager) {
+                    this.partyManager.triggerFloatingNumber(enemy.id, damageDealt, 'damage', 'physical');
+                }
+                
+                // Update enemy health and play damage animation
+                this.combatRenderer.updateEnemyHealth(enemy.id, enemy.hp, enemy.mp);
+                this.combatRenderer.playDamageAnimation(enemy.id, 500);
+            } else if (itemAction.special === 'random_magic') {
+                // Magic scroll - random spell effect
+                const randomSpells = [
+                    { name: 'Magic Missile', damage: '1d4+1', effect: 'force damage' },
+                    { name: 'Burning Hands', damage: '1d6', effect: 'fire damage' },
+                    { name: 'Frost Bolt', damage: '1d6', effect: 'cold damage' },
+                    { name: 'Lightning Spark', damage: '1d8', effect: 'lightning damage' }
+                ];
+                
+                const randomSpell = randomSpells[Math.floor(Math.random() * randomSpells.length)];
+                damageDealt = this.rollDamage(randomSpell.damage);
+                enemy.hp = Math.max(0, enemy.hp - damageDealt);
+                
+                floatingText = `${randomSpell.name}: -${damageDealt}`;
+                console.log(`🎲 Magic Scroll casts ${randomSpell.name} for ${damageDealt} damage!`);
+                
+                // Show floating damage number using PartyManager for magical damage
+                if (this.partyManager) {
+                    this.partyManager.triggerFloatingNumber(enemy.id, damageDealt, 'damage', 'magical');
+                }
+                
+                // Update enemy health and play damage animation
+                this.combatRenderer.updateEnemyHealth(enemy.id, enemy.hp, enemy.mp);
+                this.combatRenderer.playDamageAnimation(enemy.id, 500);
+            }
+        }
+        
+        // Save character data back to storage
+        this.saveCharacterToIndexedDB(actualPlayerData);
+        
+        // Check for rage mode (HP < 20%)
+        if (enemy && damageDealt > 0) {
+            const hpPercent = enemy.hp / enemy.maxHp;
+            if (hpPercent > 0 && hpPercent <= 0.2 && !enemy.inRageMode) {
+                console.log(`😡 ${enemy.name} enters rage mode! (${Math.round(hpPercent * 100)}% HP)`);
+                enemy.inRageMode = true;
+                this.combatRenderer.playRageAnimation(enemy.id, 1000);
+            }
+        }
+        
+        // Check if enemy defeated
+        if (enemy && enemy.hp <= 0) {
+            console.log(`💀 ${enemy.name} defeated by ${itemAction.name}!`);
             this.handleEnemyDefeat(enemy);
             return;
         }
