@@ -816,16 +816,25 @@ class UnifiedInventorySystem {
      * Buy item from DCC shop
      */
     buyDCCItem(itemId) {
-        if (!this.dccItems) {
-            console.error('❌ DCC items not loaded');
+        console.log(`🛒 buyDCCItem called with ID: "${itemId}"`);
+        
+        if (!this.processedDCCItems) {
+            console.error('❌ DCC items not processed yet');
             return false;
         }
 
-        const item = this.dccItems.find(i => i.id === itemId);
+        // Search through processed items (which have proper IDs)
+        const item = this.processedDCCItems.find(i => i.id === itemId);
+
         if (!item) {
             console.error('❌ DCC item not found:', itemId);
+            // Debug: show all available IDs
+            const allIds = this.processedDCCItems.map(i => i.id);
+            console.log('🔍 Available IDs:', allIds.slice(0, 20)); // Show first 20 IDs
             return false;
         }
+
+        console.log(`✅ Found item: ${item.name} in category: ${item.category}`);
 
         const currentGold = this.getGold();
         if (currentGold < item.value) {
@@ -927,17 +936,38 @@ class UnifiedInventorySystem {
         const allItems = [];
         Object.entries(this.dccItems).forEach(([category, items]) => {
             console.log(`📋 Processing category: ${category} with ${items.length} items`);
-            items.forEach(item => {
+            items.forEach((item, itemIndex) => {
                 // Add category and unique ID to each item
-                allItems.push({
-                    ...item,
+                // Use proper index within category for consistent IDs
+                const generatedId = `${category}-${itemIndex}`;
+                
+                // Create new item object without any existing undefined id
+                const newItem = {
+                    name: item.name,
+                    type: item.type,
+                    damage: item.damage,
+                    properties: item.properties,
+                    value: item.value,
+                    description: item.description,
+                    effect: item.effect,
+                    ac_bonus: item.ac_bonus,
                     category: category,
-                    id: `${category}-${allItems.length}`
-                });
+                    id: generatedId
+                };
+                
+                allItems.push(newItem);
+                
+                // Debug log for first few items
+                if (allItems.length <= 5) {
+                    console.log(`🔍 Generated ID for ${item.name}: ${generatedId}`);
+                }
             });
         });
 
         console.log(`🔢 Total flattened items: ${allItems.length}`);
+        
+        // Store processed items for buying function to use
+        this.processedDCCItems = allItems;
 
         allItems.forEach((item, index) => {
             const canAfford = currentGold >= (item.value || 0);
@@ -945,6 +975,11 @@ class UnifiedInventorySystem {
             itemElement.className = 'dcc-modal-item';
             itemElement.dataset.category = item.category; // For filtering
             itemElement.dataset.name = item.name.toLowerCase(); // For search
+
+            // Debug: log item ID for items that might be clicked
+            if (index >= 15 && index <= 20) {
+                console.log(`🔍 Item ${index}: ${item.name} has ID: ${item.id}`);
+            }
 
             const icon = this.getItemIcon(item.type);
             
