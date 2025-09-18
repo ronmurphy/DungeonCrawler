@@ -6262,3 +6262,171 @@ body.sidebar-open {
         font-size: 18px;
     }
 }
+
+/* ========================================
+   MAP CANVAS RESPONSIVE DESIGN
+   ======================================== */
+
+/* Base minimap container styles */
+#minimap-container {
+    position: absolute !important;
+    top: 15px !important;
+    left: 15px !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    border: 2px solid #333 !important;
+    border-radius: 10px !important;
+    z-index: 1002 !important;
+    display: block !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Mobile Portrait (≤480px) - Compact minimap for small screens */
+@media (max-width: 480px) {
+    #minimap-container {
+        width: 120px !important;
+        height: 120px !important;
+    }
+}
+
+/* Android Phones (361-540px) - Optimized for medium mobile screens */
+@media (min-width: 361px) and (max-width: 540px) {
+    #minimap-container {
+        width: 140px !important;
+        height: 140px !important;
+    }
+}
+
+/* Tablets (541-768px) - Larger minimap for tablet screens */
+@media (min-width: 541px) and (max-width: 768px) {
+    #minimap-container {
+        width: 180px !important;
+        height: 180px !important;
+    }
+}
+
+/* Desktop (≥769px) - Full-size minimap for desktop */
+@media (min-width: 769px) {
+    #minimap-container {
+        width: 220px !important;
+        height: 220px !important;
+    }
+}
+
+/* Landscape orientation optimization for mobile devices */
+@media (max-width: 768px) and (orientation: landscape) {
+    #minimap-container {
+        width: 100px !important;
+        height: 100px !important;
+        top: 10px !important;
+        left: 10px !important;
+    }
+}
+
+/* ========================================
+   THREEJS CONTAINER RESPONSIVE DESIGN
+   ======================================== */
+
+/* Base threejs container styles */
+#threejs-container {
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    border-radius: 10px !important;
+    background: #111 !important;
+    position: relative !important;
+}
+
+/* Mobile Portrait (≤480px) - Optimize viewport usage */
+@media (max-width: 480px) {
+    #map-viewer-container {
+        width: 95vw !important;
+        height: 85vh !important;
+        max-width: none !important;
+        max-height: none !important;
+    }
+}
+
+/* Android Phones (361-540px) - Medium mobile optimization */
+@media (min-width: 361px) and (max-width: 540px) {
+    #map-viewer-container {
+        width: 92vw !important;
+        height: 82vh !important;
+        max-width: none !important;
+        max-height: none !important;
+    }
+}
+
+/* Tablets (541-768px) - Balanced tablet layout */
+@media (min-width: 541px) and (max-width: 768px) {
+    #map-viewer-container {
+        width: 90vw !important;
+        height: 80vh !important;
+        max-width: 700px !important;
+        max-height: 550px !important;
+    }
+}
+
+/* Desktop (≥769px) - 80% height, top positioned */
+@media (min-width: 769px) {
+    #map-viewer-container {
+        width: 90vw !important;
+        height: 80vh !important;
+        max-width: 800px !important;
+        max-height: none !important;
+    }
+}
+
+/* Landscape orientation optimization for mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    #map-viewer-container {
+        width: 90vw !important;
+        height: 90vh !important;
+        max-width: none !important;
+        max-height: none !important;
+    }
+}
+
+/* ========================================
+   MAP OVERLAY POSITIONING
+   ======================================== */
+
+/* Base map overlay - position at top center to avoid FAB overlap */
+#map-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    z-index: 1000 !important;
+    display: none; /* Remove !important so JavaScript can control visibility */
+    justify-content: center !important;
+    align-items: flex-start !important; /* Top alignment instead of center */
+    backdrop-filter: blur(5px) !important;
+    padding-top: 20px !important; /* Add some top padding */
+}
+
+/* Base map viewer container styles */
+#map-viewer-container {
+    background: var(--surface-color) !important;
+    border-radius: 12px !important;
+    border: 2px solid var(--border-color) !important;
+    position: relative !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Animation for auto-run notification */
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}

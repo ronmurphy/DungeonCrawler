@@ -121,7 +121,11 @@ class ThreeMapRenderer {
         };
         
         // Touch and mobile controls
-        this.virtualStick = null;
+        this.virtualSticks = {
+            left: null,   // Movement stick
+            right: null,  // Camera/turning stick
+            running: false // Run state
+        };
         this.touchStartPos = null;
         
         // Sprite/Tileset handling
@@ -681,7 +685,7 @@ class ThreeMapRenderer {
         this.setupTouchControls();
         
         if (this.isMobile) {
-            this.createVirtualStick();
+            this.createDualVirtualSticks();
         }
     }
     
@@ -717,7 +721,13 @@ class ThreeMapRenderer {
         
         const self = this; // Store reference for event handlers
         
+        // Initialize keyboard state tracking
+        this.keyStates = {};
+        
         window.addEventListener('keydown', function(event) {
+            // Track all key states
+            self.keyStates[event.code] = true;
+            
             // F1 key to toggle performance stats
             if (event.code === 'F1') {
                 self.toggleStats();
@@ -759,6 +769,9 @@ class ThreeMapRenderer {
         });
         
         window.addEventListener('keyup', function(event) {
+            // Track key release states
+            self.keyStates[event.code] = false;
+            
             // Track shift key release
             if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
                 self.shiftPressed = false;
@@ -1122,14 +1135,129 @@ class ThreeMapRenderer {
         this.debugLog('📱 Touch controls setup');
     }
     
-    // Create virtual thumbstick for mobile
-    createVirtualStick() {
+    // Create dual virtual thumbsticks for mobile - movement and camera control
+    createDualVirtualSticks() {
+        // Initialize auto-run timer
+        this.autoRunTimer = null;
+        this.isWalking = false;
+        
+        // Create left stick for movement
+        this.virtualSticks.left = this.createVirtualStick({
+            id: 'left-virtual-stick',
+            position: 'left',
+            bottom: '20px',
+            left: '20px',
+            onUpdate: (normalizedX, normalizedY, intensity) => {
+                const threshold = 0.3;
+                const controls = this.cameraControls;
+                
+                // Check if player is moving
+                const isMoving = Math.abs(normalizedX) > threshold || Math.abs(normalizedY) > threshold;
+                
+                // Handle auto-run timer for walking
+                if (isMoving && !this.virtualSticks.running) {
+                    if (!this.isWalking) {
+                        // Just started walking, start 15-second timer
+                        this.isWalking = true;
+                        this.autoRunTimer = setTimeout(() => {
+                            // Auto-activate running after 15 seconds
+                            this.virtualSticks.running = true;
+                            this.updateRunningIndicator();
+                        }, 15000); // 15 seconds
+                    }
+                } else if (!isMoving) {
+                    // Stopped moving, clear timer
+                    this.clearAutoRunTimer();
+                }
+                
+                // Handle running based on intensity or special gestures
+                const shouldRun = this.virtualSticks.running || intensity > 0.8;
+                
+                // Only control movement keys if virtual stick is actively being used
+                if (isMoving) {
+                    // Set movement keys only when virtual stick is active
+                    controls.keys.forward = normalizedY < -threshold;
+                    controls.keys.backward = normalizedY > threshold;
+                    controls.keys.left = normalizedX < -threshold;
+                    controls.keys.right = normalizedX > threshold;
+                    
+                    // Apply running by setting the shift state directly
+                    if (shouldRun) {
+                        this.shiftPressed = true;
+                    }
+                }
+            },
+            onReset: () => {
+                // Only clear movement keys that were set by virtual stick
+                // Don't interfere with keyboard controls
+                const controls = this.cameraControls;
+                
+                // Clear virtual stick movement only if no keyboard keys are pressed
+                // This prevents virtual stick from clearing keyboard movement
+                if (!this.isKeyboardMovementActive()) {
+                    controls.keys.forward = false;
+                    controls.keys.backward = false;
+                    controls.keys.left = false;
+                    controls.keys.right = false;
+                }
+                
+                // Clear virtual shift state only if not using keyboard shift
+                if (!this.isPhysicalShiftPressed()) {
+                    this.shiftPressed = false;
+                }
+                
+                // Clear auto-run timer when virtual movement stops
+                this.clearAutoRunTimer();
+            }
+        });
+        
+        // Create right stick for camera control
+        this.virtualSticks.right = this.createVirtualStick({
+            id: 'right-virtual-stick',
+            position: 'right',
+            bottom: '20px',
+            right: '20px',
+            onUpdate: (normalizedX, normalizedY, intensity) => {
+                // Camera rotation based on stick position
+                const sensitivity = 0.02; // Adjust sensitivity
+                
+                if (this.camera && this.player) {
+                    // Horizontal rotation (Y-axis)
+                    if (Math.abs(normalizedX) > 0.1) {
+                        this.player.rotation.y -= normalizedX * sensitivity;
+                    }
+                    
+                    // Vertical camera rotation (X-axis) - limited range
+                    if (Math.abs(normalizedY) > 0.1) {
+                        const currentX = this.camera.rotation.x;
+                        const newX = currentX - normalizedY * sensitivity;
+                        // Limit vertical rotation to prevent flipping
+                        this.camera.rotation.x = Math.max(-Math.PI/3, Math.min(Math.PI/3, newX));
+                    }
+                }
+            },
+            onReset: () => {
+                // Camera stops rotating when stick is released
+                // No continuous state to reset for camera
+            }
+        });
+        
+        // Create run toggle button
+        this.createRunToggleButton();
+        
+        this.debugLog('🕹️ Dual virtual thumbsticks created');
+    }
+    
+    // Create individual virtual stick with configuration
+    createVirtualStick(config) {
         const stickContainer = document.createElement('div');
-        stickContainer.id = 'virtual-stick-container';
+        stickContainer.id = config.id + '-container';
         stickContainer.style.cssText = `
             position: absolute;
-            bottom: 20px;
-            left: 20px;
+            ${config.bottom ? `bottom: ${config.bottom};` : ''}
+            ${config.top ? `top: ${config.top};` : ''}
+            ${config.left ? `left: ${config.left};` : ''}
+            ${config.right ? `right: ${config.right};` : ''}
             width: 120px;
             height: 120px;
             background: rgba(255, 255, 255, 0.1);
@@ -1141,7 +1269,7 @@ class ThreeMapRenderer {
         `;
         
         const stick = document.createElement('div');
-        stick.id = 'virtual-stick';
+        stick.id = config.id;
         stick.style.cssText = `
             position: absolute;
             top: 50%;
@@ -1154,12 +1282,21 @@ class ThreeMapRenderer {
             transition: all 0.1s ease;
         `;
         
+        // Add stick position indicator for right stick
+        if (config.position === 'right') {
+            stick.style.background = 'rgba(100, 200, 255, 0.4)'; // Blue tint for camera stick
+            stickContainer.style.borderColor = 'rgba(100, 200, 255, 0.3)';
+        }
+        
         stickContainer.appendChild(stick);
         this.container.appendChild(stickContainer);
         
         let isDragging = false;
         let centerX = 60; // Half of container width
         let centerY = 60; // Half of container height
+        let longPressTimer = null;
+        let doubleTapTimer = null;
+        let lastTapTime = 0;
         
         const updateStickPosition = (clientX, clientY) => {
             const rect = stickContainer.getBoundingClientRect();
@@ -1178,35 +1315,64 @@ class ThreeMapRenderer {
             
             stick.style.transform = `translate(${finalX - 20}px, ${finalY - 20}px)`;
             
-            // Convert to movement input
+            // Calculate normalized values and intensity
             const normalizedX = finalX / maxDistance;
             const normalizedY = finalY / maxDistance;
+            const intensity = distance / maxDistance;
             
-            // Update movement controls based on stick position
-            const threshold = 0.3;
-            const controls = this.cameraControls;
+            // Call the update callback
+            if (config.onUpdate) {
+                config.onUpdate(normalizedX, normalizedY, intensity);
+            }
             
-            controls.keys.forward = normalizedY < -threshold;
-            controls.keys.backward = normalizedY > threshold;
-            controls.keys.left = normalizedX < -threshold;
-            controls.keys.right = normalizedX > threshold;
-            
-            return { x: normalizedX, y: normalizedY };
+            return { x: normalizedX, y: normalizedY, intensity };
         };
         
         const resetStick = () => {
             stick.style.transform = 'translate(-50%, -50%)';
-            const controls = this.cameraControls;
-            controls.keys.forward = false;
-            controls.keys.backward = false;
-            controls.keys.left = false;
-            controls.keys.right = false;
+            if (config.onReset) {
+                config.onReset();
+            }
         };
         
-        // Touch events for virtual stick
+        const handleRunGestures = () => {
+            // Long press detection for running (left stick only)
+            if (config.position === 'left') {
+                longPressTimer = setTimeout(() => {
+                    this.virtualSticks.running = true;
+                    stick.style.boxShadow = '0 0 20px rgba(255, 100, 100, 0.8)'; // Red glow for running
+                    this.updateRunningIndicator(); // Update button visual state
+                }, 15000); // 15 seconds long press (was 500ms)
+            }
+        };
+        
+        const clearRunGestures = () => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            if (config.position === 'left') {
+                stick.style.boxShadow = 'none';
+            }
+        };
+        
+        // Touch events
         stickContainer.addEventListener('touchstart', (event) => {
             isDragging = true;
             updateStickPosition(event.touches[0].clientX, event.touches[0].clientY);
+            
+            // Handle double-tap for running (left stick only)
+            if (config.position === 'left') {
+                const currentTime = Date.now();
+                if (currentTime - lastTapTime < 15000) { // Double tap within 15 seconds
+                    this.virtualSticks.running = !this.virtualSticks.running;
+                    this.updateRunningIndicator();
+                }
+                lastTapTime = currentTime;
+                
+                handleRunGestures();
+            }
+            
             event.preventDefault();
         });
         
@@ -1220,6 +1386,7 @@ class ThreeMapRenderer {
         stickContainer.addEventListener('touchend', (event) => {
             isDragging = false;
             resetStick();
+            clearRunGestures();
             event.preventDefault();
         });
         
@@ -1227,6 +1394,9 @@ class ThreeMapRenderer {
         stickContainer.addEventListener('mousedown', (event) => {
             isDragging = true;
             updateStickPosition(event.clientX, event.clientY);
+            if (config.position === 'left') {
+                handleRunGestures();
+            }
             event.preventDefault();
         });
         
@@ -1240,11 +1410,122 @@ class ThreeMapRenderer {
             if (isDragging) {
                 isDragging = false;
                 resetStick();
+                clearRunGestures();
             }
         });
         
-        this.virtualStick = stickContainer;
-        this.debugLog('🕹️ Virtual thumbstick created');
+        return stickContainer;
+    }
+    
+    // Create run toggle button
+    createRunToggleButton() {
+        const runButton = document.createElement('div');
+        runButton.id = 'run-toggle-button';
+        runButton.innerHTML = '🚶‍♂️';
+        runButton.style.cssText = `
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            touch-action: none;
+            user-select: none;
+            z-index: 1000;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        `;
+        
+        runButton.addEventListener('touchstart', (event) => {
+            this.virtualSticks.running = !this.virtualSticks.running;
+            this.updateRunningIndicator();
+            event.preventDefault();
+        });
+        
+        runButton.addEventListener('click', (event) => {
+            this.virtualSticks.running = !this.virtualSticks.running;
+            this.updateRunningIndicator();
+            event.preventDefault();
+        });
+        
+        this.container.appendChild(runButton);
+        this.runToggleButton = runButton;
+    }
+    
+    // Update running visual indicators
+    updateRunningIndicator() {
+        if (this.runToggleButton) {
+            if (this.virtualSticks.running) {
+                this.runToggleButton.style.background = 'rgba(255, 100, 100, 0.3)';
+                this.runToggleButton.style.borderColor = 'rgba(255, 100, 100, 0.6)';
+                this.runToggleButton.innerHTML = '🏃‍♂️';
+            } else {
+                this.runToggleButton.style.background = 'rgba(255, 255, 255, 0.1)';
+                this.runToggleButton.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                this.runToggleButton.innerHTML = '🚶‍♂️';
+            }
+        }
+    }
+    
+    // Helper method to check if keyboard movement is currently active
+    isKeyboardMovementActive() {
+        // Check if any movement keys are currently being held down
+        return this.keyStates && (
+            this.keyStates['KeyW'] || this.keyStates['KeyS'] || 
+            this.keyStates['KeyA'] || this.keyStates['KeyD'] ||
+            this.keyStates['ArrowUp'] || this.keyStates['ArrowDown'] ||
+            this.keyStates['ArrowLeft'] || this.keyStates['ArrowRight']
+        );
+    }
+
+    // Helper method to check if physical shift key is pressed
+    isPhysicalShiftPressed() {
+        return this.keyStates && (this.keyStates['ShiftLeft'] || this.keyStates['ShiftRight']);
+    }
+    
+    // Clear auto-run timer
+    clearAutoRunTimer() {
+        if (this.autoRunTimer) {
+            clearTimeout(this.autoRunTimer);
+            this.autoRunTimer = null;
+        }
+        this.isWalking = false;
+    }
+
+    // Show temporary running indicator
+    showRunningIndicator() {
+        // Create temporary indicator for long-press running
+        const indicator = document.createElement('div');
+        indicator.innerHTML = '🏃‍♂️ Running Mode';
+        indicator.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 100, 100, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 2000;
+            pointer-events: none;
+        `;
+        
+        this.container.appendChild(indicator);
+        
+        setTimeout(() => {
+            if (indicator.parentNode) {
+                indicator.parentNode.removeChild(indicator);
+            }
+        }, 2000);
     }
     
     // Main method to load new map data from transmission
@@ -2348,6 +2629,45 @@ class ThreeMapRenderer {
         return false;
     }
     
+    // Determine if textures should be loaded based on device capabilities
+    shouldLoadTexturesForDevice() {
+        // Always load textures on desktop
+        if (!this.isMobileResponsive) {
+            return true;
+        }
+        
+        // Get device info
+        const userAgent = navigator.userAgent.toLowerCase();
+        const screenWidth = window.screen.width;
+        const memory = navigator.deviceMemory || 4; // GB, default to 4GB if not available
+        
+        // Skip textures for very low-end devices
+        if (memory < 2) {
+            console.log('📱 Skipping textures: Low memory device (<2GB)');
+            return false;
+        }
+        
+        // Skip textures for very small screens (iPhone SE and smaller)
+        if (screenWidth <= 375) {
+            console.log('📱 Skipping textures: Small screen device (≤375px)');
+            return false;
+        }
+        
+        // Skip textures for older devices
+        if (userAgent.includes('iphone') && (
+            userAgent.includes('iphone os 12') || 
+            userAgent.includes('iphone os 13') ||
+            userAgent.includes('iphone se')
+        )) {
+            console.log('📱 Skipping textures: Older iPhone detected');
+            return false;
+        }
+        
+        // Load textures for modern mobile devices
+        console.log('📱 Loading textures: Modern mobile device detected');
+        return true;
+    }
+    
     // Performance monitoring - log LOD statistics
     logLODStats() {
         const total = this.lodStats.tilesRendered + this.lodStats.tilesCulled;
@@ -2662,9 +2982,9 @@ class ThreeMapRenderer {
         let workspaceScale = 1.0;
         if (shapeforgeData.workspaceSize) {
             console.log(`🎯 Loading v1.3 ShapeForge with workspace: ${shapeforgeData.workspaceSize.x}x${shapeforgeData.workspaceSize.y}x${shapeforgeData.workspaceSize.z}`);
-            // Scale based on workspace vs tile size ratio
-            const maxWorkspaceDimension = Math.max(shapeforgeData.workspaceSize.x, shapeforgeData.workspaceSize.y, shapeforgeData.workspaceSize.z);
-            workspaceScale = this.tileSize / maxWorkspaceDimension;
+            // No scaling - allow ShapeForge objects to be any size they want
+            // Objects can extend beyond tile boundaries for creative freedom
+            workspaceScale = 1.0; // Always use 1:1 scale, no tile size restrictions
         }
         
         const modelGroup = new THREE.Group();
@@ -2763,6 +3083,36 @@ class ThreeMapRenderer {
                     opacity: obj.material?.opacity || 1.0,
                     side: THREE.DoubleSide // Show both sides for grass blades
                 });
+                
+                // Handle texture data from ShapeForge (base64 encoded images)
+                if (obj.material?.texture && obj.material.texture.data) {
+                    console.log('🎨 Loading texture for object:', obj.name || 'unnamed');
+                    
+                    // Check device capability for texture loading
+                    const shouldLoadTextures = this.shouldLoadTexturesForDevice();
+                    
+                    if (shouldLoadTextures) {
+                        try {
+                            const textureLoader = new THREE.TextureLoader();
+                            const texture = textureLoader.load(obj.material.texture.data);
+                            
+                            // Configure texture properties
+                            texture.wrapS = THREE.RepeatWrapping;
+                            texture.wrapT = THREE.RepeatWrapping;
+                            texture.flipY = false; // ShapeForge textures don't need flipping
+                            
+                            // Apply texture to material
+                            material.map = texture;
+                            material.needsUpdate = true;
+                            
+                            console.log('✅ Texture loaded successfully for:', obj.name || 'unnamed');
+                        } catch (error) {
+                            console.warn('⚠️ Failed to load texture:', error);
+                        }
+                    } else {
+                        console.log('📱 Skipping texture for low-powered device');
+                    }
+                }
                 
                 const mesh = new THREE.Mesh(geometry, material);
                 

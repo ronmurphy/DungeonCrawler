@@ -45,7 +45,7 @@ class ShapeForge {
     this.isPreviewActive = false;
 
     // Workspace configuration
-    this.workspaceSize = { x: 10, y: 10, z: 10 }; // Default workspace size
+    this.workspaceSize = { x: 8, y: 8, z: 8 }; // Default workspace size (matches V5 ThreeJS tile size)
 
     // UI references
     this.uiContainer = null; // Changed from drawer to uiContainer
@@ -3399,15 +3399,26 @@ case 'multiDistribute':
             Set the dimensions for your 3D workspace grid (1x1x1 to 50x50x50 units)
           </p>
           
-          <div style="display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center;">
+          <!-- Tile Size Auto-Configuration -->
+          <div style="margin-bottom: 16px; padding: 12px; background: #e8f4f8; border-radius: 4px; border-left: 4px solid #2196F3;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <sl-checkbox id="use-tile-size" checked></sl-checkbox>
+              <span style="font-weight: 500;">Use V5 Map Tile Size (8x8x8 units)</span>
+            </label>
+            <p style="margin: 4px 0 0 0; font-size: 0.85em; color: #666;">
+              Objects designed at this size will fit perfectly within V5 ThreeJS map tiles and can overflow naturally.
+            </p>
+          </div>
+          
+          <div id="manual-size-controls" style="display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center;">
             <label for="workspace-x">Width (X):</label>
-            <sl-input id="workspace-x" type="number" value="${this.workspaceSize?.x || 10}" min="1" max="50" style="width: 100px;"></sl-input>
+            <sl-input id="workspace-x" type="number" value="${this.workspaceSize?.x || 8}" min="1" max="50" style="width: 100px;"></sl-input>
             
             <label for="workspace-y">Height (Y):</label>
-            <sl-input id="workspace-y" type="number" value="${this.workspaceSize?.y || 10}" min="1" max="50" style="width: 100px;"></sl-input>
+            <sl-input id="workspace-y" type="number" value="${this.workspaceSize?.y || 8}" min="1" max="50" style="width: 100px;"></sl-input>
             
             <label for="workspace-z">Depth (Z):</label>
-            <sl-input id="workspace-z" type="number" value="${this.workspaceSize?.z || 10}" min="1" max="50" style="width: 100px;"></sl-input>
+            <sl-input id="workspace-z" type="number" value="${this.workspaceSize?.z || 8}" min="1" max="50" style="width: 100px;"></sl-input>
           </div>
           
           <div style="margin-top: 16px; padding: 12px; background: #f8f9fa; border-radius: 4px; font-size: 0.9em; color: #666;">
@@ -3423,11 +3434,45 @@ case 'multiDistribute':
       
       document.body.appendChild(modal);
       
+      // Handle tile size checkbox toggle
+      const useTileSizeCheckbox = modal.querySelector('#use-tile-size');
+      const manualControls = modal.querySelector('#manual-size-controls');
+      const xInput = modal.querySelector('#workspace-x');
+      const yInput = modal.querySelector('#workspace-y');
+      const zInput = modal.querySelector('#workspace-z');
+      
+      // Set initial state
+      const updateControlsState = () => {
+        const useTileSize = useTileSizeCheckbox.checked;
+        manualControls.style.opacity = useTileSize ? '0.5' : '1';
+        xInput.disabled = useTileSize;
+        yInput.disabled = useTileSize;
+        zInput.disabled = useTileSize;
+        
+        if (useTileSize) {
+          xInput.value = 8;
+          yInput.value = 8;
+          zInput.value = 8;
+        }
+      };
+      
+      useTileSizeCheckbox.addEventListener('sl-change', updateControlsState);
+      updateControlsState(); // Set initial state
+      
       // Handle confirm
       modal.querySelector('#workspace-confirm').addEventListener('click', () => {
-        const x = parseInt(modal.querySelector('#workspace-x').value) || 10;
-        const y = parseInt(modal.querySelector('#workspace-y').value) || 10;
-        const z = parseInt(modal.querySelector('#workspace-z').value) || 10;
+        const useTileSize = useTileSizeCheckbox.checked;
+        
+        let x, y, z;
+        if (useTileSize) {
+          // Use V5 ThreeJS tile size
+          x = y = z = 8;
+        } else {
+          // Use manual values
+          x = parseInt(modal.querySelector('#workspace-x').value) || 8;
+          y = parseInt(modal.querySelector('#workspace-y').value) || 8;
+          z = parseInt(modal.querySelector('#workspace-z').value) || 8;
+        }
         
         // Validate ranges
         const validX = Math.min(50, Math.max(1, x));
