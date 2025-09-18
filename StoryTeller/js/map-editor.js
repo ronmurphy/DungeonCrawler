@@ -31,8 +31,7 @@ const tileOptions = [
     { type: "sprite", value: "door", name: "Door", category: "features", emoji: "🚪" },
     { type: "sprite", value: "fire", name: "Fire", category: "hazards", emoji: "🔥" },
     
-    // Tools (always emoji)
-    { type: "player", value: "👤", name: "Player", category: "tokens", emoji: "👤" },
+    // Tools (always emoji) - Player moved to markers tab
     { type: "clear", value: "", name: "Clear", category: "tools", emoji: "❌" }
 ];
 
@@ -434,7 +433,7 @@ function openMapModal() {
                         ">🗑️ Clear Map</button>
                     </div>
                     
-                    <!-- Tile Selector -->
+                    <!-- Tabbed Selector -->
                     <div style="
                         background: var(--bg-secondary, #f8f9fa) !important;
                         padding: 16px !important;
@@ -442,14 +441,45 @@ function openMapModal() {
                         border: 1px solid var(--border-color, #ccc) !important;
                         flex: 1 !important;
                     ">
-                        <h4 style="margin: 0 0 12px 0 !important; color: var(--text-primary, #333) !important;">Select Tile:</h4>
-                        <div id="modal-tile-selector" style="
-                            display: grid !important;
-                            grid-template-columns: repeat(3, 1fr) !important;
-                            gap: 4px !important;
-                            max-height: 400px !important;
-                            overflow-y: auto !important;
-                        "></div>
+                        <div class="selector-tabs">
+                            <button id="tiles-tab" class="tab-button active" onclick="switchSelectorTab('tiles')">
+                                🧱 Tiles
+                            </button>
+                            <button id="markers-tab" class="tab-button" onclick="switchSelectorTab('markers')">
+                                📍 Markers
+                            </button>
+                        </div>
+                        
+                        <!-- Tiles Tab Content -->
+                        <div id="tiles-tab-content" class="tab-content active">
+                            <div id="modal-tile-selector" style="
+                                display: grid !important;
+                                grid-template-columns: repeat(3, 1fr) !important;
+                                gap: 4px !important;
+                                max-height: 400px !important;
+                                overflow-y: auto !important;
+                            "></div>
+                        </div>
+                        
+                        <!-- Markers Tab Content -->
+                        <div id="markers-tab-content" class="tab-content">
+                            <div class="marker-section">
+                                <h5>Player Start</h5>
+                                <div id="modal-marker-selector" class="marker-selector-grid">
+                                    <!-- Player start marker will be added here -->
+                                </div>
+                                
+                                <div id="marker-properties" class="marker-properties" style="display: none;">
+                                    <h6>Facing Direction:</h6>
+                                    <div class="facing-selector">
+                                        <button class="facing-btn" data-facing="north">⬆️ North</button>
+                                        <button class="facing-btn" data-facing="east">➡️ East</button>
+                                        <button class="facing-btn" data-facing="south">⬇️ South</button>
+                                        <button class="facing-btn" data-facing="west">⬅️ West</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -930,8 +960,32 @@ function placeTile(index) {
     if (currentSelection.type === "clear") {
         currentMap.mapData[index] = null;
         currentMap.playerLayer[index] = null;
+    } else if (currentSelection.type === "player_start") {
+        // Clear any existing player start markers (only one allowed)
+        for (let i = 0; i < currentMap.playerLayer.length; i++) {
+            if (currentMap.playerLayer[i]?.type === "player_start") {
+                currentMap.playerLayer[i] = null;
+                // Re-render that tile
+                const oldTile = document.querySelector(`[data-idx="${i}"]`);
+                if (oldTile) {
+                    renderTile(oldTile, currentMap.mapData[i], null);
+                }
+            }
+        }
+        // Place new player start marker
+        currentMap.playerLayer[index] = {
+            ...currentSelection,
+            x: index % currentMap.size,
+            y: Math.floor(index / currentMap.size)
+        };
+        console.log(`🎯 Placed player start at (${index % currentMap.size}, ${Math.floor(index / currentMap.size)}) facing ${currentSelection.facing}`);
     } else if (currentSelection.type === "player") {
-        currentMap.playerLayer[index] = currentSelection;
+        // Legacy player support - convert to player_start
+        currentMap.playerLayer[index] = {
+            ...currentSelection,
+            type: "player_start",
+            facing: "north"
+        };
     } else {
         currentMap.mapData[index] = currentSelection;
         currentMap.playerLayer[index] = null; // Clear player when placing terrain
@@ -981,7 +1035,59 @@ function renderTile(tile, mapData, playerData) {
         if (playerData) {
             const player = document.createElement('div');
             player.classList.add('player-overlay');
-            player.textContent = playerData.value;
+            
+            // Handle different player types
+            if (playerData.type === "player_start") {
+                // Create container for player start marker with facing direction
+                player.style.cssText = `
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 18px;
+                    color: #74b9ff;
+                    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+                `;
+                
+                // Main player icon
+                const playerIcon = document.createElement('span');
+                playerIcon.textContent = playerData.value || '👤';
+                player.appendChild(playerIcon);
+                
+                // Facing direction indicator
+                const facingIndicator = document.createElement('span');
+                facingIndicator.style.cssText = `
+                    position: absolute;
+                    top: -2px;
+                    right: -2px;
+                    font-size: 12px;
+                    background: rgba(116, 185, 255, 0.9);
+                    color: white;
+                    border-radius: 50%;
+                    width: 16px;
+                    height: 16px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 1px solid white;
+                `;
+                
+                // Set facing direction arrow
+                const facingArrows = {
+                    north: '⬆️',
+                    east: '➡️', 
+                    south: '⬇️',
+                    west: '⬅️'
+                };
+                facingIndicator.textContent = facingArrows[playerData.facing] || '⬆️';
+                player.appendChild(facingIndicator);
+                
+                player.title = `Player Start (facing ${playerData.facing || 'north'})`;
+            } else {
+                // Legacy player rendering
+                player.textContent = playerData.value;
+            }
+            
             tile.appendChild(player);
         }
     }
@@ -1055,13 +1161,90 @@ function clearMap() {
 }
 
 // ========================================
+// MARKERS SYSTEM
+// ========================================
+function extractMarkersFromPlayerLayer() {
+    const markers = {};
+    const tileMarkers = Array(currentMap.size * currentMap.size).fill(null);
+    let markerCount = 0;
+    
+    currentMap.playerLayer.forEach((playerData, index) => {
+        if (playerData && playerData.type === "player_start") {
+            const markerId = `player_start_${++markerCount}`;
+            
+            // Create marker definition
+            markers[markerId] = {
+                type: "player_start",
+                facing: playerData.facing || "north",
+                properties: {
+                    spawnPoint: true,
+                    respawnPoint: false
+                }
+            };
+            
+            // Reference marker in tile array
+            tileMarkers[index] = markerId;
+            
+            console.log(`📍 Extracted marker ${markerId} at position ${index} (${index % currentMap.size}, ${Math.floor(index / currentMap.size)}) facing ${playerData.facing}`);
+        }
+        // Handle legacy player markers
+        else if (playerData && playerData.type === "player") {
+            const markerId = `player_start_${++markerCount}`;
+            
+            markers[markerId] = {
+                type: "player_start", 
+                facing: "north", // default for legacy
+                properties: {
+                    spawnPoint: true,
+                    respawnPoint: false
+                }
+            };
+            
+            tileMarkers[index] = markerId;
+            
+            console.log(`📍 Converted legacy player to marker ${markerId} at position ${index}`);
+        }
+    });
+    
+    return { markers, tileMarkers };
+}
+
+function processMarkersData(markers, tileMarkers) {
+    let markersProcessed = 0;
+    
+    tileMarkers.forEach((markerId, index) => {
+        if (markerId && markers[markerId]) {
+            const marker = markers[markerId];
+            
+            if (marker.type === "player_start") {
+                // Convert marker back to player layer format
+                currentMap.playerLayer[index] = {
+                    type: "player_start",
+                    value: "👤",
+                    name: "Player Start", 
+                    emoji: "👤",
+                    facing: marker.facing || "north",
+                    x: index % currentMap.size,
+                    y: Math.floor(index / currentMap.size)
+                };
+                
+                markersProcessed++;
+                console.log(`📍 Loaded player start marker at (${index % currentMap.size}, ${Math.floor(index / currentMap.size)}) facing ${marker.facing}`);
+            }
+        }
+    });
+    
+    console.log(`✅ Processed ${markersProcessed} markers from v1.3 format`);
+}
+
+// ========================================
 // FILE OPERATIONS
 // ========================================
 async function saveMapAsFile() {
     const mapName = document.getElementById('modal-map-name').value || 'untitled-map';
     currentMap.name = mapName;
     
-    // Create map data structure using v1.2 format with color dictionary
+    // Create map data structure using v1.3 format with markers system
     const mapData = {
         grid: await gridToArray(currentMap.mapData, currentMap.size),
         tileset: currentTileset || 'default',
@@ -1069,9 +1252,16 @@ async function saveMapAsFile() {
         size: currentMap.size,
         type: currentMap.type,
         created: new Date().toISOString(),
-        version: "1.2",  // v1.2 format with background color dictionary
+        version: "1.3",  // v1.3 format with markers system
         backgroundColors: window.tilesetData?.backgroundColors || {}  // Include color dictionary
     };
+    
+    // Add markers system using hybrid approach
+    const { markers, tileMarkers } = extractMarkersFromPlayerLayer();
+    if (Object.keys(markers).length > 0) {
+        mapData.markers = markers;
+        mapData.tileMarkers = tileMarkers;
+    }
     
     // Create and download file
     const dataStr = JSON.stringify(mapData, null, 2);
@@ -1100,7 +1290,7 @@ async function saveMapToLibrary() {
         sampleNonNull: currentMap.mapData.filter(cell => cell !== null && cell !== undefined).slice(0, 3)
     });
     
-    // Create map data structure compatible with the maps manager
+    // Create map data structure using v1.3 format with markers system
     const mapData = {
         grid: await gridToArray(currentMap.mapData, currentMap.size),
         tileset: currentTileset || 'default',
@@ -1108,9 +1298,16 @@ async function saveMapToLibrary() {
         size: currentMap.size,
         type: currentMap.type,
         created: new Date().toISOString(),
-        version: "1.2",  // v1.2 format with background color dictionary
+        version: "1.3",  // v1.3 format with markers system
         backgroundColors: window.tilesetData?.backgroundColors || {}  // Include color dictionary
     };
+    
+    // Add markers system using hybrid approach
+    const { markers, tileMarkers } = extractMarkersFromPlayerLayer();
+    if (Object.keys(markers).length > 0) {
+        mapData.markers = markers;
+        mapData.tileMarkers = tileMarkers;
+    }
     
     // Save to maps manager if available
     if (window.mapsManager) {
@@ -1744,6 +1941,13 @@ async function loadMapFromData(mapData, mapId = null) {
     currentMap.playerLayer = new Array(size * size).fill(null); // Reset player layer
     console.log('💾 Set currentMap.mapData and playerLayer');
     
+    // Process markers if present (v1.3 format)
+    if (mapData.markers && mapData.tileMarkers) {
+        console.log('📍 Processing v1.3 markers format');
+        processMarkersData(mapData.markers, mapData.tileMarkers);
+    }
+    // Handle legacy formats - no markers processing needed for v1.2 and below
+    
     // Set map name
     if (mapData.name) {
         currentMap.name = mapData.name;
@@ -1797,3 +2001,112 @@ async function loadMapFromData(mapData, mapId = null) {
 }
 
 console.log('🗺️ Map Editor loaded (modal version)');
+
+// Tab system for tile/marker selector
+function switchSelectorTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    document.getElementById(`${tabName}-tab-content`).classList.add('active');
+    
+    // If switching to markers tab, initialize it
+    if (tabName === 'markers') {
+        initializeMarkersTab();
+    }
+}
+
+// Initialize the markers tab with player start marker
+function initializeMarkersTab() {
+    const markerSelector = document.getElementById('modal-marker-selector');
+    if (!markerSelector) return;
+    
+    // Clear existing content
+    markerSelector.innerHTML = '';
+    
+    // Add player start marker
+    const playerMarker = document.createElement('div');
+    playerMarker.classList.add('tile-option');
+    playerMarker.style.cssText = `
+        width: 60px;
+        height: 60px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 24px;
+        background: white;
+        transition: all 0.2s;
+    `;
+    playerMarker.textContent = '👤';
+    playerMarker.title = 'Player Start Position';
+    
+    // Add click handler
+    playerMarker.addEventListener('click', function() {
+        // Clear other selections
+        document.querySelectorAll('.tile-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        
+        // Select this marker
+        this.classList.add('selected');
+        
+        // Set current selection to player start marker
+        currentSelection = {
+            type: "player_start",
+            value: "👤",
+            name: "Player Start",
+            emoji: "👤",
+            facing: "north" // default facing
+        };
+        
+        // Show marker properties panel
+        showMarkerProperties();
+        
+        console.log('🎯 Selected player start marker');
+    });
+    
+    markerSelector.appendChild(playerMarker);
+}
+
+// Show marker properties panel for configuration
+function showMarkerProperties() {
+    const propertiesPanel = document.getElementById('marker-properties');
+    if (!propertiesPanel) return;
+    
+    propertiesPanel.style.display = 'block';
+    
+    // Set up facing direction buttons
+    const facingButtons = document.querySelectorAll('.facing-btn');
+    facingButtons.forEach(btn => {
+        btn.classList.remove('active');
+        btn.addEventListener('click', function() {
+            // Clear other active states
+            facingButtons.forEach(b => b.classList.remove('active'));
+            // Set this button as active
+            this.classList.add('active');
+            
+            // Update current selection facing
+            if (currentSelection) {
+                currentSelection.facing = this.dataset.facing;
+                console.log(`🧭 Set facing direction to: ${currentSelection.facing}`);
+            }
+        });
+        
+        // Set default facing (north) as active
+        if (btn.dataset.facing === 'north') {
+            btn.classList.add('active');
+        }
+    });
+}
+
+// Make functions global for HTML onclick handlers
+window.switchSelectorTab = switchSelectorTab;

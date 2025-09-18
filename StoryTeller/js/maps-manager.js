@@ -411,8 +411,19 @@ class MapsManager {
             hasGrid: !!map.data?.grid,
             gridSize: map.data?.grid?.length,
             tileset: map.data?.tileset,
+            version: map.data?.version,
+            hasMarkers: !!(map.data?.markers),
+            hasTileMarkers: !!(map.data?.tileMarkers),
             sampleGridData: map.data?.grid ? map.data.grid.slice(0, 3) : 'N/A'
         });
+        
+        // Debug markers specifically
+        if (map.data?.markers) {
+            console.log('📍 Markers found:', map.data.markers);
+        }
+        if (map.data?.tileMarkers) {
+            console.log('🗺️ TileMarkers found:', map.data.tileMarkers.length, 'items');
+        }
 
         // Use the same rendering approach as the map editor
         if (window.showDebug) {
@@ -483,12 +494,26 @@ class MapsManager {
         
         let grid = null;
         let tileset = 'default';
+        let markers = null;
+        let tileMarkers = null;
+        let version = '1.2'; // Default to v1.2
 
         // Handle different map data formats
         if (mapData.grid) {
             // New format from maps manager
             grid = mapData.grid;
             tileset = mapData.tileset || 'default';
+            
+            // Check for v1.3 markers format
+            if (mapData.version === "1.3" && mapData.markers && mapData.tileMarkers) {
+                version = '1.3';
+                markers = mapData.markers;
+                tileMarkers = mapData.tileMarkers;
+                console.log('📍 Found v1.3 markers format:', {
+                    markersCount: Object.keys(markers).length,
+                    tileMarkersLength: tileMarkers.length
+                });
+            }
         } else if (mapData.mapData && mapData.size) {
             // Legacy format - convert to grid
             const size = mapData.size;
@@ -505,7 +530,7 @@ class MapsManager {
 
         // Convert to standard format that PlayerMapViewerLocal expects
         const standardFormat = {
-            version: '1.2',
+            version: version,
             format: 'local-indexeddb',
             metadata: {
                 title: 'Local Map',
@@ -517,6 +542,33 @@ class MapsManager {
                 tileset: tileset
             }
         };
+        
+        // Add markers data for v1.3 format
+        if (version === '1.3' && markers && tileMarkers) {
+            standardFormat.mapData.markers = markers;
+            standardFormat.mapData.tileMarkers = tileMarkers;
+            
+            // Extract player start information for easy access
+            const playerStartMarkers = Object.entries(markers)
+                .filter(([_, marker]) => marker.type === 'player_start')
+                .map(([id, marker]) => {
+                    // Find position in tileMarkers array
+                    const position = tileMarkers.indexOf(id);
+                    const size = grid.length;
+                    return {
+                        id: id,
+                        x: position % size,
+                        y: Math.floor(position / size),
+                        facing: marker.facing || 'north',
+                        properties: marker.properties
+                    };
+                });
+                
+            if (playerStartMarkers.length > 0) {
+                standardFormat.mapData.playerStart = playerStartMarkers[0];
+                console.log('🎯 Extracted player start position:', standardFormat.mapData.playerStart);
+            }
+        }
 
         console.log('✅ Converted to standard format:', standardFormat);
         return standardFormat;

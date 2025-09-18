@@ -1999,6 +1999,130 @@
             border-color: #6c757d;
         }
 
+        /* Tab System for Tile/Marker Selector */
+        .selector-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6c757d;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .tab-button:hover {
+            color: #495057;
+            background: rgba(116, 185, 255, 0.1);
+        }
+
+        .tab-button.active {
+            color: #74b9ff;
+            border-bottom-color: #74b9ff;
+            background: rgba(116, 185, 255, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Tile selector grid */
+        .tile-selector-grid, .marker-selector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 8px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        /* Marker properties section */
+        .marker-properties {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(116, 185, 255, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid #74b9ff;
+        }
+
+        .marker-properties h6 {
+            margin: 0 0 10px 0;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .facing-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .facing-btn {
+            padding: 8px 12px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .facing-btn:hover {
+            border-color: #74b9ff;
+            background: rgba(116, 185, 255, 0.1);
+        }
+
+        .facing-btn.active {
+            background: #74b9ff;
+            color: white;
+            border-color: #74b9ff;
+        }
+
+        /* Dark theme support for tabs */
+        .dark-theme .selector-tabs {
+            border-bottom-color: #495057;
+        }
+
+        .dark-theme .tab-button {
+            color: #adb5bd;
+        }
+
+        .dark-theme .tab-button:hover {
+            color: #f8f9fa;
+            background: rgba(116, 185, 255, 0.2);
+        }
+
+        .dark-theme .marker-properties {
+            background: rgba(116, 185, 255, 0.2);
+            border-left-color: #74b9ff;
+        }
+
+        .dark-theme .marker-properties h6 {
+            color: #f8f9fa;
+        }
+
+        .dark-theme .facing-btn {
+            background: #495057;
+            border-color: #6c757d;
+            color: #f8f9fa;
+        }
+
         .dark-theme .current-session h4 {
             color: #f8f9fa;
         }
@@ -7093,10 +7217,41 @@ ${stats.cordova?.detected ? '📱 Cordova app detected' : '🌐 Web browser mode
                         </div>
                     </div>
                     
-                    <!-- Tile Selector -->
+                    <!-- Tabbed Selector -->
                     <div class="tile-selector-section">
-                        <h4>Select Tile:</h4>
-                        <div id="modal-tile-selector" class="tile-selector-grid"></div>
+                        <div class="selector-tabs">
+                            <button id="tiles-tab" class="tab-button active" onclick="switchSelectorTab('tiles')">
+                                🧱 Tiles
+                            </button>
+                            <button id="markers-tab" class="tab-button" onclick="switchSelectorTab('markers')">
+                                📍 Markers
+                            </button>
+                        </div>
+                        
+                        <!-- Tiles Tab Content -->
+                        <div id="tiles-tab-content" class="tab-content active">
+                            <div id="modal-tile-selector" class="tile-selector-grid"></div>
+                        </div>
+                        
+                        <!-- Markers Tab Content -->
+                        <div id="markers-tab-content" class="tab-content">
+                            <div class="marker-section">
+                                <h5>Player Start</h5>
+                                <div id="modal-marker-selector" class="marker-selector-grid">
+                                    <!-- Player start marker will be added here -->
+                                </div>
+                                
+                                <div id="marker-properties" class="marker-properties" style="display: none;">
+                                    <h6>Facing Direction:</h6>
+                                    <div class="facing-selector">
+                                        <button class="facing-btn" data-facing="north">⬆️ North</button>
+                                        <button class="facing-btn" data-facing="east">➡️ East</button>
+                                        <button class="facing-btn" data-facing="south">⬇️ South</button>
+                                        <button class="facing-btn" data-facing="west">⬅️ West</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Map Grid -->

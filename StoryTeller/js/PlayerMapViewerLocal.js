@@ -307,7 +307,9 @@ class PlayerMapViewerLocal {
                 console.error(`Canvas: Failed to load sprite sheet ${tilesetName}`);
                 reject(new Error(`Failed to load ${tilesetName}.png`));
             };
-            img.src = `assets/${tilesetName}.png`;
+            img.src = `./assets/${tilesetName}.png`;
+            // Add a fallback query parameter to help with caching issues
+            img.src += `?v=${Date.now()}`;
         });
     }
     
@@ -345,6 +347,21 @@ class PlayerMapViewerLocal {
         const { width, height, spriteNames, tileset, backgroundColors } = mapData;
         console.log(`Canvas: Rendering ${width}x${height} sprites with tileset: ${tileset}`);
         
+        // Load marker data if present (v1.3 format)
+        let markerMap = new Map(); // Map from linear index to marker data
+        if (mapData.markers && mapData.tileMarkers) {
+            console.log('🎯 Loading marker data for sprite canvas rendering');
+            const markers = mapData.markers;
+            const tileMarkers = mapData.tileMarkers;
+            
+            tileMarkers.forEach((markerId, index) => {
+                if (markerId && markers[markerId]) {
+                    markerMap.set(index, markers[markerId]);
+                    console.log(`📍 Marker ${markerId} at index ${index}:`, markers[markerId]);
+                }
+            });
+        }
+        
         const tilesetName = tileset || 'default'; // Respect user's naming convention
         
         try {
@@ -367,11 +384,18 @@ class PlayerMapViewerLocal {
                         this.ctx.fillStyle = '#f9f9f9';
                         this.ctx.fillRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
                     }
+                    
+                    // Check for marker at this position and render immediately
+                    if (markerMap.has(tileIndex)) {
+                        const marker = markerMap.get(tileIndex);
+                        console.log(`🎯 Rendering marker at tile (${x}, ${y}) index ${tileIndex}:`, marker);
+                        this.renderMarkerOverlay(x, y, marker);
+                    }
                 }
             }
             
             this.ctx.restore(); // Restore transform
-            console.log('Canvas: Finished rendering sprites');
+            console.log('Canvas: Finished rendering sprites with inline markers');
             
         } catch (error) {
             console.error('Canvas: Error rendering sprites:', error);
@@ -383,6 +407,21 @@ class PlayerMapViewerLocal {
     async renderTilesCanvas(mapData) {
         const { width, height, tiles, tileset } = mapData;
         console.log(`Canvas: Rendering ${width}x${height} tiles with tileset: ${tileset}`);
+        
+        // Load marker data if present (v1.3 format)
+        let markerMap = new Map(); // Map from linear index to marker data
+        if (mapData.markers && mapData.tileMarkers) {
+            console.log('🎯 Loading marker data for tiles canvas rendering');
+            const markers = mapData.markers;
+            const tileMarkers = mapData.tileMarkers;
+            
+            tileMarkers.forEach((markerId, index) => {
+                if (markerId && markers[markerId]) {
+                    markerMap.set(index, markers[markerId]);
+                    console.log(`📍 Marker ${markerId} at index ${index}:`, markers[markerId]);
+                }
+            });
+        }
         
         const tilesetName = tileset || 'default'; // Respect user's naming convention
         
@@ -407,11 +446,18 @@ class PlayerMapViewerLocal {
                         this.ctx.fillStyle = '#f9f9f9';
                         this.ctx.fillRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
                     }
+                    
+                    // Check for marker at this position and render immediately
+                    if (markerMap.has(tileIndex)) {
+                        const marker = markerMap.get(tileIndex);
+                        console.log(`🎯 Rendering marker at tile (${x}, ${y}) index ${tileIndex}:`, marker);
+                        this.renderMarkerOverlay(x, y, marker);
+                    }
                 }
             }
             
             this.ctx.restore();
-            console.log('Canvas: Finished rendering tiles');
+            console.log('Canvas: Finished rendering tiles with inline markers');
             
         } catch (error) {
             console.error('Canvas: Error rendering tiles:', error);
@@ -428,6 +474,21 @@ class PlayerMapViewerLocal {
         
         console.log(`Canvas: Rendering local grid ${width}x${height} with tileset: ${tileset}`);
         
+        // Load marker data if present (v1.3 format)
+        let markerMap = new Map(); // Map from linear index to marker data
+        if (mapData.mapData.markers && mapData.mapData.tileMarkers) {
+            console.log('🎯 Loading marker data for inline rendering');
+            const markers = mapData.mapData.markers;
+            const tileMarkers = mapData.mapData.tileMarkers;
+            
+            tileMarkers.forEach((markerId, index) => {
+                if (markerId && markers[markerId]) {
+                    markerMap.set(index, markers[markerId]);
+                    console.log(`📍 Marker ${markerId} at index ${index}:`, markers[markerId]);
+                }
+            });
+        }
+        
         const tilesetName = tileset; // Respect user's naming convention
         
         try {
@@ -440,6 +501,7 @@ class PlayerMapViewerLocal {
                 for (let x = 0; x < width; x++) {
                     const cellData = grid[y][x];
                     
+                    // Render the base tile first
                     if (cellData && cellData.value) {
                         // Rich sprite object format: { type: "sprite", value: "mountain", ... }
                         const spriteName = cellData.value;
@@ -458,11 +520,19 @@ class PlayerMapViewerLocal {
                         this.ctx.fillStyle = '#f9f9f9';
                         this.ctx.fillRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
                     }
+                    
+                    // Check for marker at this position and render immediately
+                    const linearIndex = y * width + x;
+                    if (markerMap.has(linearIndex)) {
+                        const marker = markerMap.get(linearIndex);
+                        console.log(`🎯 Rendering marker at tile (${x}, ${y}) index ${linearIndex}:`, marker);
+                        this.renderMarkerOverlay(x, y, marker);
+                    }
                 }
             }
             
             this.ctx.restore();
-            console.log('Canvas: Finished rendering local grid');
+            console.log('Canvas: Finished rendering local grid with inline markers');
             
         } catch (error) {
             console.error('Canvas: Error rendering local grid:', error);
@@ -471,6 +541,206 @@ class PlayerMapViewerLocal {
                 cell && cell.value ? cell.value : (cell || null)
             ));
         }
+    }
+    
+    // Render marker overlay on a specific tile
+    renderMarkerOverlay(x, y, marker) {
+        const tileX = x * this.tileSize;
+        const tileY = y * this.tileSize;
+        const centerX = tileX + this.tileSize / 2;
+        const centerY = tileY + this.tileSize / 2;
+        
+        console.log(`🎨 Rendering marker overlay at tile (${x}, ${y}) -> canvas (${tileX}, ${tileY})`);
+        
+        this.ctx.save();
+        
+        // Handle different marker types
+        if (marker.type === 'player_start') {
+            // Draw player start marker with blue background
+            this.ctx.fillStyle = 'rgba(116, 185, 255, 0.8)';
+            this.ctx.beginPath();
+            this.ctx.arc(centerX, centerY, this.tileSize * 0.3, 0, 2 * Math.PI);
+            this.ctx.fill();
+            
+            // Draw white border
+            this.ctx.strokeStyle = 'white';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+            
+            // Draw 'P' character
+            this.ctx.fillStyle = 'white';
+            this.ctx.font = `bold ${this.tileSize * 0.3}px Arial`;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText('P', centerX, centerY);
+            
+            // Draw facing direction arrow
+            const facing = marker.facing || 'north';
+            this.drawFacingArrow(centerX, centerY, facing, this.tileSize * 0.4);
+            
+            console.log(`✅ Rendered player_start marker at (${x}, ${y}) facing ${facing}`);
+        }
+        
+        this.ctx.restore();
+    }
+    
+    // Helper method to draw facing direction arrows
+    drawFacingArrow(centerX, centerY, facing, offset) {
+        this.ctx.fillStyle = 'red';
+        this.ctx.strokeStyle = 'white';
+        this.ctx.lineWidth = 1;
+        
+        const arrowSize = offset * 0.4;
+        
+        // Calculate arrow position based on facing direction
+        let arrowX = centerX;
+        let arrowY = centerY;
+        
+        switch (facing) {
+            case 'north':
+                arrowY = centerY - offset;
+                break;
+            case 'south':
+                arrowY = centerY + offset;
+                break;
+            case 'east':
+                arrowX = centerX + offset;
+                break;
+            case 'west':
+                arrowX = centerX - offset;
+                break;
+        }
+        
+        // Draw triangle arrow
+        this.ctx.beginPath();
+        switch (facing) {
+            case 'north':
+                this.ctx.moveTo(arrowX, arrowY - arrowSize);
+                this.ctx.lineTo(arrowX - arrowSize, arrowY + arrowSize);
+                this.ctx.lineTo(arrowX + arrowSize, arrowY + arrowSize);
+                break;
+            case 'south':
+                this.ctx.moveTo(arrowX, arrowY + arrowSize);
+                this.ctx.lineTo(arrowX - arrowSize, arrowY - arrowSize);
+                this.ctx.lineTo(arrowX + arrowSize, arrowY - arrowSize);
+                break;
+            case 'east':
+                this.ctx.moveTo(arrowX + arrowSize, arrowY);
+                this.ctx.lineTo(arrowX - arrowSize, arrowY - arrowSize);
+                this.ctx.lineTo(arrowX - arrowSize, arrowY + arrowSize);
+                break;
+            case 'west':
+                this.ctx.moveTo(arrowX - arrowSize, arrowY);
+                this.ctx.lineTo(arrowX + arrowSize, arrowY - arrowSize);
+                this.ctx.lineTo(arrowX + arrowSize, arrowY + arrowSize);
+                break;
+        }
+        this.ctx.closePath();
+        this.ctx.fill();
+        this.ctx.stroke();
+    }
+    
+    // Render player start marker with facing direction
+    renderPlayerStartMarker(playerStart) {
+        console.log('🎯 Rendering player start marker:', playerStart);
+        
+        // First, test basic canvas drawing capability
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset all transforms
+        this.ctx.fillStyle = 'lime';
+        this.ctx.fillRect(10, 10, 100, 100);
+        console.log('✅ Basic lime rectangle test drawn at (10,10) size 100x100');
+        this.ctx.restore();
+        
+        const tileX = playerStart.x * this.tileSize;
+        const tileY = playerStart.y * this.tileSize;
+        const centerX = tileX + this.tileSize / 2;
+        const centerY = tileY + this.tileSize / 2;
+        
+        console.log(`🎨 Marker position: tile(${playerStart.x}, ${playerStart.y}) -> canvas(${tileX}, ${tileY}) center(${centerX}, ${centerY})`);
+        console.log(`📏 TileSize: ${this.tileSize}, Canvas size: ${this.canvas.width}x${this.canvas.height}`);
+        console.log(`🔍 Current transforms: zoom=${this.viewerZoom}, pan=(${this.viewerPanX}, ${this.viewerPanY})`);
+        
+        // Test: Draw marker WITHOUT any transforms first - just raw coordinates
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset all transforms
+        this.ctx.fillStyle = 'red';
+        this.ctx.fillRect(tileX, tileY, this.tileSize, this.tileSize);
+        console.log(`🔴 Red test marker drawn at RAW coordinates (${tileX}, ${tileY}) size ${this.tileSize}`);
+        this.ctx.restore();
+        
+        this.ctx.save();
+        
+        // IMPORTANT: Don't restore the transform - we want to use the current zoom/pan
+        // The marker should be rendered in the same coordinate space as the tiles
+        
+        // Draw player icon background circle
+        this.ctx.fillStyle = 'rgba(116, 185, 255, 0.9)';
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, this.tileSize * 0.3, 0, 2 * Math.PI);
+        this.ctx.fill();
+        
+        // Draw white border
+        this.ctx.strokeStyle = 'white';
+        this.ctx.lineWidth = 3; // Make thicker for visibility
+        this.ctx.stroke();
+        
+        // Draw player emoji/icon - make it bigger and use a simpler approach
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = `bold ${this.tileSize * 0.4}px Arial`;
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        
+        // Try drawing a simple character instead of emoji first
+        this.ctx.fillText('P', centerX, centerY);
+        
+        // Draw facing direction indicator - make it more prominent
+        const facingArrows = {
+            north: '^',
+            east: '>',
+            south: 'v',
+            west: '<'
+        };
+        
+        const arrow = facingArrows[playerStart.facing] || '^';
+        
+        // Position arrow based on facing direction - make it more visible
+        let arrowX = centerX;
+        let arrowY = centerY;
+        const offset = this.tileSize * 0.4;
+        
+        switch (playerStart.facing) {
+            case 'north':
+                arrowY = centerY - offset;
+                break;
+            case 'south':
+                arrowY = centerY + offset;
+                break;
+            case 'east':
+                arrowX = centerX + offset;
+                break;
+            case 'west':
+                arrowX = centerX - offset;
+                break;
+        }
+        
+        // Draw facing arrow with high contrast
+        this.ctx.fillStyle = 'red'; // Make it red for high visibility
+        this.ctx.strokeStyle = 'white';
+        this.ctx.lineWidth = 2;
+        this.ctx.font = `bold ${this.tileSize * 0.3}px Arial`;
+        this.ctx.fillText(arrow, arrowX, arrowY);
+        this.ctx.strokeText(arrow, arrowX, arrowY);
+        
+        // Debug: Draw a red rectangle around the tile area
+        this.ctx.strokeStyle = 'red';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(tileX, tileY, this.tileSize, this.tileSize);
+        
+        this.ctx.restore();
+        
+        console.log(`✅ Rendered player start at (${playerStart.x}, ${playerStart.y}) facing ${playerStart.facing}`);
+        console.log(`🎨 Used coordinates: circle at (${centerX}, ${centerY}) radius ${this.tileSize * 0.3}`);
     }
     
     // Core tile rendering method
